@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "module": "index.ts",
+  "devDependencies": {
+    "@types/bun": "^1.2.11",
+    "@types/express": "^5.0.1",
+    "drizzle-kit": "^0.31.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "private": true,
+  "scripts": {
+    "start": "bun run index.ts"
+  },
+  "type": "module",
+  "dependencies": {
+    "drizzle-orm": "^0.43.1",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.1",
+    "uuid": "^11.1.0"
+  }
+}
