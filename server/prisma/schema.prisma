@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -12,4 +6,391 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+// ======================
+//  Core User Management
+// ======================
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+model User {
+  id               Int            @id @default(autoincrement())
+  email            String         @unique @db.VarChar(255)
+  passwordHash     Bytes 
+  role             Role
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  // Relationships
+  profile          UserProfile?
+  addresses        Address[]
+  wishlists        UserWishlist[]
+  follows          UserFollows[]
+  notifications    Notification[]
+  messagesSent     Message[]      @relation("SenderMessages")
+  messagesReceived Message[]      @relation("ReceiverMessages")
+  // Vendor-specific
+  vendorProfile    VendorProfile?
+  Order            Order[]
+
+  @@index([email, role])
+}
+
+model UserProfile {
+  id        Int     @id @default(autoincrement())
+  userId    Int     @unique
+  firstName String
+  lastName  String
+  avatarUrl String?
+  phone     String? @db.VarChar(20)
+  user      User    @relation(fields: [userId], references: [id])
+}
+
+model Address {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  street    String
+  city      String
+  state     String
+  zipCode   String
+  country   String  @default("Nepal")
+  isDefault Boolean @default(false)
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@index([userId, isDefault])
+}
+
+// ======================
+//  Vendor Operations
+// ======================
+model VendorProfile {
+  id             Int                   @id @default(autoincrement())
+  userId         Int                   @unique
+  businessName   String
+  businessRegNo  String                @unique
+  description    String?
+  website        String?
+  socialMedia    SocialMedia[] // Structured social media links
+  isVerified     Boolean               @default(false)
+  rating         Float?                @default(0.0)
+  createdAt      DateTime              @default(now())
+  // Relationships
+  user           User                  @relation(fields: [userId], references: [id])
+  paymentMethods VendorPaymentMethod[]
+  schedules      VendorSchedule[]
+  dailyStats     VendorDailyStat[]
+  payouts        VendorPayout[]
+  products       Product[]
+  UserFollows    UserFollows[]
+
+  @@index([businessName, isVerified])
+}
+
+model SocialMedia {
+  id       Int           @id @default(autoincrement())
+  vendorId Int
+  platform String // e.g., "Instagram", "Facebook"
+  url      String
+  vendor   VendorProfile @relation(fields: [vendorId], references: [id])
+
+  @@unique([vendorId, platform])
+}
+
+model VendorSchedule {
+  id           Int     @id @default(autoincrement())
+  vendorId     Int
+  scheduleMask Bytes   // 1 byte (8 bits): bits 0–6 = Sunday–Saturday
+  startTime    String  // Format: "HH:mm"
+  endTime      String  // Format: "HH:mm"
+  vendor       VendorProfile @relation(fields: [vendorId], references: [id])
+}
+
+enum PaymentMethodType {
+  BANK_TRANSFER
+  KHALTI
+  ESEWA
+  PHONEPAY
+}
+
+model VendorPaymentMethod {
+  id         Int               @id @default(autoincrement())
+  vendorId   Int
+  methodType PaymentMethodType
+  details    Json // Flexible storage for method-specific fields
+  isDefault  Boolean           @default(false)
+  vendor     VendorProfile     @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId, methodType])
+}
+
+model VendorDailyStat {
+  id           Int           @id @default(autoincrement())
+  vendorId     Int
+  date         DateTime // Use Date instead of DateTime
+  paymentType PaymentMethodType
+  orderCount   Int           @default(0)
+  revenue      Decimal       @default(0.0) // Use Decimal for financial accuracy
+  visitorCount Int           @default(0)
+  vendor       VendorProfile @relation(fields: [vendorId], references: [id])
+
+  @@unique([vendorId, date])
+}
+
+model VendorPayout {
+  id          Int           @id @default(autoincrement())
+  vendorId    Int
+  amount      Decimal
+  status      PayoutStatus  @default(PENDING)
+  initiatedAt DateTime      @default(now())
+  completedAt DateTime?
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId, status])
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ======================
+//  Product Catalog
+// ======================
+model Category {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  parentId    Int?
+  description String?
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+
+  @@index([parentId, name])
+}
+
+model Product {
+  id            Int                   @id @default(autoincrement())
+  name          String
+  description   String
+  vendorId      Int
+  categoryId    Int
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  // Relationships
+  vendor        VendorProfile         @relation(fields: [vendorId], references: [id])
+  category      Category              @relation(fields: [categoryId], references: [id])
+  variants      ProductVariant[]
+  attributes    ProductAttribute[]
+  media         ProductMedia[]
+  priceHistory  ProductPriceHistory[]
+  inventoryLogs ProductInventoryLog[]
+  tags          ProductTag[]
+  UserWishlist  UserWishlist[]
+
+  @@index([vendorId, categoryId])
+}
+
+model ProductVariant {
+  id                  Int                     @id @default(autoincrement())
+  productId           Int
+  sku                 String                  @unique
+  price               Decimal
+  inventory           Int                     @default(0)
+  attributes          ProductAttributeValue[]
+  product             Product                 @relation(fields: [productId], references: [id])
+  orderItems          OrderItem[]
+  ProductInventoryLog ProductInventoryLog[]
+
+  @@index([sku, productId])
+}
+
+model ProductAttribute {
+  id        Int                     @id @default(autoincrement())
+  name      String // e.g., "color", "size"
+  variants  ProductAttributeValue[]
+  Product   Product?                @relation(fields: [productId], references: [id])
+  productId Int?
+
+  @@unique([name])
+}
+
+model ProductAttributeValue {
+  id          Int              @id @default(autoincrement())
+  attributeId Int
+  value       String // e.g., "red", "XL"
+  variantId   Int
+  attribute   ProductAttribute @relation(fields: [attributeId], references: [id])
+  variant     ProductVariant   @relation(fields: [variantId], references: [id])
+
+  @@unique([attributeId, variantId])
+}
+
+model ProductMedia {
+  id        Int       @id @default(autoincrement())
+  productId Int
+  url       String
+  mediaType MediaType
+  caption   String?
+  createdAt DateTime  @default(now())
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@index([productId, mediaType])
+}
+
+model UserFollows {
+  id        Int           @id @default(autoincrement())
+  userId    Int
+  vendorId  Int
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id])
+  vendor    VendorProfile @relation(fields: [vendorId], references: [id])
+
+  @@unique([userId, vendorId], name: "unique_follow")
+  @@index([vendorId])
+}
+
+model UserWishlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId], name: "unique_wishlist_item")
+  @@index([productId])
+}
+
+// ======================
+//  Commerce Workflow
+// ======================
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  totalAmount Decimal
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id])
+  items       OrderItem[]
+  refunds     Refund[]
+
+  @@index([userId, status])
+}
+
+model OrderItem {
+  id               Int            @id @default(autoincrement())
+  orderId          Int
+  productVariantId Int
+  quantity         Int
+  priceAtPurchase  Decimal
+  order            Order          @relation(fields: [orderId], references: [id])
+  variant          ProductVariant @relation(fields: [productVariantId], references: [id])
+  Refund           Refund[]
+
+  @@index([orderId])
+}
+
+enum RefundStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model Refund {
+  id          Int          @id @default(autoincrement())
+  orderItemId Int
+  reason      String
+  status      RefundStatus @default(REQUESTED)
+  createdAt   DateTime     @default(now())
+  processedAt DateTime?
+  orderItem   OrderItem    @relation(fields: [orderItemId], references: [id])
+  Order       Order?       @relation(fields: [orderId], references: [id])
+  orderId     Int?
+
+  @@index([orderItemId, status])
+}
+
+// ======================
+//  Engagement Features
+// ======================
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  receiverId Int
+  content    String
+  createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
+  sender     User     @relation(fields: [senderId], references: [id], name: "SenderMessages")
+  receiver   User     @relation(fields: [receiverId], references: [id], name: "ReceiverMessages")
+
+  @@index([senderId, receiverId])
+}
+
+// ======================
+//  Advanced Features
+// ======================
+model ProductPriceHistory {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  oldPrice  Decimal
+  newPrice  Decimal
+  changedAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([productId, changedAt])
+}
+
+model ProductInventoryLog {
+  id        Int            @id @default(autoincrement())
+  variantId Int
+  oldStock  Int
+  newStock  Int
+  changedAt DateTime       @default(now())
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  Product   Product?       @relation(fields: [productId], references: [id])
+  productId Int?
+
+  @@index([variantId, changedAt])
+}
+
+model ProductTag {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  tag       String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([productId, tag])
 }

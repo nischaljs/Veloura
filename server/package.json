@@ -4,14 +4,17 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/bun": "latest",
-    "prisma": "^6.8.1"
+    "@types/express": "^5.0.2",
+    "bcryptjs": "^3.0.2",
+    "prisma": "^6.8.2"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@prisma/client": "^6.8.1",
+    "@prisma/client": "^6.8.2",
     "express": "^5.1.0"
   }
 }
