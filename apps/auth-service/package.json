@@ -1,0 +1,19 @@
+{
+  "name": "auth-service",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "start": "bun dist/index.js",
+    "test": "jest"
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.2"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
