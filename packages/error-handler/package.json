@@ -1,3 +1,13 @@
 {
-  "name": "@veloura/error-handler"
+  "name": "@veloura/error-handler",
+  "version": "1.0.0",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
 }

@@ -1,0 +1,19 @@
+{
+  "name": "@veloura/db",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "generate": "npx prisma generate",
+    "migrate:reset": "npx prisma migrate reset",
+    "migrate:dev": "npx prisma migrate dev",
+    "studio": "npx prisma studio"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "prisma": "^6.8.2"
+  }
+}

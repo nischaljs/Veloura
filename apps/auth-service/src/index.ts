@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import * as path from "path";
 import cors from "cors";
 import { errorMiddleware } from "@veloura/error-handler";
-
+import cookieParser from "cookie-parser";
 const app = express();
 app.use(
   cors({
@@ -14,8 +14,8 @@ app.use(
 const port = process.env.PORT ? Number(process.env.PORT) : 4100;
 const host = process.env.HOST ? process.env.HOST : "0.0.0.0";
 
-app.use("assets", express.static(path.join(__dirname, "../assets")));
-
+app.use(express.json());
+app.use(cookieParser());
 app.use(errorMiddleware);
 
 app.get("/", (req: Request, res: Response) => {

@@ -12,7 +12,8 @@
       ],
       "outputs": [
         ".next/**",
-        "!.next/cache/**"
+        "!.next/cache/**",
+        "dist/**"
       ]
     },
     "lint": {
@@ -34,6 +35,11 @@
         "^build"
       ],
       "cache": false
+    },
+    "generate": {
+      "dependsOn": [
+        "^generate"
+      ]
     }
   }
 }

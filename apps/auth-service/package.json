@@ -9,11 +9,16 @@
     "test": "jest"
   },
   "private": true,
+  "include": [
+    "src/**/*"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "@types/express": "^5.0.2"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "@veloura/db": "workspace:*",
+    "@veloura/error-handler": "workspace:*"
   }
 }

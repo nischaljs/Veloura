@@ -2,13 +2,18 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-     "rootDir": "src",
+    "rootDir": "src",
     "composite": true
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "references": [
     {
       "path": "../../packages/error-handler"
+    },
+    {
+      "path": "../../packages/db"
     }
   ]
 }
