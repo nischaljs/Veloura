@@ -39,7 +39,11 @@
     "generate": {
       "dependsOn": [
         "^generate"
-      ]
+      ],
+      "outputs": [
+        "packages/db/generated/**"
+      ],
+      "cache": false
     }
   }
 }

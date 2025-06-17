@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email Address - Veloura</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .header img {
+            max-width: 150px; /* Adjust as needed for your logo */
+            height: auto;
+        }
+        .header h1 {
+            color: #007bff; /* Veloura primary color */
+            font-size: 28px;
+            margin-top: 10px;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #007bff; /* Veloura primary color */
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+            font-size: 12px;
+            color: #777777;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <% /* Uncomment and replace with your logo if you have one */ %>
+            <!-- <img src="URL_TO_YOUR_VELOURA_LOGO" alt="Veloura Logo"> -->
+            <h1>Welcome to Veloura!</h1>
+        </div>
+        <div class="content">
+            <p>Hi <%= name %>,</p>
+            <p>Thank you for signing up for Veloura, your ultimate multi-vendor e-commerce destination!</p>
+            <p>To complete your registration and unlock all the amazing features of Veloura, please verify your email address by clicking the button below:</p>
+            <div class="button-container">
+                <a href="http://localhost:3000/auth/verify-email?token=<%= otp %>" class="button">Verify My Email</a>
+            </div>
+            <p>This link is valid for a limited time (5 minutes). If the button doesn't work, you can copy and paste the following link into your web browser:</p>
+            <p><a href="http://localhost:3000/auth/verify-email?token=<%= otp %>">http://localhost:3000/auth/verify-email?token=<%= otp %></a></p>
+            <p>If you did not create an account with Veloura, please disregard this email.</p>
+            <p>Happy Shopping and Selling on Veloura!</p>
+            <p>Best regards,<br>The Veloura Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; <%= new Date().getFullYear() %> Veloura. All rights reserved.</p>
+            <p><a href="YOUR_WEBSITE_PRIVACY_POLICY_URL">Privacy Policy</a> | <a href="YOUR_WEBSITE_TERMS_OF_SERVICE_URL">Terms of Service</a></p>
+        </div>
+    </div>
+</body>
+</html>

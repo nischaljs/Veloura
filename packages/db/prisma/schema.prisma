@@ -149,8 +149,7 @@ model VendorPaymentMethod {
 model VendorDailyStat {
   id           Int               @id @default(autoincrement())
   vendorId     Int
-  date         DateTime // Use Date instead of DateTime
-  paymentType  PaymentMethodType
+  date         DateTime @default(now()) // Use Date instead of DateTime
   orderCount   Int               @default(0)
   revenue      Decimal           @default(0.0) // Use Decimal for financial accuracy
   visitorCount Int               @default(0)

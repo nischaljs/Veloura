@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.29",
     "jest": "^29.7.0",
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.4",
@@ -22,9 +23,14 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "bun@1.2.11",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "packageManager": "pnpm@10.11.1",
+  "dependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "swagger-autogen": "^2.23.7",
+    "swagger-jsdoc": "^6.2.8"
+  }
 }
