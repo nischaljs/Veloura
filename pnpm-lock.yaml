@@ -103,12 +103,12 @@ importers:
       '@veloura/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@veloura/error-handler':
-        specifier: workspace:*
-        version: link:../../packages/error-handler
       '@veloura/redis':
         specifier: workspace:*
         version: link:../../packages/redis
+      '@veloura/response-handler':
+        specifier: workspace:*
+        version: link:../../packages/response-handler
       '@veloura/zod-schemas':
         specifier: workspace:*
         version: link:../../packages/zod-schemas
@@ -166,22 +166,6 @@ importers:
         specifier: ^6.8.2
         version: 6.8.2(typescript@5.8.3)
 
-  packages/error-handler:
-    dependencies:
-      '@types/express':
-        specifier: ^5.0.2
-        version: 5.0.2
-      express:
-        specifier: ^5.1.0
-        version: 5.1.0
-      typescript:
-        specifier: ^5
-        version: 5.8.3
-    devDependencies:
-      '@types/bun':
-        specifier: latest
-        version: 1.2.16
-
   packages/redis:
     dependencies:
       '@types/ioredis':
@@ -211,6 +195,18 @@ importers:
         version: 10.9.2(@types/node@22.15.29)(typescript@5.8.3)
       typescript:
         specifier: ^5.8.3
+        version: 5.8.3
+
+  packages/response-handler:
+    dependencies:
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.23
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      typescript:
+        specifier: ^5
         version: 5.8.3
 
   packages/zod-schemas:

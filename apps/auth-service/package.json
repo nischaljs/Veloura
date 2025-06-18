@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@veloura/db": "workspace:*",
-    "@veloura/error-handler": "workspace:*",
+    "@veloura/response-handler": "workspace:*",
     "@veloura/redis": "workspace:*",
     "@veloura/zod-schemas": "workspace:*",
     "bcryptjs": "^2.4.3",

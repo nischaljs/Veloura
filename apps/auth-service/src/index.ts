@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { errorMiddleware } from "@veloura/error-handler";
+import { errorMiddleware } from "@veloura/response-handler";
 import cookieParser from "cookie-parser";
 import router from "./routes/auth.router";
 

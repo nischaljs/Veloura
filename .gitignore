@@ -5,6 +5,11 @@ node_modules
 .pnp
 .pnp.js
 
+# Package lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Local env files
 .env
 .env.local
@@ -26,6 +31,7 @@ coverage
 out/
 build
 dist
+postman-apis
 
 
 # Debug
@@ -38,3 +44,4 @@ yarn-error.log*
 *.pem
 
 /generated/prisma
+pnpm-lock.yaml
