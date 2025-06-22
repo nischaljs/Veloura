@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import path from 'path';
 import authRoutes from './routes/auth.route';
 import brandRoutes from './routes/brand.route';
 import categoryRoutes from './routes/category.route';
@@ -18,6 +19,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
+
+// Serve static files from public folder
+app.use('/images', express.static(path.join(__dirname, '../public/images')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/brands', brandRoutes);

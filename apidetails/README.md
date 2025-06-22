@@ -4,7 +4,7 @@ This document outlines all the API routes needed for the Veloura e-commerce plat
 
 ## Base URL
 ```
-http://localhost:3000/api/v1
+http://localhost:5000/api/
 ```
 
 ## Authentication
