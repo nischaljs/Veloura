@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRoutes from './routes/auth.route';
 import brandRoutes from './routes/brand.route';
+import categoryRoutes from './routes/category.route';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,6 +21,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/brands', brandRoutes);
+app.use('/api/categories', categoryRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running');
