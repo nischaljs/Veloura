@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
+import { addImageUrls, addImageUrlsToArray } from '../utils/imageUtils';
 
 // Helper function to create slug from name
 const createSlug = (name: string): string => {
@@ -61,10 +62,13 @@ export const getAllCategories = async (req: Request, res: Response): Promise<voi
       subcategoryCount: (category as any)._count.children
     }));
 
+    // Add complete image URLs
+    const categoriesWithImageUrls = addImageUrlsToArray(categoriesWithCount, ['image']);
+
     res.json({
       success: true,
       data: {
-        categories: categoriesWithCount,
+        categories: categoriesWithImageUrls,
         pagination: {
           page: pageNum,
           limit: limitNum,
@@ -119,15 +123,20 @@ export const getCategoryBySlug = async (req: Request, res: Response): Promise<vo
       productCount: (sub as any)._count.products
     }));
 
+    const categoryWithCount = {
+      ...category,
+      productCount: (category as any)._count.products,
+      subcategoryCount: (category as any)._count.children,
+      subcategories: subcategoriesWithCount
+    };
+
+    // Add complete image URLs
+    const categoryWithImageUrl = addImageUrls(categoryWithCount, ['image']);
+
     res.json({
       success: true,
       data: {
-        category: {
-          ...category,
-          productCount: (category as any)._count.products,
-          subcategoryCount: (category as any)._count.children,
-          subcategories: subcategoriesWithCount
-        }
+        category: categoryWithImageUrl
       }
     });
     return;
@@ -254,14 +263,101 @@ export const deleteCategory = async (req: Request, res: Response): Promise<void>
 
 // POST /categories/:id/image - Upload category image (admin only)
 export const uploadCategoryImage = async (req: Request, res: Response): Promise<void> => {
-  res.status(501).json({ success: false, message: 'Image upload functionality yet to be implemented' });
-  return;
+  try {
+    const { id } = req.params;
+    
+    // Check if category exists
+    const existingCategory = await prisma.category.findUnique({ where: { id: parseInt(id) } });
+    if (!existingCategory) {
+      res.status(404).json({ success: false, message: 'Category not found' });
+      return;
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      res.status(400).json({ success: false, message: 'No image file provided' });
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(req.file.mimetype)) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Invalid file type. Only JPEG, PNG, and WebP files are allowed' 
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (req.file.size > maxSize) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'File too large. Maximum size is 5MB' 
+      });
+      return;
+    }
+
+    // Generate filename
+    const fileExtension = req.file.originalname.split('.').pop();
+    const filename = `category-${id}-image.${fileExtension}`;
+    const imagePath = `/images/categories/${filename}`;
+
+    // Update category with new image path
+    await prisma.category.update({
+      where: { id: parseInt(id) },
+      data: { image: imagePath }
+    });
+
+    // Add complete image URL to response
+    const imageUrl = addImageUrls({ image: imagePath }, ['image']);
+
+    res.json({
+      success: true,
+      message: 'Category image uploaded successfully',
+      data: {
+        image: imageUrl.image
+      }
+    });
+    return;
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+    return;
+  }
 };
 
 // DELETE /categories/:id/image - Remove category image (admin only)
 export const removeCategoryImage = async (req: Request, res: Response): Promise<void> => {
-  res.status(501).json({ success: false, message: 'Image removal functionality yet to be implemented' });
-  return;
+  try {
+    const { id } = req.params;
+
+    const existingCategory = await prisma.category.findUnique({ where: { id: parseInt(id) } });
+    if (!existingCategory) {
+      res.status(404).json({ success: false, message: 'Category not found' });
+      return;
+    }
+
+    if (!existingCategory.image) {
+      res.status(404).json({ success: false, message: 'Category has no image to remove' });
+      return;
+    }
+
+    // Remove image from database
+    await prisma.category.update({
+      where: { id: parseInt(id) },
+      data: { image: null }
+    });
+
+    res.json({
+      success: true,
+      message: 'Category image removed successfully'
+    });
+    return;
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+    return;
+  }
 };
 
 // GET /categories/featured - Get featured categories
@@ -289,9 +385,12 @@ export const getFeaturedCategories = async (req: Request, res: Response): Promis
       productCount: (category as any)._count.products
     }));
 
+    // Add complete image URLs
+    const categoriesWithImageUrls = addImageUrlsToArray(categoriesWithCount, ['image']);
+
     res.json({
       success: true,
-      data: { categories: categoriesWithCount }
+      data: { categories: categoriesWithImageUrls }
     });
     return;
   } catch (err) {
@@ -339,9 +438,12 @@ export const searchCategories = async (req: Request, res: Response): Promise<voi
       productCount: (category as any)._count.products
     }));
 
+    // Add complete image URLs
+    const categoriesWithImageUrls = addImageUrlsToArray(categoriesWithCount, ['image']);
+
     res.json({
       success: true,
-      data: { categories: categoriesWithCount }
+      data: { categories: categoriesWithImageUrls }
     });
     return;
   } catch (err) {

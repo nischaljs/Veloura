@@ -14,6 +14,7 @@ import {
   getBrandAnalytics
 } from '../controllers/brand.controller';
 import { authenticate } from '../middlewares/authMiddleware';
+import { upload, handleUploadError } from '../middlewares/uploadMiddleware';
 
 const router = Router();
 
@@ -28,8 +29,12 @@ router.get('/:slug/products', getBrandProducts);
 router.post('/', authenticate, createBrand);
 router.put('/:id', authenticate, updateBrand);
 router.delete('/:id', authenticate, deleteBrand);
-router.post('/:id/logo', authenticate, uploadBrandLogo);
+
+// Image upload routes
+router.post('/:id/logo', authenticate, upload.single('logo'), handleUploadError, uploadBrandLogo);
 router.delete('/:id/logo', authenticate, removeBrandLogo);
+
+// Admin-only routes
 router.put('/featured-order', authenticate, updateFeaturedOrder);
 router.get('/analytics', authenticate, getBrandAnalytics);
 

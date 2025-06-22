@@ -195,10 +195,19 @@ Delete category (requires admin authentication).
 }
 ```
 
-## POST /categories/:id/image 🔴 Yet to implement
+## POST /categories/:id/image ✅ Implemented
 Upload category image (requires admin authentication).
 
 **Request:** Multipart form data with image file.
+
+**Headers:**
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <jwt-token>
+```
+
+**Form Data:**
+- `image` (file): Image file (JPEG, PNG, WebP)
 
 **Response:**
 ```json
@@ -206,19 +215,54 @@ Upload category image (requires admin authentication).
   "success": true,
   "message": "Category image uploaded successfully",
   "data": {
-    "image": "https://example.com/categories/category123.jpg"
+    "image": "/images/categories/category-1-image.jpg"
   }
 }
 ```
 
-## DELETE /categories/:id/image 🔴 Yet to implement
+**Error Responses:**
+```json
+{
+  "success": false,
+  "message": "No image file provided"
+}
+```
+
+```json
+{
+  "success": false,
+  "message": "Invalid file type. Only JPEG, PNG, and WebP files are allowed"
+}
+```
+
+```json
+{
+  "success": false,
+  "message": "File too large. Maximum size is 5MB"
+}
+```
+
+## DELETE /categories/:id/image ✅ Implemented
 Remove category image (requires admin authentication).
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "message": "Category image removed successfully"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Category has no image to remove"
 }
 ```
 

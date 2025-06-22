@@ -179,10 +179,19 @@ Delete brand (requires admin authentication).
 }
 ```
 
-## POST /brands/:id/logo 🔴 Yet to implement
+## POST /brands/:id/logo ✅ Implemented
 Upload brand logo (requires admin authentication).
 
 **Request:** Multipart form data with image file.
+
+**Headers:**
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <jwt-token>
+```
+
+**Form Data:**
+- `logo` (file): Image file (JPEG, PNG, WebP, SVG)
 
 **Response:**
 ```json
@@ -190,19 +199,54 @@ Upload brand logo (requires admin authentication).
   "success": true,
   "message": "Brand logo uploaded successfully",
   "data": {
-    "logo": "https://example.com/brands/brand123.jpg"
+    "logo": "/images/brands/brand-1-logo.jpg"
   }
 }
 ```
 
-## DELETE /brands/:id/logo 🔴 Yet to implement
+**Error Responses:**
+```json
+{
+  "success": false,
+  "message": "No image file provided"
+}
+```
+
+```json
+{
+  "success": false,
+  "message": "Invalid file type. Only JPEG, PNG, WebP, and SVG files are allowed"
+}
+```
+
+```json
+{
+  "success": false,
+  "message": "File too large. Maximum size is 5MB"
+}
+```
+
+## DELETE /brands/:id/logo ✅ Implemented
 Remove brand logo (requires admin authentication).
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
 
 **Response:**
 ```json
 {
   "success": true,
   "message": "Brand logo removed successfully"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Brand has no logo to remove"
 }
 ```
 

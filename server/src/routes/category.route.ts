@@ -15,24 +15,29 @@ import {
   getCategoryAnalytics
 } from '../controllers/category.controller';
 import { authenticateAdmin } from '../middlewares/authMiddleware';
+import { upload, handleUploadError } from '../middlewares/uploadMiddleware';
 
 const router = Router();
 
 // Public routes
-router.get('/', (req, res) => void getAllCategories(req, res));
-router.get('/featured', (req, res) => void getFeaturedCategories(req, res));
-router.get('/search', (req, res) => void searchCategories(req, res));
-router.get('/tree', (req, res) => void getCategoryTree(req, res));
-router.get('/:slug', (req, res) => void getCategoryBySlug(req, res));
-router.get('/:slug/products', (req, res) => void getCategoryProducts(req, res));
+router.get('/', getAllCategories);
+router.get('/featured', getFeaturedCategories);
+router.get('/search', searchCategories);
+router.get('/tree', getCategoryTree);
+router.get('/:slug', getCategoryBySlug);
+router.get('/:slug/products', getCategoryProducts);
 
 // Admin routes (require admin authentication)
-router.post('/', authenticateAdmin, (req, res) => void createCategory(req, res));
-router.put('/:id', authenticateAdmin, (req, res) => void updateCategory(req, res));
-router.delete('/:id', authenticateAdmin, (req, res) => void deleteCategory(req, res));
-router.post('/:id/image', authenticateAdmin, (req, res) => void uploadCategoryImage(req, res));
-router.delete('/:id/image', authenticateAdmin, (req, res) => void removeCategoryImage(req, res));
-router.put('/featured-order', authenticateAdmin, (req, res) => void updateFeaturedOrder(req, res));
-router.get('/analytics', authenticateAdmin, (req, res) => void getCategoryAnalytics(req, res));
+router.post('/', authenticateAdmin, createCategory);
+router.put('/:id', authenticateAdmin, updateCategory);
+router.delete('/:id', authenticateAdmin, deleteCategory);
+
+// Image upload routes
+router.post('/:id/image', authenticateAdmin, upload.single('image'), handleUploadError, uploadCategoryImage);
+router.delete('/:id/image', authenticateAdmin, removeCategoryImage);
+
+// Admin-only routes
+router.put('/featured-order', authenticateAdmin, updateFeaturedOrder);
+router.get('/analytics', authenticateAdmin, getCategoryAnalytics);
 
 export default router; 

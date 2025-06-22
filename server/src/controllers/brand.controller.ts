@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
+import { addImageUrls, addImageUrlsToArray } from '../utils/imageUtils';
 
 // Helper function to create slug from name
 const createSlug = (name: string): string => {
@@ -46,10 +47,13 @@ export const getAllBrands = async (req: Request, res: Response): Promise<void> =
       productCount: (brand as any)._count.products
     }));
 
+    // Add complete image URLs
+    const brandsWithImageUrls = addImageUrlsToArray(brandsWithCount, ['logo']);
+
     res.json({
       success: true,
       data: {
-        brands: brandsWithCount,
+        brands: brandsWithImageUrls,
         pagination: {
           page: pageNum,
           limit: limitNum,
@@ -84,13 +88,18 @@ export const getBrandBySlug = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    const brandWithCount = {
+      ...brand,
+      productCount: (brand as any)._count.products
+    };
+
+    // Add complete image URL
+    const brandWithImageUrl = addImageUrls(brandWithCount, ['logo']);
+
     res.json({
       success: true,
       data: {
-        brand: {
-          ...brand,
-          productCount: (brand as any)._count.products
-        }
+        brand: brandWithImageUrl
       }
     });
     return;
@@ -217,14 +226,101 @@ export const deleteBrand = async (req: Request, res: Response): Promise<void> =>
 
 // POST /brands/:id/logo - Upload brand logo (admin only)
 export const uploadBrandLogo = async (req: Request, res: Response): Promise<void> => {
-  res.status(501).json({ success: false, message: 'Logo upload functionality yet to be implemented' });
-  return;
+  try {
+    const { id } = req.params;
+    
+    // Check if brand exists
+    const existingBrand = await prisma.brand.findUnique({ where: { id: parseInt(id) } });
+    if (!existingBrand) {
+      res.status(404).json({ success: false, message: 'Brand not found' });
+      return;
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      res.status(400).json({ success: false, message: 'No image file provided' });
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+    if (!allowedTypes.includes(req.file.mimetype)) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Invalid file type. Only JPEG, PNG, WebP, and SVG files are allowed' 
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (req.file.size > maxSize) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'File too large. Maximum size is 5MB' 
+      });
+      return;
+    }
+
+    // Generate filename
+    const fileExtension = req.file.originalname.split('.').pop();
+    const filename = `brand-${id}-logo.${fileExtension}`;
+    const logoPath = `/images/brands/${filename}`;
+
+    // Update brand with new logo path
+    await prisma.brand.update({
+      where: { id: parseInt(id) },
+      data: { logo: logoPath }
+    });
+
+    // Add complete image URL to response
+    const logoUrl = addImageUrls({ logo: logoPath }, ['logo']);
+
+    res.json({
+      success: true,
+      message: 'Brand logo uploaded successfully',
+      data: {
+        logo: logoUrl.logo
+      }
+    });
+    return;
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+    return;
+  }
 };
 
 // DELETE /brands/:id/logo - Remove brand logo (admin only)
 export const removeBrandLogo = async (req: Request, res: Response): Promise<void> => {
-  res.status(501).json({ success: false, message: 'Logo removal functionality yet to be implemented' });
-  return;
+  try {
+    const { id } = req.params;
+
+    const existingBrand = await prisma.brand.findUnique({ where: { id: parseInt(id) } });
+    if (!existingBrand) {
+      res.status(404).json({ success: false, message: 'Brand not found' });
+      return;
+    }
+
+    if (!existingBrand.logo) {
+      res.status(404).json({ success: false, message: 'Brand has no logo to remove' });
+      return;
+    }
+
+    // Remove logo from database
+    await prisma.brand.update({
+      where: { id: parseInt(id) },
+      data: { logo: null }
+    });
+
+    res.json({
+      success: true,
+      message: 'Brand logo removed successfully'
+    });
+    return;
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+    return;
+  }
 };
 
 // GET /brands/featured - Get featured brands
@@ -249,9 +345,12 @@ export const getFeaturedBrands = async (req: Request, res: Response): Promise<vo
       productCount: (brand as any)._count.products
     }));
 
+    // Add complete image URLs
+    const brandsWithImageUrls = addImageUrlsToArray(brandsWithCount, ['logo']);
+
     res.json({
       success: true,
-      data: { brands: brandsWithCount }
+      data: { brands: brandsWithImageUrls }
     });
     return;
   } catch (err) {
@@ -299,9 +398,12 @@ export const searchBrands = async (req: Request, res: Response): Promise<void> =
       productCount: (brand as any)._count.products
     }));
 
+    // Add complete image URLs
+    const brandsWithImageUrls = addImageUrlsToArray(brandsWithCount, ['logo']);
+
     res.json({
       success: true,
-      data: { brands: brandsWithCount }
+      data: { brands: brandsWithImageUrls }
     });
     return;
   } catch (err) {

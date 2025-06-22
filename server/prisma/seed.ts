@@ -5,11 +5,11 @@ import { downloadImages } from '../src/scripts/download-images';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('Starting database seeding...');
 
   try {
     // Download images first
-    console.log('🖼️ Downloading images...');
+    console.log('Downloading images...');
     await downloadImages();
 
     // Passwords
@@ -19,7 +19,7 @@ async function main() {
     const password4 = await bcrypt.hash('vendor456', 10);
     const adminPassword = await bcrypt.hash('admin123', 10);
 
-    console.log('👥 Creating users...');
+    console.log('Creating users...');
 
     // Users - Using upsert to avoid unique constraint errors
     const customer1 = await prisma.user.upsert({
@@ -92,7 +92,7 @@ async function main() {
       },
     });
 
-    console.log('🏪 Creating vendors...');
+    console.log('Creating vendors...');
 
     // Vendors - Using upsert to avoid unique constraint errors
     const vendor1 = await prisma.vendor.upsert({
@@ -127,7 +127,7 @@ async function main() {
       },
     });
 
-    console.log('🏷️ Creating brands...');
+    console.log('Creating brands...');
 
     // Brands - Using upsert for each brand
     const brands = [
@@ -144,7 +144,7 @@ async function main() {
       });
     }
 
-    console.log('📂 Creating categories...');
+    console.log('Creating categories...');
 
     // Categories - Using upsert for each category
     const categories = [
@@ -179,21 +179,21 @@ async function main() {
       });
     }
 
-    console.log('✅ Seed data created successfully!');
-    console.log(`📊 Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
+    console.log('Seed data created successfully!');
+    console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
 
   } catch (error) {
-    console.error('❌ Error during seeding:', error);
+    console.error('Error during seeding:', error);
     throw error;
   }
 }
 
 main()
   .catch((e) => {
-    console.error('💥 Seeding failed:', e);
+    console.error('Seeding failed:', e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
-    console.log('🔌 Database connection closed');
+    console.log('Database connection closed');
   }); 
