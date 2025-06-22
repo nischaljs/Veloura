@@ -1,0 +1,464 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  KHALTI
+  ESEWA
+  COD
+  CARD
+  WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  OUT_OF_STOCK
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  phone           String?
+  avatar          String?
+  role            UserRole  @default(CUSTOMER)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLogin       DateTime?
+  isActive        Boolean   @default(true)
+
+  // Relationships
+  addresses       Address[]
+  orders          Order[]
+  reviews         Review[]
+  vendorProfile   Vendor?
+  adminActivities AdminActivity[]
+  notifications   Notification[]
+}
+
+model Vendor {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @unique
+  businessName    String
+  businessEmail   String    @unique
+  businessPhone   String
+  slug            String    @unique
+  taxId           String?
+  description     String?
+  logo            String?
+  banner          String?
+  website         String?
+  facebook        String?
+  instagram       String?
+  twitter         String?
+  isApproved      Boolean   @default(false)
+  approvedAt      DateTime?
+  rating          Float     @default(0)
+  totalReviews    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  user            User      @relation(fields: [userId], references: [id])
+  products        Product[]
+  bankDetails     BankDetail[]
+  policies        VendorPolicy[]
+  orderItems      OrderItem[]
+}
+
+model VendorPolicy {
+  id              Int       @id @default(autoincrement())
+  vendorId        Int
+  policyType      String    // 'shipping', 'return', 'privacy', etc.
+  title           String
+  description     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+}
+
+model Address {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  label           String    @default("Home")
+  recipientName   String
+  street          String
+  city            String
+  state           String
+  postalCode      String
+  country         String    @default("Nepal")
+  phone           String
+  isDefault       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model Category {
+  id              Int       @id @default(autoincrement())
+  name            String
+  slug            String    @unique
+  description     String?
+  image           String?
+  parentId        Int?
+  isFeatured      Boolean   @default(false)
+  featuredOrder   Int?      @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  parent          Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryToCategory")
+  products        Product[]
+  attributes      CategoryAttribute[]
+}
+
+model CategoryAttribute {
+  id              Int       @id @default(autoincrement())
+  categoryId      Int
+  name            String
+  isRequired      Boolean   @default(false)
+  isFilterable    Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  category        Category  @relation(fields: [categoryId], references: [id])
+}
+
+model Product {
+  id              Int           @id @default(autoincrement())
+  vendorId        Int
+  categoryId      Int
+  brandId         Int?
+  name            String
+  slug            String        @unique
+  description     String
+  shortDescription String?
+  price           Float
+  salePrice       Float?
+  costPrice       Float?
+  sku             String        @unique
+  stockQuantity   Int           @default(0)
+  status          ProductStatus @default(DRAFT)
+  isFeatured      Boolean       @default(false)
+  hasVariants     Boolean       @default(false)
+  weight          Float?
+  length          Float?
+  width           Float?
+  height          Float?
+  rating          Float?        @default(0)
+  reviewCount     Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relationships
+  vendor          Vendor        @relation(fields: [vendorId], references: [id])
+  category        Category      @relation(fields: [categoryId], references: [id])
+  brand           Brand?        @relation(fields: [brandId], references: [id])
+  images          ProductImage[]
+  variants        ProductVariant[]
+  attributes      ProductAttribute[]
+  reviews         Review[]
+  tags            ProductTag[]
+  orderItems      OrderItem[]
+}
+
+model Brand {
+  id              Int       @id @default(autoincrement())
+  name            String
+  slug            String    @unique
+  description     String?
+  logo            String?
+  website         String?
+  isFeatured      Boolean   @default(false)
+  featuredOrder   Int?      @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  products        Product[]
+}
+
+model ProductTag {
+  id              Int       @id @default(autoincrement())
+  productId       Int
+  name            String
+  createdAt       DateTime  @default(now())
+
+  product         Product   @relation(fields: [productId], references: [id])
+}
+
+model ProductImage {
+  id              Int       @id @default(autoincrement())
+  productId       Int
+  url             String
+  altText         String?
+  isPrimary       Boolean   @default(false)
+  order           Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  product         Product   @relation(fields: [productId], references: [id])
+}
+
+model ProductVariant {
+  id              Int       @id @default(autoincrement())
+  productId       Int
+  name            String    // e.g., "Color", "Size"
+  value           String    // e.g., "Red", "XL"
+  priceDifference Float     @default(0)
+  stockQuantity   Int       @default(0)
+  sku             String?
+  image           String?   // Variant-specific image
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  product         Product   @relation(fields: [productId], references: [id])
+  orderItems      OrderItem[]
+}
+
+model ProductAttribute {
+  id              Int       @id @default(autoincrement())
+  productId       Int
+  name            String    // e.g., "Material", "Care Instructions"
+  value           String    // e.g., "Cotton", "Machine wash cold"
+  createdAt       DateTime  @default(now())
+
+  product         Product   @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id              Int       @id @default(autoincrement())
+  orderNumber     String    @unique
+  userId          Int
+  status          OrderStatus @default(PENDING)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(PENDING)
+  subtotal        Float
+  shippingFee     Float     @default(0)
+  taxAmount       Float     @default(0)
+  discountAmount  Float     @default(0)
+  total           Float
+  shippingAddress Json      // Snapshot of address at time of order
+  customerNote    String?
+  trackingNumber  String?
+  trackingCompany String?
+  estimatedDelivery DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  user            User      @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  payments        Payment[]
+  refunds         Refund[]
+  shipments       Shipment[]
+}
+
+model OrderItem {
+  id              Int       @id @default(autoincrement())
+  orderId         Int
+  productId       Int
+  vendorId        Int
+  variantId       Int?
+  quantity        Int
+  price           Float     // Price at time of purchase
+  salePrice       Float?    // Sale price at time of purchase
+  productSnapshot Json      // Product details snapshot
+  variantSnapshot Json?     // Variant details snapshot
+  createdAt       DateTime  @default(now())
+
+  order           Order     @relation(fields: [orderId], references: [id])
+  product         Product   @relation(fields: [productId], references: [id])
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+  variant         ProductVariant? @relation(fields: [variantId], references: [id])
+  reviews         Review[]
+}
+
+model Shipment {
+  id              Int       @id @default(autoincrement())
+  orderId         Int
+  trackingNumber  String
+  carrier         String
+  status          String    @default("pending")
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  order           Order     @relation(fields: [orderId], references: [id])
+}
+
+model Payment {
+  id              Int       @id @default(autoincrement())
+  orderId         Int
+  amount          Float
+  method          PaymentMethod
+  transactionId   String?
+  status          PaymentStatus @default(PENDING)
+  paymentDetails  Json?     // Gateway-specific response data
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  order           Order     @relation(fields: [orderId], references: [id])
+  khaltiDetails   KhaltiPayment?
+  esewaDetails    EsewaPayment?
+}
+
+model Refund {
+  id              Int       @id @default(autoincrement())
+  orderId         Int
+  amount          Float
+  reason          String?
+  processedBy     Int       // User ID who processed the refund
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  order           Order     @relation(fields: [orderId], references: [id])
+}
+
+model Review {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  productId       Int
+  orderItemId     Int
+  rating          Int
+  title           String?
+  comment         String?
+  images          Json?     // Array of image URLs stored as JSON
+  isApproved      Boolean   @default(true) // Auto-approve for now
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+  product         Product   @relation(fields: [productId], references: [id])
+  orderItem       OrderItem @relation(fields: [orderItemId], references: [id])
+}
+
+model BankDetail {
+  id              Int       @id @default(autoincrement())
+  vendorId        Int
+  bankName        String
+  accountName     String
+  accountNumber   String
+  branch          String?
+  isDefault       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+}
+
+model AdminActivity {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  action          String
+  entityType      String?
+  entityId        Int?
+  details         Json?
+  ipAddress       String?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model SystemSetting {
+  id              Int       @id @default(autoincrement())
+  key             String    @unique
+  value           Json
+  description     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Payment Gateway Specific Models
+model KhaltiPayment {
+  id              Int       @id @default(autoincrement())
+  paymentId       Int       @unique
+  pidx            String
+  paymentUrl      String
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+
+  payment         Payment   @relation(fields: [paymentId], references: [id])
+}
+
+model EsewaPayment {
+  id              Int       @id @default(autoincrement())
+  paymentId       Int       @unique
+  refId           String?
+  token           String?
+  verificationUrl String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  payment         Payment   @relation(fields: [paymentId], references: [id])
+}
+
+// Discount/Coupon System
+model Coupon {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  description     String?
+  discountType    String    @default("percentage") // or "fixed"
+  discountValue   Float
+  minOrderAmount  Float?
+  maxUses         Int?
+  uses            Int       @default(0)
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Notification System
+model Notification {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  title           String
+  message         String
+  isRead          Boolean   @default(false)
+  link            String?
+  type            String    // 'order', 'promotion', 'system', etc.
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id])
+}
