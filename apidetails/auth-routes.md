@@ -96,8 +96,15 @@ Get current user profile (requires authentication).
 }
 ```
 
-## POST /auth/refresh
+## POST /auth/refresh 🔴 Yet to implement
 Refresh JWT token.
+
+**Request Body:**
+```json
+{
+  "refreshToken": "refresh_token_here"
+}
+```
 
 **Response:**
 ```json
@@ -109,7 +116,7 @@ Refresh JWT token.
 }
 ```
 
-## POST /auth/forgot-password
+## POST /auth/forgot-password 🔴 Yet to implement
 Request password reset.
 
 **Request Body:**
@@ -127,7 +134,7 @@ Request password reset.
 }
 ```
 
-## POST /auth/reset-password
+## POST /auth/reset-password 🔴 Yet to implement
 Reset password with token.
 
 **Request Body:**
@@ -146,7 +153,7 @@ Reset password with token.
 }
 ```
 
-## POST /auth/verify-email
+## POST /auth/verify-email 🔴 Yet to implement
 Verify email address.
 
 **Request Body:**

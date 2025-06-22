@@ -90,3 +90,76 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ message: 'Server error', error: err });
   }
 };
+
+// 🔴 Yet to implement routes
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      res.status(400).json({ message: 'Refresh token is required' });
+      return;
+    }
+    
+    // TODO: Implement refresh token logic
+    res.status(501).json({ 
+      success: false, 
+      message: 'Refresh token functionality yet to be implemented' 
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ message: 'Email is required' });
+      return;
+    }
+    
+    // TODO: Implement forgot password logic
+    res.status(501).json({ 
+      success: false, 
+      message: 'Forgot password functionality yet to be implemented' 
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      res.status(400).json({ message: 'Token and new password are required' });
+      return;
+    }
+    
+    // TODO: Implement reset password logic
+    res.status(501).json({ 
+      success: false, 
+      message: 'Reset password functionality yet to be implemented' 
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err });
+  }
+};
+
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      res.status(400).json({ message: 'Verification token is required' });
+      return;
+    }
+    
+    // TODO: Implement email verification logic
+    res.status(501).json({ 
+      success: false, 
+      message: 'Email verification functionality yet to be implemented' 
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err });
+  }
+};

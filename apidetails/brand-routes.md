@@ -63,7 +63,7 @@ Get brand details by slug.
 }
 ```
 
-## GET /brands/:slug/products
+## GET /brands/:slug/products 🔴 Yet to implement
 Get products by brand.
 
 **Query Parameters:**
@@ -179,7 +179,7 @@ Delete brand (requires admin authentication).
 }
 ```
 
-## POST /brands/:id/logo
+## POST /brands/:id/logo 🔴 Yet to implement
 Upload brand logo (requires admin authentication).
 
 **Request:** Multipart form data with image file.
@@ -195,7 +195,7 @@ Upload brand logo (requires admin authentication).
 }
 ```
 
-## DELETE /brands/:id/logo
+## DELETE /brands/:id/logo 🔴 Yet to implement
 Remove brand logo (requires admin authentication).
 
 **Response:**
@@ -228,7 +228,7 @@ Get featured brands.
 }
 ```
 
-## PUT /brands/featured-order
+## PUT /brands/featured-order 🔴 Yet to implement
 Update featured brands order (requires admin authentication).
 
 **Request Body:**
@@ -280,7 +280,7 @@ Search brands by name.
 }
 ```
 
-## GET /brands/analytics
+## GET /brands/analytics 🔴 Yet to implement
 Get brand analytics (requires admin authentication).
 
 **Query Parameters:**
