@@ -26,6 +26,7 @@ app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/api/auth', authRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/products', require('./routes/product.route').default);
 
 app.get('/', (req, res) => {
   res.send('API is running');

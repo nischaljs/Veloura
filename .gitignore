@@ -126,3 +126,6 @@ prisma/migrations/
 .local
 
 homepage.webp
+
+test/
+jwt.md
