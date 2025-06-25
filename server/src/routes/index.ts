@@ -8,6 +8,7 @@ import couponRoutes from './coupon.route';
 import orderRoutes from './order.route';
 import reviewRoutes from './review.route';
 import searchRoutes from './search.route';
+import shippingRoutes from './shipping.route';
 
 export default {
   auth: authRoutes,
@@ -20,8 +21,9 @@ export default {
   orders: orderRoutes,
   reviews: reviewRoutes,
   search: searchRoutes,
+  shipping: shippingRoutes,
 };
 
-
+ 
 
 

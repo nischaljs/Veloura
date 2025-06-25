@@ -542,7 +542,7 @@ async function main() {
     });
 
     // Order 3: SHIPPED
-    await prisma.order.create({
+    const order3 = await prisma.order.create({
       data: {
         orderNumber: 'ORD-1003',
         userId: customer2.id,
@@ -579,9 +579,20 @@ async function main() {
         },
       },
     });
+    // Seed shipment for SHIPPED order
+    await prisma.shipment.create({
+      data: {
+        orderId: order3.id,
+        trackingNumber: 'TRK1003',
+        carrier: 'Nepal Post',
+        status: 'shipped',
+        shippedAt: new Date('2024-01-16T10:30:00Z'),
+        deliveredAt: null,
+      }
+    });
 
     // Order 4: DELIVERED
-    await prisma.order.create({
+    const order4 = await prisma.order.create({
       data: {
         orderNumber: 'ORD-1004',
         userId: customer2.id,
@@ -618,6 +629,17 @@ async function main() {
           ],
         },
       },
+    });
+    // Seed shipment for DELIVERED order
+    await prisma.shipment.create({
+      data: {
+        orderId: order4.id,
+        trackingNumber: 'TRK1004',
+        carrier: 'DHL',
+        status: 'delivered',
+        shippedAt: new Date('2024-01-17T09:00:00Z'),
+        deliveredAt: new Date('2024-01-19T15:30:00Z'),
+      }
     });
 
     // Order 5: CANCELLED
