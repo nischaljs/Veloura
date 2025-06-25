@@ -294,6 +294,153 @@ async function main() {
     }
     console.log('Products created!');
 
+    // --- SEED COUPONS ---
+    console.log('Creating coupons...');
+
+    // Get required foreign keys for categories and vendors
+    const electronicsCat = await prisma.category.findUnique({ where: { slug: 'electronics' } });
+    const fashionCat = await prisma.category.findUnique({ where: { slug: 'fashion' } });
+    const techStoreVendor = await prisma.vendor.findUnique({ where: { slug: 'tech-store' } });
+    const fashionHubVendor = await prisma.vendor.findUnique({ where: { slug: 'fashion-hub' } });
+
+    // Create coupons
+    const coupon1 = await prisma.coupon.upsert({
+      where: { code: 'SAVE10' },
+      update: {},
+      create: {
+        code: 'SAVE10',
+        description: 'Save 10% on your first order',
+        discountType: 'percentage',
+        discountValue: 10,
+        minOrderAmount: 1000,
+        maxUses: 100,
+        startDate: new Date('2024-01-01T00:00:00Z'),
+        endDate: new Date('2024-12-31T23:59:59Z'),
+        isActive: true,
+      },
+    });
+    const coupon2 = await prisma.coupon.upsert({
+      where: { code: 'FASHION20' },
+      update: {},
+      create: {
+        code: 'FASHION20',
+        description: '20% off on fashion',
+        discountType: 'percentage',
+        discountValue: 20,
+        minOrderAmount: 500,
+        maxUses: 50,
+        startDate: new Date('2024-01-01T00:00:00Z'),
+        endDate: new Date('2024-12-31T23:59:59Z'),
+        isActive: true,
+      },
+    });
+    const coupon3 = await prisma.coupon.upsert({
+      where: { code: 'FLAT100' },
+      update: {},
+      create: {
+        code: 'FLAT100',
+        description: 'Flat 100 off on any order',
+        discountType: 'fixed',
+        discountValue: 100,
+        minOrderAmount: 0,
+        maxUses: 200,
+        startDate: new Date('2024-01-01T00:00:00Z'),
+        endDate: new Date('2024-12-31T23:59:59Z'),
+        isActive: true,
+      },
+    });
+
+    // Link coupons to categories/vendors
+    if (electronicsCat) {
+      await prisma.couponCategory.create({
+        data: { couponId: coupon1.id, categoryId: electronicsCat.id }
+      });
+    }
+    if (fashionCat) {
+      await prisma.couponCategory.create({
+        data: { couponId: coupon2.id, categoryId: fashionCat.id }
+      });
+    }
+    if (techStoreVendor) {
+      await prisma.couponVendor.create({
+        data: { couponId: coupon1.id, vendorId: techStoreVendor.id }
+      });
+    }
+    if (fashionHubVendor) {
+      await prisma.couponVendor.create({
+        data: { couponId: coupon2.id, vendorId: fashionHubVendor.id }
+      });
+    }
+
+    // Seed a user-coupon claim for demo
+    await prisma.userCoupon.create({
+      data: {
+        userId: customer1.id,
+        couponId: coupon1.id,
+        usedAt: null,
+        orderId: null,
+      },
+    });
+    console.log('Coupons created!');
+
+    // --- SEED CARTS & WISHLISTS ---
+    console.log('Creating carts and wishlists...');
+
+    // Get some products and variants
+    const iphone = await prisma.product.findUnique({ where: { slug: 'iphone-15' } });
+    const galaxy = await prisma.product.findUnique({ where: { slug: 'galaxy-s24' } });
+    const nike = await prisma.product.findUnique({ where: { slug: 'nike-air-max' } });
+    const iphoneVariant = await prisma.productVariant.findFirst({ where: { productId: iphone?.id } });
+    const galaxyVariant = await prisma.productVariant.findFirst({ where: { productId: galaxy?.id } });
+
+    // Cart for customer1
+    const cart1 = await prisma.cart.create({
+      data: {
+        userId: customer1.id,
+        items: {
+          create: [
+            { productId: iphone?.id!, variantId: iphoneVariant?.id, quantity: 2 },
+            { productId: galaxy?.id!, variantId: galaxyVariant?.id, quantity: 1 },
+          ]
+        }
+      }
+    });
+    // Cart for customer2
+    const cart2 = await prisma.cart.create({
+      data: {
+        userId: customer2.id,
+        items: {
+          create: [
+            { productId: nike?.id!, quantity: 3 },
+          ]
+        }
+      }
+    });
+    // Wishlist for customer1
+    const wishlist1 = await prisma.wishlist.create({
+      data: {
+        userId: customer1.id,
+        items: {
+          create: [
+            { productId: iphone?.id! },
+            { productId: nike?.id! },
+          ]
+        }
+      }
+    });
+    // Wishlist for customer2
+    const wishlist2 = await prisma.wishlist.create({
+      data: {
+        userId: customer2.id,
+        items: {
+          create: [
+            { productId: galaxy?.id! },
+          ]
+        }
+      }
+    });
+    console.log('Carts and wishlists created!');
+
     console.log('Seed data created successfully!');
     console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
 
