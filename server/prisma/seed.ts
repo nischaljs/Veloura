@@ -441,6 +441,265 @@ async function main() {
     });
     console.log('Carts and wishlists created!');
 
+    // --- SEED ORDERS ---
+    console.log('Creating demo orders...');
+
+    // Helper: snapshot for product and variant
+    const productSnapshot = (product) => ({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      salePrice: product.salePrice,
+      sku: product.sku,
+    });
+    const variantSnapshot = (variant) => variant ? ({
+      id: variant.id,
+      name: variant.name,
+      value: variant.value,
+      priceDifference: variant.priceDifference,
+      sku: variant.sku,
+    }) : undefined;
+
+    // Order 1: PENDING
+    await prisma.order.create({
+      data: {
+        orderNumber: 'ORD-1001',
+        userId: customer1.id,
+        status: 'PENDING',
+        paymentMethod: 'KHALTI',
+        paymentStatus: 'PENDING',
+        subtotal: 2400,
+        shippingFee: 100,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: 2500,
+        shippingAddress: {
+          label: 'Home',
+          recipientName: 'Alice Smith',
+          street: '123 Main St',
+          city: 'Kathmandu',
+          state: 'Bagmati',
+          postalCode: '44600',
+          country: 'Nepal',
+          phone: '+977-9800000001',
+        },
+        items: {
+          create: [
+            {
+              productId: iphone?.id!,
+              vendorId: vendor1.id,
+              variantId: iphoneVariant?.id,
+              quantity: 2,
+              price: 1200,
+              salePrice: null,
+              productSnapshot: productSnapshot(iphone),
+              variantSnapshot: variantSnapshot(iphoneVariant),
+            },
+          ],
+        },
+      },
+    });
+
+    // Order 2: PROCESSING
+    await prisma.order.create({
+      data: {
+        orderNumber: 'ORD-1002',
+        userId: customer1.id,
+        status: 'PROCESSING',
+        paymentMethod: 'ESEWA',
+        paymentStatus: 'COMPLETED',
+        subtotal: 1100,
+        shippingFee: 80,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: 1180,
+        shippingAddress: {
+          label: 'Office',
+          recipientName: 'Alice Smith',
+          street: '456 Office Rd',
+          city: 'Lalitpur',
+          state: 'Bagmati',
+          postalCode: '44700',
+          country: 'Nepal',
+          phone: '+977-9800000001',
+        },
+        items: {
+          create: [
+            {
+              productId: galaxy?.id!,
+              vendorId: vendor1.id,
+              variantId: galaxyVariant?.id,
+              quantity: 1,
+              price: 1100,
+              salePrice: null,
+              productSnapshot: productSnapshot(galaxy),
+              variantSnapshot: variantSnapshot(galaxyVariant),
+            },
+          ],
+        },
+      },
+    });
+
+    // Order 3: SHIPPED
+    await prisma.order.create({
+      data: {
+        orderNumber: 'ORD-1003',
+        userId: customer2.id,
+        status: 'SHIPPED',
+        paymentMethod: 'COD',
+        paymentStatus: 'PENDING',
+        subtotal: 600,
+        shippingFee: 50,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: 650,
+        shippingAddress: {
+          label: 'Home',
+          recipientName: 'Bob Johnson',
+          street: '789 Home St',
+          city: 'Bhaktapur',
+          state: 'Bagmati',
+          postalCode: '44800',
+          country: 'Nepal',
+          phone: '+977-9800000002',
+        },
+        items: {
+          create: [
+            {
+              productId: nike?.id!,
+              vendorId: vendor2.id,
+              quantity: 3,
+              price: 200,
+              salePrice: null,
+              productSnapshot: productSnapshot(nike),
+              variantSnapshot: undefined,
+            },
+          ],
+        },
+      },
+    });
+
+    // Order 4: DELIVERED
+    await prisma.order.create({
+      data: {
+        orderNumber: 'ORD-1004',
+        userId: customer2.id,
+        status: 'DELIVERED',
+        paymentMethod: 'CARD',
+        paymentStatus: 'COMPLETED',
+        subtotal: 500,
+        shippingFee: 40,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: 540,
+        shippingAddress: {
+          label: 'Work',
+          recipientName: 'Bob Johnson',
+          street: '321 Work Ave',
+          city: 'Kathmandu',
+          state: 'Bagmati',
+          postalCode: '44601',
+          country: 'Nepal',
+          phone: '+977-9800000002',
+        },
+        items: {
+          create: [
+            {
+              productId: iphone?.id!,
+              vendorId: vendor1.id,
+              variantId: iphoneVariant?.id,
+              quantity: 1,
+              price: 500,
+              salePrice: null,
+              productSnapshot: productSnapshot(iphone),
+              variantSnapshot: variantSnapshot(iphoneVariant),
+            },
+          ],
+        },
+      },
+    });
+
+    // Order 5: CANCELLED
+    await prisma.order.create({
+      data: {
+        orderNumber: 'ORD-1005',
+        userId: customer1.id,
+        status: 'CANCELLED',
+        paymentMethod: 'WALLET',
+        paymentStatus: 'FAILED',
+        subtotal: 1500,
+        shippingFee: 60,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: 1560,
+        shippingAddress: {
+          label: 'Other',
+          recipientName: 'Alice Smith',
+          street: '999 Cancelled St',
+          city: 'Pokhara',
+          state: 'Gandaki',
+          postalCode: '33700',
+          country: 'Nepal',
+          phone: '+977-9800000001',
+        },
+        items: {
+          create: [
+            {
+              productId: galaxy?.id!,
+              vendorId: vendor1.id,
+              variantId: galaxyVariant?.id,
+              quantity: 1,
+              price: 1500,
+              salePrice: null,
+              productSnapshot: productSnapshot(galaxy),
+              variantSnapshot: variantSnapshot(galaxyVariant),
+            },
+          ],
+        },
+      },
+    });
+
+    // Order 6: RETURNED
+    await prisma.order.create({
+      data: {
+        orderNumber: 'ORD-1006',
+        userId: customer2.id,
+        status: 'RETURNED',
+        paymentMethod: 'COD',
+        paymentStatus: 'REFUNDED',
+        subtotal: 200,
+        shippingFee: 30,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: 230,
+        shippingAddress: {
+          label: 'Return',
+          recipientName: 'Bob Johnson',
+          street: '111 Return Rd',
+          city: 'Lalitpur',
+          state: 'Bagmati',
+          postalCode: '44701',
+          country: 'Nepal',
+          phone: '+977-9800000002',
+        },
+        items: {
+          create: [
+            {
+              productId: nike?.id!,
+              vendorId: vendor2.id,
+              quantity: 1,
+              price: 200,
+              salePrice: null,
+              productSnapshot: productSnapshot(nike),
+              variantSnapshot: undefined,
+            },
+          ],
+        },
+      },
+    });
+    console.log('Demo orders created!');
+
     console.log('Seed data created successfully!');
     console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
 
