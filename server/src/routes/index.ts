@@ -9,6 +9,7 @@ import orderRoutes from './order.route';
 import reviewRoutes from './review.route';
 import searchRoutes from './search.route';
 import shippingRoutes from './shipping.route';
+import notificationRoutes from './notification.route';
 
 export default {
   auth: authRoutes,
@@ -22,6 +23,7 @@ export default {
   reviews: reviewRoutes,
   search: searchRoutes,
   shipping: shippingRoutes,
+  notifications: notificationRoutes,
 };
 
  

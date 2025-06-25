@@ -803,6 +803,70 @@ async function main() {
     }
     console.log('Demo reviews created!');
 
+    // --- SEED NOTIFICATIONS ---
+    console.log('Creating demo notifications...');
+    // User notifications
+    await prisma.notification.createMany({
+      data: [
+        {
+          userId: customer1.id,
+          title: 'Order Shipped',
+          message: 'Your order ORD-1001 has been shipped',
+          type: 'order',
+          isRead: false,
+          link: '/orders/1',
+          createdAt: new Date('2024-01-15T10:30:00Z'),
+        },
+        {
+          userId: customer1.id,
+          title: 'Price Drop Alert',
+          message: 'iPhone 15 price dropped by 10%',
+          type: 'promotion',
+          isRead: true,
+          link: '/products/iphone-15',
+          createdAt: new Date('2024-01-14T15:20:00Z'),
+        },
+        {
+          userId: customer2.id,
+          title: 'Order Delivered',
+          message: 'Your order ORD-1004 has been delivered',
+          type: 'order',
+          isRead: false,
+          link: '/orders/4',
+          createdAt: new Date('2024-01-19T15:30:00Z'),
+        },
+        {
+          userId: customer2.id,
+          title: 'Product Review',
+          message: 'Thank you for reviewing Nike Air Max',
+          type: 'review',
+          isRead: true,
+          link: '/products/nike-air-max/reviews',
+          createdAt: new Date('2024-01-14T15:20:00Z'),
+        },
+        // Vendor notifications (using vendorUser1 and vendorUser2)
+        {
+          userId: vendorUser1.id,
+          title: 'New Order Received',
+          message: 'You have received a new order ORD-1003',
+          type: 'order',
+          isRead: false,
+          link: '/vendors/orders/3',
+          createdAt: new Date('2024-01-15T10:30:00Z'),
+        },
+        {
+          userId: vendorUser2.id,
+          title: 'Product Review',
+          message: 'New review received for Nike Air Max',
+          type: 'review',
+          isRead: true,
+          link: '/vendors/products/nike-air-max/reviews',
+          createdAt: new Date('2024-01-14T15:20:00Z'),
+        },
+      ]
+    });
+    console.log('Demo notifications created!');
+
     console.log('Seed data created successfully!');
     console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
 
