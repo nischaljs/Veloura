@@ -57,6 +57,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { identifier, password } = req.body;
+    
     if (!identifier || !password) {
       res.status(400).json({ message: 'Missing identifier or password' });
       return;

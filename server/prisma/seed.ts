@@ -183,9 +183,9 @@ async function main() {
     console.log('Creating products...');
 
     // Get required foreign keys
-    const apple = await prisma.brand.findUnique({ where: { slug: 'apple' } });
-    const samsung = await prisma.brand.findUnique({ where: { slug: 'samsung' } });
-    const nike = await prisma.brand.findUnique({ where: { slug: 'nike' } });
+    const appleBrand = await prisma.brand.findUnique({ where: { slug: 'apple' } });
+    const samsungBrand = await prisma.brand.findUnique({ where: { slug: 'samsung' } });
+    const nikeBrand = await prisma.brand.findUnique({ where: { slug: 'nike' } });
     const electronics = await prisma.category.findUnique({ where: { slug: 'electronics' } });
     const fashion = await prisma.category.findUnique({ where: { slug: 'fashion' } });
     const mobiles = await prisma.category.findUnique({ where: { slug: 'mobiles' } });
@@ -211,7 +211,7 @@ async function main() {
         sku: 'IP15-001',
         stockQuantity: 50,
         categoryId: electronics?.id,
-        brandId: apple?.id,
+        brandId: appleBrand?.id,
         vendorId: vendor1.id,
         image: productImages[0],
       },
@@ -224,7 +224,7 @@ async function main() {
         sku: 'SGS24-001',
         stockQuantity: 40,
         categoryId: mobiles?.id,
-        brandId: samsung?.id,
+        brandId: samsungBrand?.id,
         vendorId: vendor1.id,
         image: productImages[1],
       },
@@ -237,7 +237,7 @@ async function main() {
         sku: 'NAM-001',
         stockQuantity: 100,
         categoryId: fashion?.id,
-        brandId: nike?.id,
+        brandId: nikeBrand?.id,
         vendorId: vendor2.id,
         image: productImages[2],
       },
@@ -250,7 +250,7 @@ async function main() {
         sku: 'AW9-001',
         stockQuantity: 30,
         categoryId: electronics?.id,
-        brandId: apple?.id,
+        brandId: appleBrand?.id,
         vendorId: vendor1.id,
         image: productImages[3],
       },
@@ -263,7 +263,7 @@ async function main() {
         sku: 'SQT-001',
         stockQuantity: 20,
         categoryId: electronics?.id,
-        brandId: samsung?.id,
+        brandId: samsungBrand?.id,
         vendorId: vendor1.id,
         image: productImages[4],
       },
@@ -389,7 +389,7 @@ async function main() {
     // Get some products and variants
     const iphone = await prisma.product.findUnique({ where: { slug: 'iphone-15' } });
     const galaxy = await prisma.product.findUnique({ where: { slug: 'galaxy-s24' } });
-    const nike = await prisma.product.findUnique({ where: { slug: 'nike-air-max' } });
+    const nikeProduct = await prisma.product.findUnique({ where: { slug: 'nike-air-max' } });
     const iphoneVariant = await prisma.productVariant.findFirst({ where: { productId: iphone?.id } });
     const galaxyVariant = await prisma.productVariant.findFirst({ where: { productId: galaxy?.id } });
 
@@ -411,7 +411,7 @@ async function main() {
         userId: customer2.id,
         items: {
           create: [
-            { productId: nike?.id!, quantity: 3 },
+            { productId: nikeProduct?.id!, quantity: 3 },
           ]
         }
       }
@@ -423,7 +423,7 @@ async function main() {
         items: {
           create: [
             { productId: iphone?.id! },
-            { productId: nike?.id! },
+            { productId: nikeProduct?.id! },
           ]
         }
       }
@@ -445,7 +445,7 @@ async function main() {
     console.log('Creating demo orders...');
 
     // Helper: snapshot for product and variant
-    const productSnapshot = (product) => ({
+    const productSnapshot = (product: any) => ({
       id: product.id,
       name: product.name,
       slug: product.slug,
@@ -453,7 +453,7 @@ async function main() {
       salePrice: product.salePrice,
       sku: product.sku,
     });
-    const variantSnapshot = (variant) => variant ? ({
+    const variantSnapshot = (variant: any) => variant ? ({
       id: variant.id,
       name: variant.name,
       value: variant.value,
@@ -567,12 +567,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: nike?.id!,
+              productId: nikeProduct?.id!,
               vendorId: vendor2.id,
               quantity: 3,
               price: 200,
               salePrice: null,
-              productSnapshot: productSnapshot(nike),
+              productSnapshot: productSnapshot(nikeProduct),
               variantSnapshot: undefined,
             },
           ],
@@ -686,12 +686,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: nike?.id!,
+              productId: nikeProduct?.id!,
               vendorId: vendor2.id,
               quantity: 1,
               price: 200,
               salePrice: null,
-              productSnapshot: productSnapshot(nike),
+              productSnapshot: productSnapshot(nikeProduct),
               variantSnapshot: undefined,
             },
           ],
@@ -699,6 +699,87 @@ async function main() {
       },
     });
     console.log('Demo orders created!');
+
+    // --- SEED REVIEWS ---
+    console.log('Creating demo reviews...');
+
+    // Fetch order items for reviews
+    const orderItems = await prisma.orderItem.findMany({
+      include: {
+        order: true,
+        product: true,
+      },
+      where: {
+        order: {
+          userId: { in: [customer1.id, customer2.id] },
+        },
+      },
+    });
+
+    // Helper to find order item for a user and product
+    function findOrderItem(userId: number, productId: number) {
+      return orderItems.find(
+        (oi) => oi.order.userId === userId && oi.productId === productId
+      );
+    }
+
+    // Demo reviews
+    const demoReviews = [
+      {
+        user: customer1,
+        product: iphone,
+        orderItem: findOrderItem(customer1.id, iphone?.id!),
+        rating: 5,
+        title: 'Amazing iPhone!',
+        comment: 'The iPhone 15 exceeded my expectations. Super fast and great camera.',
+        images: JSON.stringify(['/images/reviews/iphone1.jpg']),
+      },
+      {
+        user: customer1,
+        product: galaxy,
+        orderItem: findOrderItem(customer1.id, galaxy?.id!),
+        rating: 4,
+        title: 'Solid Android phone',
+        comment: 'Galaxy S24 is a great device, but battery life could be better.',
+        images: JSON.stringify(['/images/reviews/galaxy1.jpg']),
+      },
+      {
+        user: customer2,
+        product: nikeProduct,
+        orderItem: findOrderItem(customer2.id, nikeProduct?.id!),
+        rating: 5,
+        title: 'Super comfy shoes',
+        comment: 'Nike Air Max are the most comfortable shoes I have owned.',
+        images: JSON.stringify(['/images/reviews/nike1.jpg']),
+      },
+      {
+        user: customer2,
+        product: iphone,
+        orderItem: findOrderItem(customer2.id, iphone?.id!),
+        rating: 3,
+        title: 'Good, but expensive',
+        comment: 'iPhone 15 is good, but the price is a bit high for my taste.',
+        images: JSON.stringify([]),
+      },
+    ];
+
+    for (const r of demoReviews) {
+      if (r.user && r.product && r.orderItem) {
+        await prisma.review.create({
+          data: {
+            userId: r.user.id,
+            productId: r.product.id,
+            orderItemId: r.orderItem.id,
+            rating: r.rating,
+            title: r.title,
+            comment: r.comment,
+            images: r.images,
+            isApproved: true,
+          },
+        });
+      }
+    }
+    console.log('Demo reviews created!');
 
     console.log('Seed data created successfully!');
     console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
