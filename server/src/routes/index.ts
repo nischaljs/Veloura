@@ -10,6 +10,7 @@ import reviewRoutes from './review.route';
 import searchRoutes from './search.route';
 import shippingRoutes from './shipping.route';
 import notificationRoutes from './notification.route';
+import userRoutes from './user.route';
 
 export default {
   auth: authRoutes,
@@ -24,6 +25,7 @@ export default {
   search: searchRoutes,
   shipping: shippingRoutes,
   notifications: notificationRoutes,
+  users: userRoutes,
 };
 
  

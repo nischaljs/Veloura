@@ -14,6 +14,7 @@ import reviewRoutes from './routes/review.route';
 import searchRoutes from './routes/search.route';
 import shippingRoutes from './routes/shipping.route';
 import notificationRoutes from './routes/notification.route';
+import userRoutes from './routes/user.route';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,6 +45,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running');
