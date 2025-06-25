@@ -2,7 +2,9 @@
 
 Base path: `/products`
 
-## GET /products
+## Public Routes
+
+### GET /products
 Get all products with filtering and pagination.
 
 **Query Parameters:**
@@ -89,7 +91,85 @@ Get all products with filtering and pagination.
 }
 ```
 
-## GET /products/:slug
+### GET /products/featured
+Get featured products.
+
+**Query Parameters:**
+- `limit` (number): Number of products to return
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "id": 1,
+        "name": "Featured Product",
+        "slug": "featured-product",
+        "price": 500.00,
+        "salePrice": 450.00,
+        "rating": 4.5,
+        "image": "https://example.com/product.jpg"
+      }
+    ]
+  }
+}
+```
+
+### GET /products/trending
+Get trending products.
+
+**Query Parameters:**
+- `limit` (number): Number of products to return
+- `period` (string): Period (7d, 30d, 90d)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "id": 1,
+        "name": "Trending Product",
+        "slug": "trending-product",
+        "price": 500.00,
+        "salesCount": 150,
+        "rating": 4.5,
+        "image": "https://example.com/product.jpg"
+      }
+    ]
+  }
+}
+```
+
+### GET /products/similar/:productId
+Get similar products by product ID.
+
+**Query Parameters:**
+- `limit` (number): Number of products to return
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "id": 2,
+        "name": "Similar Product",
+        "slug": "similar-product",
+        "price": 480.00,
+        "rating": 4.3,
+        "image": "https://example.com/similar.jpg"
+      }
+    ]
+  }
+}
+```
+
+### GET /products/:slug
 Get product details by slug.
 
 **Response:**
@@ -172,8 +252,10 @@ Get product details by slug.
 }
 ```
 
-## POST /products
-Create new product (requires vendor authentication).
+## Vendor-only Routes (require vendor authentication)
+
+### POST /products
+Create new product.
 
 **Request Body:**
 ```json
@@ -219,8 +301,8 @@ Create new product (requires vendor authentication).
 }
 ```
 
-## PUT /products/:id
-Update product (requires vendor authentication).
+### PUT /products/:id
+Update product.
 
 **Request Body:**
 ```json
@@ -239,8 +321,8 @@ Update product (requires vendor authentication).
 }
 ```
 
-## DELETE /products/:id
-Delete product (requires vendor authentication).
+### DELETE /products/:id
+Delete product.
 
 **Response:**
 ```json
@@ -250,8 +332,8 @@ Delete product (requires vendor authentication).
 }
 ```
 
-## POST /products/:id/images
-Upload product images (requires vendor authentication).
+### POST /products/:id/images
+Upload product images (multipart form data, field: images[]).
 
 **Request:** Multipart form data with image files.
 
@@ -272,8 +354,8 @@ Upload product images (requires vendor authentication).
 }
 ```
 
-## PUT /products/:id/images/:imageId
-Update product image (requires vendor authentication).
+### PUT /products/:id/images/:imageId
+Update a specific product image.
 
 **Request Body:**
 ```json
@@ -292,8 +374,8 @@ Update product image (requires vendor authentication).
 }
 ```
 
-## DELETE /products/:id/images/:imageId
-Delete product image (requires vendor authentication).
+### DELETE /products/:id/images/:imageId
+Delete a specific product image.
 
 **Response:**
 ```json
@@ -303,8 +385,8 @@ Delete product image (requires vendor authentication).
 }
 ```
 
-## POST /products/:id/variants
-Add product variant (requires vendor authentication).
+### POST /products/:id/variants
+Add a product variant.
 
 **Request Body:**
 ```json
@@ -326,8 +408,8 @@ Add product variant (requires vendor authentication).
 }
 ```
 
-## PUT /products/:id/variants/:variantId
-Update product variant (requires vendor authentication).
+### PUT /products/:id/variants/:variantId
+Update a product variant.
 
 **Request Body:**
 ```json
@@ -346,8 +428,8 @@ Update product variant (requires vendor authentication).
 }
 ```
 
-## DELETE /products/:id/variants/:variantId
-Delete product variant (requires vendor authentication).
+### DELETE /products/:id/variants/:variantId
+Delete a product variant.
 
 **Response:**
 ```json
@@ -357,86 +439,8 @@ Delete product variant (requires vendor authentication).
 }
 ```
 
-## GET /products/featured
-Get featured products.
-
-**Query Parameters:**
-- `limit` (number): Number of products to return
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "products": [
-      {
-        "id": 1,
-        "name": "Featured Product",
-        "slug": "featured-product",
-        "price": 500.00,
-        "salePrice": 450.00,
-        "rating": 4.5,
-        "image": "https://example.com/product.jpg"
-      }
-    ]
-  }
-}
-```
-
-## GET /products/trending
-Get trending products.
-
-**Query Parameters:**
-- `limit` (number): Number of products to return
-- `period` (string): Period (7d, 30d, 90d)
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "products": [
-      {
-        "id": 1,
-        "name": "Trending Product",
-        "slug": "trending-product",
-        "price": 500.00,
-        "salesCount": 150,
-        "rating": 4.5,
-        "image": "https://example.com/product.jpg"
-      }
-    ]
-  }
-}
-```
-
-## GET /products/similar/:productId
-Get similar products.
-
-**Query Parameters:**
-- `limit` (number): Number of products to return
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "products": [
-      {
-        "id": 2,
-        "name": "Similar Product",
-        "slug": "similar-product",
-        "price": 480.00,
-        "rating": 4.3,
-        "image": "https://example.com/similar.jpg"
-      }
-    ]
-  }
-}
-```
-
-## POST /products/:id/stock
-Update product stock (requires vendor authentication).
+### POST /products/:id/stock
+Update product stock.
 
 **Request Body:**
 ```json
@@ -454,8 +458,8 @@ Update product stock (requires vendor authentication).
 }
 ```
 
-## GET /products/:id/analytics
-Get product analytics (requires vendor authentication).
+### GET /products/:id/analytics
+Get product analytics.
 
 **Query Parameters:**
 - `period` (string): Period (7d, 30d, 90d, 1y)
@@ -481,4 +485,11 @@ Get product analytics (requires vendor authentication).
     }
   }
 }
-``` 
+```
+
+---
+
+> **Note:**
+> - All vendor routes require a valid vendor JWT in the Authorization header.
+> - All public routes are accessible without authentication.
+> - If a route is not listed here but present in previous documentation, it is not implemented in the current codebase. 

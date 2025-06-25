@@ -2,17 +2,56 @@
 
 Base path: `/categories`
 
-## GET /categories
+## Public Routes
+
+### GET /categories
 Get all categories.
 
-**Query Parameters:**
-- `page` (number): Page number
-- `limit` (number): Items per page
-- `parent` (string): Parent category slug
-- `featured` (boolean): Featured categories only
-- `search` (string): Search by category name
+### GET /categories/featured
+Get featured categories.
 
-**Response:**
+### GET /categories/search
+Search categories.
+
+### GET /categories/tree
+Get category tree.
+
+### GET /categories/:slug
+Get category details by slug.
+
+### GET /categories/:slug/products
+Get products by category slug.
+
+## Admin-only Routes (require admin authentication)
+
+### POST /categories
+Create new category.
+
+### PUT /categories/:id
+Update category.
+
+### DELETE /categories/:id
+Delete category.
+
+### POST /categories/:id/image
+Upload category image (multipart form data, field: image).
+
+### DELETE /categories/:id/image
+Remove category image.
+
+### PUT /categories/featured-order
+Update featured order for categories.
+
+### GET /categories/analytics
+Get category analytics.
+
+---
+
+> **Note:**
+> - All admin routes require a valid admin JWT in the Authorization header.
+> - All public routes are accessible without authentication.
+> - If a route is not listed here but present in previous documentation, it is not implemented in the current codebase.
+
 ```json
 {
   "success": true,
@@ -41,10 +80,6 @@ Get all categories.
 }
 ```
 
-## GET /categories/:slug
-Get category details by slug.
-
-**Response:**
 ```json
 {
   "success": true,
@@ -79,21 +114,6 @@ Get category details by slug.
 }
 ```
 
-## GET /categories/:slug/products 🔴 Yet to implement
-Get products by category.
-
-**Query Parameters:**
-- `page` (number): Page number
-- `limit` (number): Items per page
-- `sort` (string): Sort by (price, rating, newest, popularity)
-- `order` (string): Sort order (asc, desc)
-- `minPrice` (number): Minimum price
-- `maxPrice` (number): Maximum price
-- `brand` (string): Brand filter
-- `vendor` (string): Vendor filter
-- `rating` (number): Minimum rating
-
-**Response:**
 ```json
 {
   "success": true,
@@ -133,21 +153,6 @@ Get products by category.
 }
 ```
 
-## POST /categories
-Create new category (requires admin authentication).
-
-**Request Body:**
-```json
-{
-  "name": "New Category",
-  "description": "Category description",
-  "parentId": null,
-  "isFeatured": false,
-  "featuredOrder": null
-}
-```
-
-**Response:**
 ```json
 {
   "success": true,
@@ -162,21 +167,6 @@ Create new category (requires admin authentication).
 }
 ```
 
-## PUT /categories/:id
-Update category (requires admin authentication).
-
-**Request Body:**
-```json
-{
-  "name": "Updated Category Name",
-  "description": "Updated description",
-  "parentId": 1,
-  "isFeatured": true,
-  "featuredOrder": 2
-}
-```
-
-**Response:**
 ```json
 {
   "success": true,
@@ -184,10 +174,6 @@ Update category (requires admin authentication).
 }
 ```
 
-## DELETE /categories/:id
-Delete category (requires admin authentication).
-
-**Response:**
 ```json
 {
   "success": true,
@@ -195,21 +181,6 @@ Delete category (requires admin authentication).
 }
 ```
 
-## POST /categories/:id/image ✅ Implemented
-Upload category image (requires admin authentication).
-
-**Request:** Multipart form data with image file.
-
-**Headers:**
-```
-Content-Type: multipart/form-data
-Authorization: Bearer <jwt-token>
-```
-
-**Form Data:**
-- `image` (file): Image file (JPEG, PNG, WebP)
-
-**Response:**
 ```json
 {
   "success": true,
@@ -220,7 +191,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-**Error Responses:**
 ```json
 {
   "success": false,
@@ -242,15 +212,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-## DELETE /categories/:id/image ✅ Implemented
-Remove category image (requires admin authentication).
-
-**Headers:**
-```
-Authorization: Bearer <jwt-token>
-```
-
-**Response:**
 ```json
 {
   "success": true,
@@ -258,7 +219,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-**Error Response:**
 ```json
 {
   "success": false,
@@ -266,10 +226,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-## GET /categories/featured
-Get featured categories.
-
-**Response:**
 ```json
 {
   "success": true,
@@ -289,62 +245,6 @@ Get featured categories.
 }
 ```
 
-## PUT /categories/featured-order 🔴 Yet to implement
-Update featured categories order (requires admin authentication).
-
-**Request Body:**
-```json
-{
-  "categories": [
-    {
-      "id": 1,
-      "featuredOrder": 1
-    },
-    {
-      "id": 2,
-      "featuredOrder": 2
-    }
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Featured order updated successfully"
-}
-```
-
-## GET /categories/search
-Search categories by name.
-
-**Query Parameters:**
-- `q` (string): Search query
-- `limit` (number): Number of results
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "categories": [
-      {
-        "id": 1,
-        "name": "Electronics",
-        "slug": "electronics",
-        "image": "https://example.com/category-image.jpg",
-        "productCount": 150
-      }
-    ]
-  }
-}
-```
-
-## GET /categories/tree
-Get category hierarchy tree.
-
-**Response:**
 ```json
 {
   "success": true,
@@ -370,13 +270,6 @@ Get category hierarchy tree.
 }
 ```
 
-## GET /categories/analytics 🔴 Yet to implement
-Get category analytics (requires admin authentication).
-
-**Query Parameters:**
-- `period` (string): Period (7d, 30d, 90d, 1y)
-
-**Response:**
 ```json
 {
   "success": true,

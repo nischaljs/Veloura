@@ -2,16 +2,53 @@
 
 Base path: `/brands`
 
-## GET /brands
+## Public Routes
+
+### GET /brands
 Get all brands.
 
-**Query Parameters:**
-- `page` (number): Page number
-- `limit` (number): Items per page
-- `featured` (boolean): Featured brands only
-- `search` (string): Search by brand name
+### GET /brands/featured
+Get featured brands.
 
-**Response:**
+### GET /brands/search
+Search brands.
+
+### GET /brands/:slug
+Get brand details by slug.
+
+### GET /brands/:slug/products
+Get products by brand slug.
+
+## Authenticated/Admin-only Routes (require authentication)
+
+### POST /brands
+Create new brand.
+
+### PUT /brands/:id
+Update brand.
+
+### DELETE /brands/:id
+Delete brand.
+
+### POST /brands/:id/logo
+Upload brand logo (multipart form data, field: logo).
+
+### DELETE /brands/:id/logo
+Remove brand logo.
+
+### PUT /brands/featured-order
+Update featured order for brands.
+
+### GET /brands/analytics
+Get brand analytics.
+
+---
+
+> **Note:**
+> - All authenticated routes require a valid JWT in the Authorization header.
+> - All public routes are accessible without authentication.
+> - If a route is not listed here but present in previous documentation, it is not implemented in the current codebase.
+
 ```json
 {
   "success": true,
@@ -39,10 +76,6 @@ Get all brands.
 }
 ```
 
-## GET /brands/:slug
-Get brand details by slug.
-
-**Response:**
 ```json
 {
   "success": true,
@@ -63,21 +96,6 @@ Get brand details by slug.
 }
 ```
 
-## GET /brands/:slug/products 🔴 Yet to implement
-Get products by brand.
-
-**Query Parameters:**
-- `page` (number): Page number
-- `limit` (number): Items per page
-- `sort` (string): Sort by (price, rating, newest, popularity)
-- `order` (string): Sort order (asc, desc)
-- `minPrice` (number): Minimum price
-- `maxPrice` (number): Maximum price
-- `category` (string): Category filter
-- `vendor` (string): Vendor filter
-- `rating` (number): Minimum rating
-
-**Response:**
 ```json
 {
   "success": true,
@@ -117,21 +135,6 @@ Get products by brand.
 }
 ```
 
-## POST /brands
-Create new brand (requires admin authentication).
-
-**Request Body:**
-```json
-{
-  "name": "New Brand",
-  "description": "Brand description",
-  "website": "https://newbrand.com",
-  "isFeatured": false,
-  "featuredOrder": null
-}
-```
-
-**Response:**
 ```json
 {
   "success": true,
@@ -146,21 +149,6 @@ Create new brand (requires admin authentication).
 }
 ```
 
-## PUT /brands/:id
-Update brand (requires admin authentication).
-
-**Request Body:**
-```json
-{
-  "name": "Updated Brand Name",
-  "description": "Updated description",
-  "website": "https://updatedbrand.com",
-  "isFeatured": true,
-  "featuredOrder": 2
-}
-```
-
-**Response:**
 ```json
 {
   "success": true,
@@ -168,10 +156,6 @@ Update brand (requires admin authentication).
 }
 ```
 
-## DELETE /brands/:id
-Delete brand (requires admin authentication).
-
-**Response:**
 ```json
 {
   "success": true,
@@ -179,21 +163,6 @@ Delete brand (requires admin authentication).
 }
 ```
 
-## POST /brands/:id/logo ✅ Implemented
-Upload brand logo (requires admin authentication).
-
-**Request:** Multipart form data with image file.
-
-**Headers:**
-```
-Content-Type: multipart/form-data
-Authorization: Bearer <jwt-token>
-```
-
-**Form Data:**
-- `logo` (file): Image file (JPEG, PNG, WebP, SVG)
-
-**Response:**
 ```json
 {
   "success": true,
@@ -204,7 +173,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-**Error Responses:**
 ```json
 {
   "success": false,
@@ -226,15 +194,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-## DELETE /brands/:id/logo ✅ Implemented
-Remove brand logo (requires admin authentication).
-
-**Headers:**
-```
-Authorization: Bearer <jwt-token>
-```
-
-**Response:**
 ```json
 {
   "success": true,
@@ -242,7 +201,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-**Error Response:**
 ```json
 {
   "success": false,
@@ -250,10 +208,6 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-## GET /brands/featured
-Get featured brands.
-
-**Response:**
 ```json
 {
   "success": true,
@@ -272,41 +226,6 @@ Get featured brands.
 }
 ```
 
-## PUT /brands/featured-order 🔴 Yet to implement
-Update featured brands order (requires admin authentication).
-
-**Request Body:**
-```json
-{
-  "brands": [
-    {
-      "id": 1,
-      "featuredOrder": 1
-    },
-    {
-      "id": 2,
-      "featuredOrder": 2
-    }
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Featured order updated successfully"
-}
-```
-
-## GET /brands/search
-Search brands by name.
-
-**Query Parameters:**
-- `q` (string): Search query
-- `limit` (number): Number of results
-
-**Response:**
 ```json
 {
   "success": true,
@@ -317,6 +236,7 @@ Search brands by name.
         "name": "Brand Name",
         "slug": "brand-name",
         "logo": "https://example.com/brand-logo.jpg",
+        "featuredOrder": 1,
         "productCount": 50
       }
     ]
@@ -324,13 +244,6 @@ Search brands by name.
 }
 ```
 
-## GET /brands/analytics 🔴 Yet to implement
-Get brand analytics (requires admin authentication).
-
-**Query Parameters:**
-- `period` (string): Period (7d, 30d, 90d, 1y)
-
-**Response:**
 ```json
 {
   "success": true,

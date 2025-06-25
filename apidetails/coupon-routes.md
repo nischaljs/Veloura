@@ -2,7 +2,9 @@
 
 Base path: `/coupons`
 
-## GET /coupons
+## Public Routes
+
+### GET /coupons
 Get available coupons.
 
 **Query Parameters:**
@@ -43,7 +45,7 @@ Get available coupons.
 }
 ```
 
-## GET /coupons/validate
+### GET /coupons/validate
 Validate coupon code.
 
 **Query Parameters:**
@@ -72,8 +74,10 @@ Validate coupon code.
 }
 ```
 
-## GET /coupons/user
-Get user coupons (requires authentication).
+## User Routes (require authentication)
+
+### GET /coupons/user
+Get user coupons.
 
 **Query Parameters:**
 - `page` (number): Page number
@@ -110,8 +114,8 @@ Get user coupons (requires authentication).
 }
 ```
 
-## POST /coupons/claim
-Claim coupon (requires authentication).
+### POST /coupons/claim
+Claim coupon.
 
 **Request Body:**
 ```json
@@ -140,10 +144,150 @@ Claim coupon (requires authentication).
 }
 ```
 
-## Admin Coupon Management Routes
+## Vendor Routes (require vendor authentication)
 
-### GET /admin/coupons
-Get all coupons (requires admin authentication).
+### GET /coupons/vendors/coupons
+Get vendor coupons.
+
+**Query Parameters:**
+- `page` (number): Page number
+- `limit` (number): Items per page
+- `status` (string): Filter by status
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "coupons": [
+      {
+        "id": 1,
+        "code": "VENDOR10",
+        "description": "Vendor specific discount",
+        "discountType": "percentage",
+        "discountValue": 10,
+        "minOrderAmount": 500.00,
+        "maxUses": 50,
+        "uses": 25,
+        "startDate": "2024-01-01T00:00:00Z",
+        "endDate": "2024-12-31T23:59:59Z",
+        "isActive": true,
+        "usageRate": 50.0
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 20,
+      "pages": 2
+    }
+  }
+}
+```
+
+### POST /coupons/vendors/coupons
+Create vendor coupon.
+
+**Request Body:**
+```json
+{
+  "code": "VENDOR20",
+  "description": "Vendor discount 20%",
+  "discountType": "percentage",
+  "discountValue": 20,
+  "minOrderAmount": 1000.00,
+  "maxUses": 100,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-12-31T23:59:59Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Coupon created successfully",
+  "data": {
+    "coupon": {
+      "id": 2,
+      "code": "VENDOR20"
+    }
+  }
+}
+```
+
+### PUT /coupons/vendors/coupons/:id
+Update vendor coupon.
+
+**Request Body:**
+```json
+{
+  "description": "Updated vendor discount",
+  "discountValue": 25,
+  "maxUses": 150
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Coupon updated successfully"
+}
+```
+
+### DELETE /coupons/vendors/coupons/:id
+Delete vendor coupon.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Coupon deleted successfully"
+}
+```
+
+### GET /coupons/vendors/coupons/analytics
+Get vendor coupon analytics.
+
+**Query Parameters:**
+- `period` (string): Period (7d, 30d, 90d, 1y)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "analytics": {
+      "totalCoupons": 20,
+      "activeCoupons": 10,
+      "totalUses": 500,
+      "totalDiscount": 50000.00,
+      "averageUsageRate": 40.0,
+      "topCoupons": [
+        {
+          "code": "VENDOR10",
+          "uses": 100,
+          "discount": 10000.00,
+          "usageRate": 50.0
+        }
+      ],
+      "couponPerformance": [
+        {
+          "date": "2024-01-15",
+          "uses": 10,
+          "discount": 1000.00
+        }
+      ]
+    }
+  }
+}
+```
+
+## Admin Routes (require admin authentication)
+
+### GET /coupons/admin/coupons
+Get all admin coupons.
 
 **Query Parameters:**
 - `page` (number): Page number
@@ -185,8 +329,8 @@ Get all coupons (requires admin authentication).
 }
 ```
 
-### POST /admin/coupons
-Create new coupon (requires admin authentication).
+### POST /coupons/admin/coupons
+Create admin coupon.
 
 **Request Body:**
 ```json
@@ -223,8 +367,8 @@ Create new coupon (requires admin authentication).
 }
 ```
 
-### PUT /admin/coupons/:id
-Update coupon (requires admin authentication).
+### PUT /coupons/admin/coupons/:id
+Update admin coupon.
 
 **Request Body:**
 ```json
@@ -244,8 +388,8 @@ Update coupon (requires admin authentication).
 }
 ```
 
-### DELETE /admin/coupons/:id
-Delete coupon (requires admin authentication).
+### DELETE /coupons/admin/coupons/:id
+Delete admin coupon.
 
 **Response:**
 ```json
@@ -255,8 +399,8 @@ Delete coupon (requires admin authentication).
 }
 ```
 
-### PUT /admin/coupons/:id/activate
-Activate coupon (requires admin authentication).
+### PUT /coupons/admin/coupons/:id/activate
+Activate admin coupon.
 
 **Response:**
 ```json
@@ -266,8 +410,8 @@ Activate coupon (requires admin authentication).
 }
 ```
 
-### PUT /admin/coupons/:id/deactivate
-Deactivate coupon (requires admin authentication).
+### PUT /coupons/admin/coupons/:id/deactivate
+Deactivate admin coupon.
 
 **Response:**
 ```json
@@ -277,8 +421,8 @@ Deactivate coupon (requires admin authentication).
 }
 ```
 
-### GET /admin/coupons/:id/usage
-Get coupon usage details (requires admin authentication).
+### GET /coupons/admin/coupons/:id/usage
+Get coupon usage.
 
 **Response:**
 ```json
@@ -309,113 +453,8 @@ Get coupon usage details (requires admin authentication).
 }
 ```
 
-## Vendor Coupon Routes
-
-### GET /vendors/coupons
-Get vendor coupons (requires vendor authentication).
-
-**Query Parameters:**
-- `page` (number): Page number
-- `limit` (number): Items per page
-- `status` (string): Filter by status
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "coupons": [
-      {
-        "id": 1,
-        "code": "VENDOR10",
-        "description": "Vendor specific discount",
-        "discountType": "percentage",
-        "discountValue": 10,
-        "minOrderAmount": 500.00,
-        "maxUses": 50,
-        "uses": 25,
-        "startDate": "2024-01-01T00:00:00Z",
-        "endDate": "2024-12-31T23:59:59Z",
-        "isActive": true,
-        "usageRate": 50.0
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 10,
-      "total": 20,
-      "pages": 2
-    }
-  }
-}
-```
-
-### POST /vendors/coupons
-Create vendor coupon (requires vendor authentication).
-
-**Request Body:**
-```json
-{
-  "code": "VENDOR20",
-  "description": "Vendor discount 20%",
-  "discountType": "percentage",
-  "discountValue": 20,
-  "minOrderAmount": 1000.00,
-  "maxUses": 100,
-  "startDate": "2024-01-01T00:00:00Z",
-  "endDate": "2024-12-31T23:59:59Z"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Coupon created successfully",
-  "data": {
-    "coupon": {
-      "id": 2,
-      "code": "VENDOR20"
-    }
-  }
-}
-```
-
-### PUT /vendors/coupons/:id
-Update vendor coupon (requires vendor authentication).
-
-**Request Body:**
-```json
-{
-  "description": "Updated vendor discount",
-  "discountValue": 25,
-  "maxUses": 150
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Coupon updated successfully"
-}
-```
-
-### DELETE /vendors/coupons/:id
-Delete vendor coupon (requires vendor authentication).
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Coupon deleted successfully"
-}
-```
-
-## Coupon Analytics Routes
-
-### GET /admin/coupons/analytics
-Get coupon analytics (requires admin authentication).
+### GET /coupons/admin/coupons/analytics
+Get admin coupon analytics.
 
 **Query Parameters:**
 - `period` (string): Period (7d, 30d, 90d, 1y)
@@ -451,47 +490,8 @@ Get coupon analytics (requires admin authentication).
 }
 ```
 
-### GET /vendors/coupons/analytics
-Get vendor coupon analytics (requires vendor authentication).
-
-**Query Parameters:**
-- `period` (string): Period (7d, 30d, 90d, 1y)
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "analytics": {
-      "totalCoupons": 20,
-      "activeCoupons": 10,
-      "totalUses": 500,
-      "totalDiscount": 50000.00,
-      "averageUsageRate": 40.0,
-      "topCoupons": [
-        {
-          "code": "VENDOR10",
-          "uses": 100,
-          "discount": 10000.00,
-          "usageRate": 50.0
-        }
-      ],
-      "couponPerformance": [
-        {
-          "date": "2024-01-15",
-          "uses": 10,
-          "discount": 1000.00
-        }
-      ]
-    }
-  }
-}
-```
-
-## Bulk Coupon Operations
-
-### POST /admin/coupons/bulk-create
-Create multiple coupons (requires admin authentication).
+### POST /coupons/admin/coupons/bulk-create
+Bulk create admin coupons.
 
 **Request Body:**
 ```json
@@ -539,8 +539,8 @@ Create multiple coupons (requires admin authentication).
 }
 ```
 
-### POST /admin/coupons/bulk-deactivate
-Deactivate multiple coupons (requires admin authentication).
+### POST /coupons/admin/coupons/bulk-deactivate
+Bulk deactivate admin coupons.
 
 **Request Body:**
 ```json
@@ -559,4 +559,11 @@ Deactivate multiple coupons (requires admin authentication).
     "failed": 0
   }
 }
-``` 
+```
+
+---
+
+> **Note:**
+> - All user, vendor, and admin routes require a valid JWT in the Authorization header.
+> - All public routes are accessible without authentication.
+> - If a route is not listed here but present in previous documentation, it is not implemented in the current codebase. 

@@ -15,6 +15,9 @@ import searchRoutes from './routes/search.route';
 import shippingRoutes from './routes/shipping.route';
 import notificationRoutes from './routes/notification.route';
 import userRoutes from './routes/user.route';
+import vendorRoutes from './routes/vendor.route';
+import adminRoutes from './routes/admin.route';
+import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,11 +49,20 @@ app.use('/api/search', searchRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/vendors', vendorRoutes);
+app.use('/admin', adminRoutes); 
 
 app.get('/', (req, res) => {
   res.send('API is running');
 });
 
+// Global error handler (should be after all routes)
+app.use(errorHandler);
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+
+
