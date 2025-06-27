@@ -14,7 +14,9 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     let orderItems = items;
     if (!orderItems || !orderItems.length) {
       const cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
-      if (!cart || !cart.items.length) return res.status(400).json({ success: false, message: 'Cart is empty' });
+      if (!cart || !cart.items.length) { res.status(400).json({ success: false, message: 'Cart is empty' });
+      return;
+    }
       orderItems = cart.items.map(item => ({
         productId: item.productId,
         variantId: item.variantId,
@@ -26,7 +28,9 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     const orderItemData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] = [];
     for (const item of orderItems) {
       const product = await prisma.product.findUnique({ where: { id: item.productId } });
-      if (!product) return res.status(400).json({ success: false, message: 'Product not found' });
+      if (!product) { res.status(400).json({ success: false, message: 'Product not found' });
+      return;
+    }
       const variant = item.variantId ? await prisma.productVariant.findUnique({ where: { id: item.variantId } }) : null;
       const price = variant ? (product.salePrice ?? product.price) + variant.priceDifference : (product.salePrice ?? product.price);
       subtotal += price * item.quantity;
@@ -141,7 +145,9 @@ export const getOrderDetails = async (req: Request, res: Response, next: NextFun
       where: { id: Number(id) },
       include: { items: true, payments: true, shipments: true }
     });
-    if (!order || order.userId !== userId) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order || order.userId !== userId) { res.status(404).json({ success: false, message: 'Order not found' });
+    return;
+  }
     res.json({ success: true, data: { order } });
   } catch (err) {
     next(err);
@@ -156,8 +162,12 @@ export const cancelOrder = async (req: Request, res: Response, next: NextFunctio
     const userId = (req as any).userId;
     const { id } = req.params;
     const order = await prisma.order.findUnique({ where: { id: Number(id) } });
-    if (!order || order.userId !== userId) return res.status(404).json({ success: false, message: 'Order not found' });
-    if (order.status !== 'PENDING' && order.status !== 'PROCESSING') return res.status(400).json({ success: false, message: 'Order cannot be cancelled' });
+    if (!order || order.userId !== userId) { res.status(404).json({ success: false, message: 'Order not found' });
+    return;
+  }
+    if (order.status !== 'PENDING' && order.status !== 'PROCESSING') { res.status(400).json({ success: false, message: 'Order cannot be cancelled' });
+    return;
+}
     await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
     res.json({ success: true, message: 'Order cancelled successfully' });
   } catch (err) {
@@ -173,8 +183,12 @@ export const returnOrder = async (req: Request, res: Response, next: NextFunctio
     const userId = (req as any).userId;
     const { id } = req.params;
     const order = await prisma.order.findUnique({ where: { id: Number(id) } });
-    if (!order || order.userId !== userId) return res.status(404).json({ success: false, message: 'Order not found' });
-    if (order.status !== 'DELIVERED') return res.status(400).json({ success: false, message: 'Order cannot be returned' });
+    if (!order || order.userId !== userId) { res.status(404).json({ success: false, message: 'Order not found' });
+    return;
+  }
+    if (order.status !== 'DELIVERED') { res.status(400).json({ success: false, message: 'Order cannot be returned' });
+    return;
+  }
     await prisma.order.update({ where: { id: order.id }, data: { status: 'RETURNED' } });
     res.json({ success: true, message: 'Return request submitted successfully' });
   } catch (err) {
@@ -190,7 +204,9 @@ export const getOrderTracking = async (req: Request, res: Response, next: NextFu
     const userId = (req as any).userId;
     const { id } = req.params;
     const order = await prisma.order.findUnique({ where: { id: Number(id) }, include: { shipments: true } });
-    if (!order || order.userId !== userId) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order || order.userId !== userId) { res.status(404).json({ success: false, message: 'Order not found' });
+    return;
+  }
     // For now, return shipment info or mock data
     res.json({ success: true, data: { tracking: order.shipments?.[0] || {} } });
   } catch (err) {
@@ -206,7 +222,9 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
     const userId = (req as any).userId;
     const { id } = req.params;
     const order = await prisma.order.findUnique({ where: { id: Number(id) }, include: { items: true, payments: true } });
-    if (!order || order.userId !== userId) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order || order.userId !== userId) { res.status(404).json({ success: false, message: 'Order not found' });
+    return;
+  }
     // For now, return order as invoice
     res.json({ success: true, data: { invoice: order } });
   } catch (err) {
@@ -261,9 +279,13 @@ export const updateVendorOrderStatus = async (req: Request, res: Response, next:
     const { status } = req.body;
     // Only update items belonging to this vendor
     const order = await prisma.order.findUnique({ where: { id: Number(id) }, include: { items: true } });
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order) { res.status(404).json({ success: false, message: 'Order not found' });
+    return;
+  }
     const vendorItems = order.items.filter(item => item.vendorId === vendorId);
-    if (!vendorItems.length) return res.status(403).json({ success: false, message: 'No items for this vendor in order' });
+    if (!vendorItems.length) { res.status(403).json({ success: false, message: 'No items for this vendor in order' });
+    return;
+  }
     // Remove per-item status update since OrderItem has no status field
     // await prisma.orderItem.updateMany({ where: { orderId: order.id, vendorId }, data: { status } });
     res.json({ success: true, message: 'Order item status update skipped (no per-item status field)' });
@@ -349,7 +371,9 @@ export const updateAdminOrderStatus = async (req: Request, res: Response, next: 
     const { id } = req.params;
     const { status } = req.body;
     const order = await prisma.order.findUnique({ where: { id: Number(id) } });
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order) { res.status(404).json({ success: false, message: 'Order not found' });
+    return;
+  }
     await prisma.order.update({ where: { id: order.id }, data: { status } });
     res.json({ success: true, message: 'Order status updated' });
   } catch (err) {

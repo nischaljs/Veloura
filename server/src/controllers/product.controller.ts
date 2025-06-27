@@ -49,10 +49,22 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
           vendor: { select: { id: true, businessName: true, slug: true } },
           category: { select: { id: true, name: true, slug: true } },
           brand: { select: { id: true, name: true, slug: true } },
+          images: true,
         }
       }),
       prisma.product.count({ where })
     ]);
+
+    // Map to add a single image field (primary or first) and complete URL, remove images array
+    const productsWithImage = products.map(p => {
+      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find(img => img.isPrimary) || p.images[0]) : null;
+      const image = primaryImageObj ? addImageUrls(primaryImageObj, ['url']) : null;
+      const { images, ...rest } = p; // Remove images array
+      return {
+        ...rest,
+        image,
+      };
+    });
 
     // Filters for sidebar
     const [categories, brands, priceRange] = await Promise.all([
@@ -71,7 +83,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
     res.json({
       success: true,
       data: {
-        products: addImageUrlsToArray(products, ['image']),
+        products: productsWithImage,
         pagination: {
           page: pageNum,
           limit: limitNum,

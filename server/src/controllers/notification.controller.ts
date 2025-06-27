@@ -55,7 +55,9 @@ export const markAsRead = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const id = Number(req.params.id);
     const notification = await prisma.notification.findUnique({ where: { id } });
-    if (!notification || notification.userId !== userId) return res.status(404).json({ success: false, message: 'Notification not found' });
+    if (!notification || notification.userId !== userId) { res.status(404).json({ success: false, message: 'Notification not found' });
+    return;
+  }
     await prisma.notification.update({ where: { id }, data: { isRead: true } });
     res.json({ success: true, message: 'Notification marked as read' });
   } catch (err) {
@@ -78,7 +80,9 @@ export const deleteNotification = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const id = Number(req.params.id);
     const notification = await prisma.notification.findUnique({ where: { id } });
-    if (!notification || notification.userId !== userId) return res.status(404).json({ success: false, message: 'Notification not found' });
+    if (!notification || notification.userId !== userId) { res.status(404).json({ success: false, message: 'Notification not found' });
+    return;
+  }
     await prisma.notification.delete({ where: { id } });
     res.json({ success: true, message: 'Notification deleted successfully' });
   } catch (err) {
@@ -119,7 +123,9 @@ export const getVendorNotifications = async (req: Request, res: Response) => {
     // Find vendor by userId
     const userId = (req as any).userId;
     const vendor = await prisma.vendor.findUnique({ where: { userId } });
-    if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' });
+    return;
+  }
     // Get notifications for vendor's userId
     const { page = 1, limit = 10, type } = req.query;
     const pageNum = parseInt(page as string);
@@ -159,7 +165,9 @@ export const markVendorAsRead = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const id = Number(req.params.id);
     const notification = await prisma.notification.findUnique({ where: { id } });
-    if (!notification || notification.userId !== userId) return res.status(404).json({ success: false, message: 'Notification not found' });
+    if (!notification || notification.userId !== userId) { res.status(404).json({ success: false, message: 'Notification not found' });
+    return;
+  }
     await prisma.notification.update({ where: { id }, data: { isRead: true } });
     res.json({ success: true, message: 'Notification marked as read' });
   } catch (err) {

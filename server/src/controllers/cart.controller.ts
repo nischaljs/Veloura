@@ -22,7 +22,8 @@ export const getCart = async (req: Request, res: Response, next: NextFunction) =
       }
     });
     if (!cart) {
-      return res.json({ success: true, data: { cart: { items: [], summary: { subtotal: 0, shippingFee: 0, taxAmount: 0, discountAmount: 0, total: 0, itemCount: 0 } } } });
+      res.json({ success: true, data: { cart: { items: [], summary: { subtotal: 0, shippingFee: 0, taxAmount: 0, discountAmount: 0, total: 0, itemCount: 0 } } } });
+      return;
     }
     const subtotal = cart.items.reduce((sum: number, item: any) => {
       const price = item.variant?.priceDifference
@@ -63,9 +64,14 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
   try {
     const userId = (req as any).userId;
     const { productId, variantId, quantity } = req.body;
-    let cart = await prisma.cart.findUnique({ where: { userId } });
+    let cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
     if (!cart) {
-      cart = await prisma.cart.create({ data: { userId } });
+      await prisma.cart.create({ data: { userId } });
+      cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
+    }
+    if (!cart) {
+      res.status(500).json({ success: false, message: 'Cart could not be created.' });
+      return;
     }
     // Check if item exists
     const existing = await prisma.cartItem.findFirst({
@@ -97,7 +103,9 @@ export const updateCartItem = async (req: Request, res: Response, next: NextFunc
     const { itemId } = req.params;
     const { quantity } = req.body;
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) return res.status(404).json({ success: false, message: 'Cart not found' });
+    if (!cart) { res.status(404).json({ success: false, message: 'Cart not found' });
+    return;
+    }
     const cartItem = await prisma.cartItem.update({
       where: { id: Number(itemId) },
       data: { quantity },
@@ -116,7 +124,10 @@ export const removeCartItem = async (req: Request, res: Response, next: NextFunc
     const userId = (req as any).userId;
     const { itemId } = req.params;
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) return res.status(404).json({ success: false, message: 'Cart not found' });
+    if (!cart) {
+      res.status(404).json({ success: false, message: 'Cart not found' });
+      return;
+    }
     await prisma.cartItem.delete({ where: { id: Number(itemId) } });
     res.json({ success: true, message: 'Item removed from cart successfully' });
   } catch (err) {
@@ -131,7 +142,8 @@ export const clearCart = async (req: Request, res: Response, next: NextFunction)
   try {
     const userId = (req as any).userId;
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) return res.status(404).json({ success: false, message: 'Cart not found' });
+    if (!cart) { res.status(404).json({ success: false, message: 'Cart not found' });
+    return;}
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     res.json({ success: true, message: 'Cart cleared successfully' });
   } catch (err) {
@@ -146,7 +158,8 @@ export const getCartAnalytics = async (req: Request, res: Response, next: NextFu
   try {
     const userId = (req as any).userId;
     const cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
-    if (!cart) return res.json({ success: true, data: { analytics: { totalItems: 0, totalValue: 0, averageItemValue: 0 } } });
+    if (!cart) { res.json({ success: true, data: { analytics: { totalItems: 0, totalValue: 0, averageItemValue: 0 } } });
+    return;}
     const totalItems = cart.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
     const totalValue = cart.items.reduce((sum: number, item: any) => {
       const price = item.variant?.priceDifference
@@ -193,11 +206,19 @@ export const applyCoupon = async (req: Request, res: Response, next: NextFunctio
     const { code } = req.body;
     const coupon = await prisma.coupon.findUnique({ where: { code } });
     if (!coupon || !coupon.isActive) {
-      return res.status(400).json({ success: false, message: 'Invalid or inactive coupon' });
+      res.status(400).json({ success: false, message: 'Invalid or inactive coupon' });
+      return;
     }
     let cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
-    if (!cart) cart = await prisma.cart.create({ data: { userId } });
-    await prisma.cart.update({ where: { id: cart.id }, data: { couponCode: code } });
+    if (!cart) {
+      await prisma.cart.create({ data: { userId } });
+      cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
+    }
+    if (!cart) {
+      res.status(500).json({ success: false, message: 'Cart could not be created.' });
+      return;
+    }
+    // No longer update cart with couponCode, just use code for calculations
     const subtotal = cart.items.reduce((sum: number, item: any) => {
       const price = item.variant?.priceDifference
         ? (item.product.salePrice ?? item.product.price) + item.variant.priceDifference
@@ -234,10 +255,7 @@ export const applyCoupon = async (req: Request, res: Response, next: NextFunctio
 
 export const removeCoupon = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).userId;
-    let cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) return res.status(404).json({ success: false, message: 'Cart not found' });
-    await prisma.cart.update({ where: { id: cart.id }, data: { couponCode: null } });
+    // No longer update cart with couponCode, just respond success
     res.json({ success: true, message: 'Coupon removed successfully' });
   } catch (err) {
     next(err);
@@ -266,7 +284,9 @@ export const calculateShipping = async (req: Request, res: Response, next: NextF
     const userId = (req as any).userId;
     const { shippingOptionId, address } = req.body;
     const cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
-    if (!cart) return res.status(404).json({ success: false, message: 'Cart not found' });
+    if (!cart) { res.status(404).json({ success: false, message: 'Cart not found' });
+    return;
+  }
     const subtotal = cart.items.reduce((sum: number, item: any) => {
       const price = item.variant?.priceDifference
         ? (item.product.salePrice ?? item.product.price) + item.variant.priceDifference

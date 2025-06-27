@@ -7,7 +7,7 @@ export const getProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return; }
     res.json({ success: true, data: { user } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
@@ -28,7 +28,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 export const uploadAvatar = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+    if (!req.file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
     const avatarPath = '/images/users/' + path.basename(req.file.path);
     const user = await prisma.user.update({ where: { id: userId }, data: { avatar: avatarPath } });
     res.json({ success: true, message: 'Avatar uploaded successfully', data: { avatar: avatarPath } });
@@ -52,9 +52,9 @@ export const changePassword = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const { currentPassword, newPassword } = req.body;
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return; }
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!valid) return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+    if (!valid) { res.status(400).json({ success: false, message: 'Current password is incorrect' }); return; }
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
     res.json({ success: true, message: 'Password changed successfully' });
@@ -167,7 +167,7 @@ export const getUserOrderDetails = async (req: Request, res: Response) => {
         shipments: true,
       }
     });
-    if (!order || order.userId !== userId) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!order || order.userId !== userId) { res.status(404).json({ success: false, message: 'Order not found' }); return; }
     res.json({ success: true, data: { order } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });

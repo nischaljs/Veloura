@@ -8,7 +8,9 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
     const { productId, orderItemId, rating, title, comment, images } = req.body;
     // Check if user already reviewed this order item
     const existing = await prisma.review.findFirst({ where: { userId, orderItemId } });
-    if (existing) return res.status(400).json({ success: false, message: 'You have already reviewed this item.' });
+    if (existing) { res.status(400).json({ success: false, message: 'You have already reviewed this item.' });
+    return;
+  }
     // Create review
     const review = await prisma.review.create({
       data: {
@@ -145,7 +147,9 @@ export const updateReview = async (req: Request, res: Response, next: NextFuncti
     const { id } = req.params;
     const { rating, title, comment, images } = req.body;
     const review = await prisma.review.findUnique({ where: { id: Number(id) } });
-    if (!review || review.userId !== userId) return res.status(404).json({ success: false, message: 'Review not found' });
+    if (!review || review.userId !== userId) { res.status(404).json({ success: false, message: 'Review not found' });
+    return;
+  }
     await prisma.review.update({
       where: { id: Number(id) },
       data: { rating, title, comment, images }
@@ -161,7 +165,9 @@ export const deleteReview = async (req: Request, res: Response, next: NextFuncti
     const userId = (req as any).userId;
     const { id } = req.params;
     const review = await prisma.review.findUnique({ where: { id: Number(id) } });
-    if (!review || review.userId !== userId) return res.status(404).json({ success: false, message: 'Review not found' });
+    if (!review || review.userId !== userId) { res.status(404).json({ success: false, message: 'Review not found' });
+    return;
+  }
     await prisma.review.delete({ where: { id: Number(id) } });
     res.json({ success: true, message: 'Review deleted successfully' });
   } catch (err) {

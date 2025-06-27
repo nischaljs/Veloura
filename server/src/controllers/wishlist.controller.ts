@@ -50,9 +50,7 @@ export const addToWishlist = async (req: Request, res: Response, next: NextFunct
     }
     // Check if item exists
     const existing = await prisma.wishlistItem.findFirst({ where: { wishlistId: wishlist.id, productId } });
-    if (existing) {
-      return res.status(409).json({ success: false, message: 'Item already in wishlist' });
-    }
+    if (existing) { res.status(409).json({ success: false, message: 'Item already in wishlist' }); return; }
     await prisma.wishlistItem.create({ data: { wishlistId: wishlist.id, productId } });
     res.json({ success: true, message: 'Item added to wishlist successfully' });
   } catch (err) {
@@ -68,7 +66,7 @@ export const removeWishlistItem = async (req: Request, res: Response, next: Next
     const userId = (req as any).userId;
     const { itemId } = req.params;
     const wishlist = await prisma.wishlist.findUnique({ where: { userId } });
-    if (!wishlist) return res.status(404).json({ success: false, message: 'Wishlist not found' });
+    if (!wishlist) { res.status(404).json({ success: false, message: 'Wishlist not found' }); return; }
     await prisma.wishlistItem.delete({ where: { id: Number(itemId) } });
     res.json({ success: true, message: 'Item removed from wishlist successfully' });
   } catch (err) {
@@ -83,7 +81,7 @@ export const clearWishlist = async (req: Request, res: Response, next: NextFunct
   try {
     const userId = (req as any).userId;
     const wishlist = await prisma.wishlist.findUnique({ where: { userId } });
-    if (!wishlist) return res.status(404).json({ success: false, message: 'Wishlist not found' });
+    if (!wishlist) { res.status(404).json({ success: false, message: 'Wishlist not found' }); return; }
     await prisma.wishlistItem.deleteMany({ where: { wishlistId: wishlist.id } });
     res.json({ success: true, message: 'Wishlist cleared successfully' });
   } catch (err) {
@@ -100,9 +98,9 @@ export const moveToCart = async (req: Request, res: Response, next: NextFunction
     const { itemId } = req.params;
     const { variantId, quantity = 1 } = req.body;
     const wishlist = await prisma.wishlist.findUnique({ where: { userId } });
-    if (!wishlist) return res.status(404).json({ success: false, message: 'Wishlist not found' });
+    if (!wishlist) { res.status(404).json({ success: false, message: 'Wishlist not found' }); return; }
     const item = await prisma.wishlistItem.findUnique({ where: { id: Number(itemId) } });
-    if (!item) return res.status(404).json({ success: false, message: 'Wishlist item not found' });
+    if (!item) { res.status(404).json({ success: false, message: 'Wishlist item not found' }); return; }
     // Add to cart
     let cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) cart = await prisma.cart.create({ data: { userId } });
@@ -122,7 +120,7 @@ export const moveAllToCart = async (req: Request, res: Response, next: NextFunct
   try {
     const userId = (req as any).userId;
     const wishlist = await prisma.wishlist.findUnique({ where: { userId }, include: { items: true } });
-    if (!wishlist || wishlist.items.length === 0) return res.status(404).json({ success: false, message: 'Wishlist is empty' });
+    if (!wishlist || wishlist.items.length === 0) { res.status(404).json({ success: false, message: 'Wishlist is empty' }); return; }
     let cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) cart = await prisma.cart.create({ data: { userId } });
     let movedItems = 0;

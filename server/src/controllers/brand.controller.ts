@@ -62,10 +62,8 @@ export const getAllBrands = async (req: Request, res: Response): Promise<void> =
         }
       }
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
@@ -102,17 +100,14 @@ export const getBrandBySlug = async (req: Request, res: Response): Promise<void>
         brand: brandWithImageUrl
       }
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
 // GET /brands/:slug/products - Get products by brand
 export const getBrandProducts = async (req: Request, res: Response): Promise<void> => {
   res.status(501).json({ success: false, message: 'Brand products functionality yet to be implemented' });
-  return;
 };
 
 // POST /brands - Create new brand (admin only)
@@ -155,10 +150,8 @@ export const createBrand = async (req: Request, res: Response): Promise<void> =>
         }
       }
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
@@ -193,10 +186,8 @@ export const updateBrand = async (req: Request, res: Response): Promise<void> =>
       success: true,
       message: 'Brand updated successfully'
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
@@ -217,10 +208,8 @@ export const deleteBrand = async (req: Request, res: Response): Promise<void> =>
       success: true,
       message: 'Brand deleted successfully'
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
@@ -283,10 +272,8 @@ export const uploadBrandLogo = async (req: Request, res: Response): Promise<void
         logo: logoUrl.logo
       }
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
@@ -316,10 +303,8 @@ export const removeBrandLogo = async (req: Request, res: Response): Promise<void
       success: true,
       message: 'Brand logo removed successfully'
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
@@ -352,17 +337,14 @@ export const getFeaturedBrands = async (req: Request, res: Response): Promise<vo
       success: true,
       data: { brands: brandsWithImageUrls }
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
 // PUT /brands/featured-order - Update featured brands order (admin only)
 export const updateFeaturedOrder = async (req: Request, res: Response): Promise<void> => {
   res.status(501).json({ success: false, message: 'Featured order update functionality yet to be implemented' });
-  return;
 };
 
 // GET /brands/search - Search brands by name
@@ -405,15 +387,12 @@ export const searchBrands = async (req: Request, res: Response): Promise<void> =
       success: true,
       data: { brands: brandsWithImageUrls }
     });
-    return;
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
-    return;
   }
 };
 
 // GET /brands/analytics - Get brand analytics (admin only)
 export const getBrandAnalytics = async (req: Request, res: Response): Promise<void> => {
   res.status(501).json({ success: false, message: 'Brand analytics functionality yet to be implemented' });
-  return;
 }; 

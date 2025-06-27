@@ -17,6 +17,7 @@ import notificationRoutes from './routes/notification.route';
 import userRoutes from './routes/user.route';
 import vendorRoutes from './routes/vendor.route';
 import adminRoutes from './routes/admin.route';
+import paymentRoutes from './routes/payment.route';
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -50,7 +51,8 @@ app.use('/api/shipping', shippingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/vendors', vendorRoutes);
-app.use('/admin', adminRoutes); 
+app.use('/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running');
