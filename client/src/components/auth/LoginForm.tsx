@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
+import { useAuth } from '../../context/AuthContext';
 
 interface LoginFormValues {
   identifier: string;
@@ -18,26 +19,26 @@ const LoginForm: React.FC = () => {
       password: '',
     },
   });
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
+  const navigate = useNavigate();
+  const { login, loading, error, user } = useAuth();
 
   const onSubmit = async (values: LoginFormValues) => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(values),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Login failed');
-      // TODO: handle successful login (e.g., redirect, set user state)
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    await login(values.identifier, values.password);
+    // Redirect after successful login based on role
+    if (!error && user) {
+      switch (user.role) {
+        case 'CUSTOMER':
+          navigate('/dashboard/customer');
+          break;
+        case 'VENDOR':
+          navigate('/dashboard/vendor');
+          break;
+        case 'ADMIN':
+          navigate('/dashboard/admin');
+          break;
+        default:
+          navigate('/');
+      }
     }
   };
 

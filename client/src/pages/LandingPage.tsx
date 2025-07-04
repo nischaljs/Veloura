@@ -3,11 +3,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { Button } from '../components/ui/button';
 import type { AllProduct, Category } from '../types';
 import ProductsCard from '../components/ProductsCard';
+import { useNavigate } from 'react-router-dom';
 
 function LandingPage() {
     const [products, setProducts] = useState<AllProduct[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
   
     useEffect(() => {
       async function fetchData() {
@@ -76,6 +78,7 @@ function LandingPage() {
               showVendor={false}
               showStatus={true}
               buttonText="Add to Cart"
+              onProductClick={(product) => navigate(`/products/${product.slug}`)}
             />
           </div>
         </section>
@@ -119,6 +122,7 @@ function LandingPage() {
               showVendor={false}
               showStatus={false}
               buttonText="Shop Now"
+              onProductClick={(product) => navigate(`/products/${product.slug}`)}
             />
           </div>
         </section>

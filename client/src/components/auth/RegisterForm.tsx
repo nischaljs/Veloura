@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
+import { useAuth } from '../../context/AuthContext';
 
 interface RegisterFormValues {
   firstName: string;
@@ -24,27 +25,13 @@ const RegisterForm: React.FC = () => {
       password: '',
     },
   });
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
-
+  const { register: registerUser, loading, error, user } = useAuth();
+  const navigate = useNavigate();
+  
   const onSubmit = async (values: RegisterFormValues) => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(values),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Registration failed');
-      // TODO: handle successful registration (e.g., redirect, set user state)
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    await registerUser(values);
+    // Optionally redirect after registration
+    if (!error && user) navigate('/');
   };
 
   return (

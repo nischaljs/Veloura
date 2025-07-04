@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Search, Github, Twitter, Instagram, Globe, Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { fetchCategories } from '@/services/category';
 import { fetchBrands } from '@/services/brand';
+import { useAuth } from '../context/AuthContext';
+import { Button } from '../components/ui/button';
 
 const navLinks = [
   { name: 'Home', to: '/' },
@@ -33,6 +35,8 @@ export default function Header() {
   const [catError, setCatError] = useState('');
   const [brandError, setBrandError] = useState('');
   const [search, setSearch] = useState('');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCategories(100)
@@ -72,7 +76,7 @@ export default function Header() {
         </div>
         {/* Become a seller (right) */}
         <div className="z-10">
-          <Link to="/become-seller" className="text-white underline hover:text-indigo-100 text-xs font-normal ml-4">become a seller</Link>
+          <Link to="/register-business" className="text-white underline hover:text-indigo-100 text-xs font-normal ml-4">become a seller</Link>
         </div>
       </div>
       {/* Main header */}
@@ -92,7 +96,7 @@ export default function Header() {
             ))}
           </nav>
           {/* Search bar */}
-          <form className="flex-1 max-w-md mx-6 hidden md:flex" onSubmit={e => { e.preventDefault(); /* handle search */ }}>
+          <form className="flex-1 max-w-md mx-6 hidden md:flex" onSubmit={e => { e.preventDefault(); if (search.trim()) navigate(`/search?q=${encodeURIComponent(search)}`); }}>
             <div className="relative w-full">
               <input
                 type="text"
@@ -114,26 +118,37 @@ export default function Header() {
               {/* Cart badge placeholder */}
               <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full px-1">2</span>
             </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="p-0 border-0 bg-transparent focus:outline-none">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src="/api/placeholder/40/40" alt="User" />
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Account</DropdownMenuLabel>
-                <DropdownMenuItem asChild>
-                  <Link to="/account">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/orders">Orders</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/logout">Logout</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!user ? (
+              <>
+                <Link to="/login">
+                  <Button variant="outline" className="border-indigo-600 text-indigo-700 hover:bg-indigo-50 mr-2">Login</Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="bg-pink-600 text-white hover:bg-pink-700">Register</Button>
+                </Link>
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="p-0 border-0 bg-transparent focus:outline-none">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src="https://via.placeholder.com/40x40.png?text=User" alt="User" />
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Account</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to="/account">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/orders">Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/logout">Logout</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
         {/* Category and Brands bar below header */}

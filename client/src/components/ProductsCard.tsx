@@ -3,6 +3,8 @@ import type { AllProduct } from '../types';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardDescription, CardTitle } from './ui/card';
+import { addToCart } from '../services/cart';
+import { useState } from 'react';
 
 interface ProductsCardProps {
   products: AllProduct[];
@@ -33,6 +35,9 @@ const ProductsCard = ({
   onAddToCart,
   onWishlist
 }: ProductsCardProps) => {
+  const [cartLoading, setCartLoading] = useState<{ [key: string]: boolean }>({});
+  const [cartMessage, setCartMessage] = useState<{ [key: string]: string | null }>({});
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE': return 'bg-green-500';
@@ -75,6 +80,20 @@ const ProductsCard = ({
     );
   };
 
+  const handleAddToCart = async (product: AllProduct) => {
+    if (onAddToCart) return onAddToCart(product);
+    setCartLoading((prev) => ({ ...prev, [product.id]: true }));
+    setCartMessage((prev) => ({ ...prev, [product.id]: null }));
+    try {
+      await addToCart({ productId: product.id, quantity: 1 });
+      setCartMessage((prev) => ({ ...prev, [product.id]: 'Added to cart!' }));
+    } catch (err: any) {
+      setCartMessage((prev) => ({ ...prev, [product.id]: err.response?.data?.message || 'Failed to add to cart' }));
+    } finally {
+      setCartLoading((prev) => ({ ...prev, [product.id]: false }));
+    }
+  };
+
   return (
     <>
       {products.map((product) => (
@@ -83,14 +102,20 @@ const ProductsCard = ({
           className={`group relative rounded-3xl bg-gradient-to-br from-white via-zinc-50 to-zinc-100 shadow-xl border-0 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden p-0 ${cardClassName}`}
         >
           <div className="relative">
-            <img
-              src={product.image?.url || '/api/placeholder/300/200'}
-              alt={product.image?.altText || product.name}
-              className={`w-full h-56 object-cover rounded-t-3xl transition-transform duration-300 group-hover:scale-105 ${imageClassName}`}
-              onError={(e) => {
-                e.currentTarget.src = '/api/placeholder/300/200';
-              }}
-            />
+            {product.image?.url ? (
+              <img
+                src={product.image.url}
+                alt={product.image?.altText || product.name}
+                className={`w-full h-56 object-cover rounded-t-3xl transition-transform duration-300 group-hover:scale-105 ${imageClassName}`}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className={`w-full h-56 flex items-center justify-center bg-gray-200 rounded-t-3xl ${imageClassName}`}>
+                <span className="text-gray-500 text-lg font-semibold">{product.image?.altText || product.name}</span>
+              </div>
+            )}
             {showStatus && (
               <Badge className="absolute top-4 left-4 bg-yellow-200 text-yellow-800 font-semibold px-3 py-1 rounded-full text-xs shadow">
                 {product.status}
@@ -130,11 +155,14 @@ const ProductsCard = ({
               {showPrice && <div className="text-base font-bold text-gray-900">{formatPrice(product.price, product.salePrice)}</div>}
               <Button 
                 className="w-full h-11 bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-semibold shadow-md hover:scale-105 hover:shadow-lg transition-transform text-base"
-                onClick={onAddToCart ? () => onAddToCart(product) : undefined}
-                disabled={product.stockQuantity === 0}
+                onClick={() => handleAddToCart(product)}
+                disabled={product.stockQuantity === 0 || cartLoading[product.id]}
               >
-                {product.stockQuantity === 0 ? 'Out of Stock' : buttonText}
+                {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading[product.id] ? 'Adding...' : buttonText)}
               </Button>
+              {cartMessage[product.id] && (
+                <div className={`text-xs mt-1 ${cartMessage[product.id] === 'Added to cart!' ? 'text-green-600' : 'text-red-500'}`}>{cartMessage[product.id]}</div>
+              )}
             </div>
           </div>
         </Card>
