@@ -13,4 +13,6 @@ export const register = (data: {
 
 export const getCurrentUser = () => api.get('/auth/me');
 
-export const logout = () => api.post('/auth/logout'); 
+export const logout = () => api.post('/auth/logout');
+
+export const getProfile = () => api.get('/users/profile'); 

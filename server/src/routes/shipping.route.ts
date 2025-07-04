@@ -5,7 +5,7 @@ import { authenticate, authenticateVendor, authenticateAdmin } from '../middlewa
 const router = Router();
 
 // User shipping endpoints
-router.get('/options', authenticate, shippingController.getShippingOptions);
+router.get('/options', shippingController.getShippingOptions);
 router.post('/calculate', authenticate, shippingController.calculateShipping);
 router.get('/tracking/:trackingNumber', authenticate, shippingController.getTrackingInfo);
 router.get('/zones', shippingController.getShippingZones);

@@ -51,15 +51,15 @@ const ProductsCard = ({
     if (salePrice && salePrice < price) {
       return (
         <div className="flex items-center gap-2">
-          <span className="font-bold text-lg text-red-600">${salePrice}</span>
-          <span className="text-sm text-gray-500 line-through">${price}</span>
+          <span className="font-bold text-lg text-red-600">Rs.{salePrice}</span>
+          <span className="text-sm text-gray-500 line-through">Rs.{price}</span>
           <Badge variant="destructive" className="text-xs">
             {Math.round(((price - salePrice) / price) * 100)}% OFF
           </Badge>
         </div>
       );
     }
-    return <span className="font-bold text-lg">${price}</span>;
+    return <span className="font-bold text-lg">Rs.{price}</span>;
   };
 
   const renderRating = (rating: number, reviewCount: number) => {

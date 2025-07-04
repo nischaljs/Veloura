@@ -8,6 +8,10 @@ import RegisterForm from "./components/auth/RegisterForm";
 import LoginForm from "./components/auth/LoginForm";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import SearchResultsPage from "./pages/SearchResultsPage";
+import CartPage from './pages/CartPage';
+import OrderPage from './pages/OrderPage';
+import OrderSuccessPage from './pages/OrderSuccessPage';
+import DashboardPage from './pages/DashboardPage';
 
 const routes = [
   {
@@ -38,6 +42,26 @@ const routes = [
   {
     path: '/search',
     element: <SearchResultsPage/>,
+    children: [],
+  },
+  {
+    path: '/cart',
+    element: <CartPage/>,
+    children: [],
+  },
+  {
+    path: '/checkout',
+    element: <OrderPage/>,
+    children: [],
+  },
+  {
+    path: '/orders/success',
+    element: <OrderSuccessPage/>,
+    children: [],
+  },
+  {
+    path: '/dashboard',
+    element: <DashboardPage/>,
     children: [],
   },
 ];

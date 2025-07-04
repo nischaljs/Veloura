@@ -7,6 +7,7 @@ import { fetchCategories } from '@/services/category';
 import { fetchBrands } from '@/services/brand';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
+import { getCart } from '../services/cart';
 
 const navLinks = [
   { name: 'Home', to: '/' },
@@ -37,6 +38,7 @@ export default function Header() {
   const [search, setSearch] = useState('');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     fetchCategories(100)
@@ -47,6 +49,14 @@ export default function Header() {
       .then(data => setBrands(data.data?.brands || []))
       .catch(() => setBrandError('Failed to load brands'))
       .finally(() => setBrandLoading(false));
+    // Fetch cart count
+    getCart()
+      .then(res => {
+        const cart = res.data?.data?.cart;
+        const count = cart?.summary?.itemCount || 0;
+        setCartCount(count);
+      })
+      .catch(() => setCartCount(0));
   }, []);
 
   return (
@@ -115,8 +125,8 @@ export default function Header() {
             </Link>
             <Link to="/cart" className="relative p-2 rounded-full hover:bg-indigo-50 transition-colors">
               <ShoppingCart className="w-6 h-6 text-gray-700" />
-              {/* Cart badge placeholder */}
-              <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full px-1">2</span>
+              {/* Cart badge dynamic */}
+              <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full px-1">{cartCount}</span>
             </Link>
             {!user ? (
               <>
@@ -137,6 +147,9 @@ export default function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Account</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/account">Profile</Link>
                   </DropdownMenuItem>

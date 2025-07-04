@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import type { AllProduct, Category } from '../types';
 import ProductsCard from '../components/ProductsCard';
 import { useNavigate } from 'react-router-dom';
+import CartPage from './CartPage';
 
 function LandingPage() {
     const [products, setProducts] = useState<AllProduct[]>([]);

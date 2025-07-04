@@ -1,6 +1,7 @@
 import prisma from '../utils/prisma';
 import { Request, Response, NextFunction } from 'express';
 import { calculateShippingFee, calculateTaxAmount, calculateDiscountAmount } from '../utils/cartUtils';
+import { getImageUrl } from '../utils/imageUtils';
 
 /**
  * Get the authenticated user's cart
@@ -14,7 +15,10 @@ export const getCart = async (req: Request, res: Response, next: NextFunction) =
         items: {
           include: {
             product: {
-              include: { vendor: true }
+              include: {
+                images: true,
+                vendor: true
+              }
             },
             variant: true
           }
@@ -25,13 +29,30 @@ export const getCart = async (req: Request, res: Response, next: NextFunction) =
       res.json({ success: true, data: { cart: { items: [], summary: { subtotal: 0, shippingFee: 0, taxAmount: 0, discountAmount: 0, total: 0, itemCount: 0 } } } });
       return;
     }
-    const subtotal = cart.items.reduce((sum: number, item: any) => {
+    const items = cart.items.map((item: any) => {
+      const product = item.product;
+      const vendor = product.vendor;
+      let productImage = null;
+      if (product.images && product.images.length > 0) {
+        const primary = product.images.find((img: any) => img.isPrimary) || product.images[0];
+        productImage = getImageUrl(primary.url);
+      }
+      return {
+        ...item,
+        product: {
+          ...product,
+          productImage,
+          vendorLogo: getImageUrl(vendor?.logo || null),
+        }
+      };
+    });
+    const subtotal = items.reduce((sum: number, item: any) => {
       const price = item.variant?.priceDifference
         ? (item.product.salePrice ?? item.product.price) + item.variant.priceDifference
         : (item.product.salePrice ?? item.product.price);
       return sum + price * item.quantity;
     }, 0);
-    const itemCount = cart.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+    const itemCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
     const shippingFee = calculateShippingFee();
     const taxAmount = calculateTaxAmount(subtotal);
     const discountAmount = await calculateDiscountAmount(subtotal, (cart as any).couponCode);
@@ -40,7 +61,7 @@ export const getCart = async (req: Request, res: Response, next: NextFunction) =
       success: true,
       data: {
         cart: {
-          items: cart.items,
+          items,
           summary: {
             subtotal,
             shippingFee,

@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { getProductBySlug } from '../services/product';
 import { addToWishlist } from '../services/wishlist';
+import { addToCart } from '../services/cart';
 
 const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -13,6 +14,8 @@ const ProductDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [wishlistMessage, setWishlistMessage] = useState<string | null>(null);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [cartMessage, setCartMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -34,6 +37,20 @@ const ProductDetailPage: React.FC = () => {
       setWishlistMessage(err.response?.data?.message || 'Failed to add to wishlist');
     } finally {
       setWishlistLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    setCartLoading(true);
+    setCartMessage(null);
+    try {
+      await addToCart({ productId: product.id, quantity: 1 });
+      setCartMessage('Added to cart!');
+    } catch (err: any) {
+      setCartMessage(err.response?.data?.message || 'Failed to add to cart');
+    } finally {
+      setCartLoading(false);
     }
   };
 
@@ -84,9 +101,9 @@ const ProductDetailPage: React.FC = () => {
             {product.stockQuantity === 0 && <Badge variant="destructive">Out of Stock</Badge>}
           </div>
           <div className="text-2xl font-bold text-indigo-600">
-            ${product.salePrice && product.salePrice < product.price ? product.salePrice : product.price}
+            Rs.{product.salePrice && product.salePrice < product.price ? product.salePrice : product.price}
             {product.salePrice && product.salePrice < product.price && (
-              <span className="ml-2 text-gray-400 line-through text-lg">${product.price}</span>
+              <span className="ml-2 text-gray-400 line-through text-lg">Rs.{product.price}</span>
             )}
           </div>
           <div className="text-gray-500">SKU: {product.sku}</div>
@@ -94,8 +111,8 @@ const ProductDetailPage: React.FC = () => {
           <div className="text-gray-500">Created: {new Date(product.createdAt).toLocaleString()}</div>
           <div className="text-gray-500">Updated: {new Date(product.updatedAt).toLocaleString()}</div>
           <div className="flex gap-4 mt-4">
-            <Button disabled={product.stockQuantity === 0}>
-              {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+            <Button disabled={product.stockQuantity === 0 || cartLoading} onClick={handleAddToCart}>
+              {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading ? 'Adding...' : 'Add to Cart')}
             </Button>
             <Button variant="outline" onClick={handleAddToWishlist} disabled={wishlistLoading}>
               {wishlistLoading ? 'Adding...' : 'Add to Wishlist'}
@@ -103,6 +120,9 @@ const ProductDetailPage: React.FC = () => {
           </div>
           {wishlistMessage && (
             <div className="text-green-600 text-sm mt-1">{wishlistMessage}</div>
+          )}
+          {cartMessage && (
+            <div className={`text-sm mt-1 ${cartMessage === 'Added to cart!' ? 'text-green-600' : 'text-red-500'}`}>{cartMessage}</div>
           )}
           {/* Short Description */}
           {product.shortDescription && (

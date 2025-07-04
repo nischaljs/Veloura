@@ -393,9 +393,24 @@ async function main() {
     const iphoneVariant = await prisma.productVariant.findFirst({ where: { productId: iphone?.id } });
     const galaxyVariant = await prisma.productVariant.findFirst({ where: { productId: galaxy?.id } });
 
+    // Clean up all dependent data before seeding to avoid unique constraint errors
+    await prisma.review.deleteMany();
+    await prisma.orderItem.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.refund.deleteMany();
+    await prisma.shipment.deleteMany();
+    await prisma.cartItem.deleteMany();
+    await prisma.cart.deleteMany();
+    await prisma.wishlistItem.deleteMany();
+    await prisma.wishlist.deleteMany();
+    await prisma.notification.deleteMany();
+    await prisma.order.deleteMany();
+
     // Cart for customer1
-    const cart1 = await prisma.cart.create({
-      data: {
+    const cart1 = await prisma.cart.upsert({
+      where: { userId: customer1.id },
+      update: {},
+      create: {
         userId: customer1.id,
         items: {
           create: [
@@ -406,8 +421,10 @@ async function main() {
       }
     });
     // Cart for customer2
-    const cart2 = await prisma.cart.create({
-      data: {
+    const cart2 = await prisma.cart.upsert({
+      where: { userId: customer2.id },
+      update: {},
+      create: {
         userId: customer2.id,
         items: {
           create: [
@@ -866,6 +883,36 @@ async function main() {
       ]
     });
     console.log('Demo notifications created!');
+
+    // --- SEED PAYMENT OPTIONS & SHIPPING METHODS ---
+    console.log('Seeding payment options and shipping methods...');
+
+    // Payment options (from PaymentMethod enum)
+    const paymentOptions = [
+      { method: 'KHALTI', label: 'Khalti', description: 'Pay with Khalti wallet', enabled: true },
+      { method: 'ESEWA', label: 'eSewa', description: 'Pay with eSewa wallet', enabled: true },
+      { method: 'COD', label: 'Cash on Delivery', description: 'Pay with cash on delivery', enabled: true },
+      { method: 'CARD', label: 'Credit/Debit Card', description: 'Pay with card (coming soon)', enabled: false },
+      { method: 'WALLET', label: 'Wallet', description: 'Pay with site wallet (coming soon)', enabled: false },
+    ];
+    await prisma.systemSetting.upsert({
+      where: { key: 'payment_options' },
+      update: { value: paymentOptions },
+      create: { key: 'payment_options', value: paymentOptions, description: 'Available payment options for checkout' },
+    });
+
+    // Shipping methods
+    const shippingMethods = [
+      { id: 1, name: 'Standard Delivery', description: '3-5 business days', fee: 100, estimatedDays: '3-5' },
+      { id: 2, name: 'Express Delivery', description: '1-2 business days', fee: 200, estimatedDays: '1-2' },
+      { id: 3, name: 'Same Day Delivery', description: 'Same day delivery in Kathmandu', fee: 300, estimatedDays: '0-1' },
+    ];
+    await prisma.systemSetting.upsert({
+      where: { key: 'shipping_methods' },
+      update: { value: shippingMethods },
+      create: { key: 'shipping_methods', value: shippingMethods, description: 'Available shipping methods for checkout' },
+    });
+    console.log('Payment options and shipping methods seeded!');
 
     console.log('Seed data created successfully!');
     console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
