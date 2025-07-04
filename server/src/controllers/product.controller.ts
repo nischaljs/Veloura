@@ -130,10 +130,15 @@ export const getProductBySlug = async (req: Request, res: Response): Promise<voi
       res.status(404).json({ success: false, message: 'Product not found' });
       return;
     }
+    // Add complete URLs to all images
+    const productWithImageUrls = {
+      ...product,
+      images: addImageUrlsToArray(product.images, ['url'])
+    };
     res.json({
       success: true,
       data: {
-        product: addImageUrls(product, ['image']),
+        product: addImageUrls(productWithImageUrls, ['image']),
       }
     });
   } catch (err) {

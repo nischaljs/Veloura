@@ -36,7 +36,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    res.cookie('token', token, COOKIE_OPTIONS);
     res.status(201).json({ 
       message: 'User registered', 
       token, 
@@ -82,7 +81,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    res.cookie('token', token, COOKIE_OPTIONS);
     res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
     return;
   } catch (err) {
@@ -92,7 +90,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const logout = async (req: Request, res: Response): Promise<void> => {
-  res.clearCookie('token', COOKIE_OPTIONS);
   res.json({ message: 'Logged out' });
   return;
 };

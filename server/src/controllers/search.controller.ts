@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
+import { addImageUrlsToArray } from '../utils/imageUtils';
 
 // GET /search
 export const searchProducts = async (req: Request, res: Response) => {
@@ -14,8 +15,8 @@ export const searchProducts = async (req: Request, res: Response) => {
     // Build Prisma where clause
     const where: any = {};
     if (q) where.OR = [
-      { name: { contains: q as string, mode: 'insensitive' } },
-      { description: { contains: q as string, mode: 'insensitive' } }
+      { name: { contains: q as string } },
+      { description: { contains: q as string } }
     ];
     if (category) where.category = { slug: category };
     if (brand) where.brand = { slug: brand };
@@ -47,30 +48,34 @@ export const searchProducts = async (req: Request, res: Response) => {
           vendor: { select: { businessName: true, slug: true } },
           category: { select: { name: true, slug: true } },
           brand: { select: { name: true, slug: true } },
-          tags: true,
-          attributes: true,
+          tags: { select: { name: true } },
+          attributes: { select: { name: true, value: true } },
           images: true
         }
       }),
       prisma.product.count({ where })
     ]);
     // Format products
-    const formatted = products.map(p => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      description: p.description,
-      price: p.price,
-      salePrice: p.salePrice,
-      rating: p.rating,
-      reviewCount: p.reviewCount,
-      image: p.images?.[0]?.url || null,
-      vendor: p.vendor,
-      category: p.category,
-      brand: p.brand,
-      tags: p.tags?.map(t => t.name),
-      attributes: Object.fromEntries((p.attributes || []).map(a => [a.name, a.value]))
-    }));
+    const formatted = products.map(p => {
+      const productImages = addImageUrlsToArray(p.images, ['url']);
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        description: p.description,
+        price: p.price,
+        salePrice: p.salePrice,
+        rating: p.rating,
+        reviewCount: p.reviewCount,
+        image: productImages.length > 0 ? productImages[0] : null,
+        images: productImages,
+        vendor: p.vendor,
+        category: p.category,
+        brand: p.brand,
+        tags: p.tags,
+        attributes: p.attributes,
+      };
+    });
     // TODO: filters, suggestions
     res.json({
       success: true,
@@ -88,6 +93,7 @@ export const searchProducts = async (req: Request, res: Response) => {
       }
     });
   } catch (err) {
+    console.error('Search error:', err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };
@@ -95,8 +101,16 @@ export const searchProducts = async (req: Request, res: Response) => {
 // GET /search/suggestions
 export const getSuggestions = async (req: Request, res: Response) => {
   try {
-    // TODO: Implement real suggestions
-    res.json({ success: true, data: { suggestions: [] } });
+    const { q } = req.query;
+    if (!q) return res.json({ success: true, data: { suggestions: [] } });
+    const suggestions = await prisma.product.findMany({
+      where: {
+        name: { contains: q as string }
+      },
+      select: { name: true },
+      take: 5
+    });
+    res.json({ success: true, data: { suggestions: suggestions.map(s => s.name) } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -105,8 +119,14 @@ export const getSuggestions = async (req: Request, res: Response) => {
 // GET /search/autocomplete
 export const getAutocomplete = async (req: Request, res: Response) => {
   try {
-    // TODO: Implement real autocomplete
-    res.json({ success: true, data: { products: [], categories: [], brands: [] } });
+    const { q } = req.query;
+    if (!q) return res.json({ success: true, data: { products: [], categories: [], brands: [] } });
+    const [products, categories, brands] = await Promise.all([
+      prisma.product.findMany({ where: { name: { contains: q as string } }, select: { id: true, name: true, slug: true }, take: 5 }),
+      prisma.category.findMany({ where: { name: { contains: q as string } }, select: { id: true, name: true, slug: true }, take: 5 }),
+      prisma.brand.findMany({ where: { name: { contains: q as string } }, select: { id: true, name: true, slug: true }, take: 5 })
+    ]);
+    res.json({ success: true, data: { products, categories, brands } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -115,8 +135,25 @@ export const getAutocomplete = async (req: Request, res: Response) => {
 // GET /search/filters
 export const getFilters = async (req: Request, res: Response) => {
   try {
-    // TODO: Implement real filters
-    res.json({ success: true, data: { filters: {} } });
+    // Return all categories, brands, and price range
+    const [categories, brands, priceRange] = await Promise.all([
+      prisma.category.findMany({ select: { id: true, name: true, slug: true } }),
+      prisma.brand.findMany({ select: { id: true, name: true, slug: true } }),
+      prisma.product.aggregate({ _min: { price: true }, _max: { price: true } })
+    ]);
+    res.json({
+      success: true,
+      data: {
+        filters: {
+          categories,
+          brands,
+          priceRange: {
+            min: priceRange._min.price || 0,
+            max: priceRange._max.price || 0
+          }
+        }
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -125,8 +162,13 @@ export const getFilters = async (req: Request, res: Response) => {
 // GET /search/trending
 export const getTrending = async (req: Request, res: Response) => {
   try {
-    // TODO: Implement trending search terms
-    res.json({ success: true, data: { trending: [] } });
+    // Top 5 products with most reviews
+    const trending = await prisma.product.findMany({
+      orderBy: { reviewCount: 'desc' },
+      take: 5,
+      select: { id: true, name: true, slug: true, reviewCount: true }
+    });
+    res.json({ success: true, data: { trending } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -135,8 +177,13 @@ export const getTrending = async (req: Request, res: Response) => {
 // GET /search/popular
 export const getPopular = async (req: Request, res: Response) => {
   try {
-    // TODO: Implement popular search terms
-    res.json({ success: true, data: { popular: [] } });
+    // Top 5 products with highest rating
+    const popular = await prisma.product.findMany({
+      orderBy: { rating: 'desc' },
+      take: 5,
+      select: { id: true, name: true, slug: true, rating: true }
+    });
+    res.json({ success: true, data: { popular } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -145,7 +192,7 @@ export const getPopular = async (req: Request, res: Response) => {
 // GET /search/recent
 export const getRecent = async (req: Request, res: Response) => {
   try {
-    // TODO: Implement recent search terms for user
+    // Stub: would require user search history
     res.json({ success: true, data: { recent: [] } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
@@ -155,7 +202,7 @@ export const getRecent = async (req: Request, res: Response) => {
 // POST /search/log
 export const logSearch = async (req: Request, res: Response) => {
   try {
-    // TODO: Implement search logging
+    // Stub: would require user search logging
     res.json({ success: true, message: 'Search logged successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
