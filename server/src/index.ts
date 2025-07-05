@@ -51,7 +51,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
-app.use('/vendors', vendorRoutes);
+app.use('/api/vendors', vendorRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
 

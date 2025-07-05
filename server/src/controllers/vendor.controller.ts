@@ -33,7 +33,7 @@ export const registerVendor = async (req: Request, res: Response) => {
 export const getVendorProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     res.json({ success: true, data: { vendor } });
   } catch (err) {
@@ -82,7 +82,7 @@ export const uploadBanner = async (req: Request, res: Response) => {
 export const getPublicVendorProfile = async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    const vendor = await prisma.vendor.findUnique({ where: { slug } });
+    const vendor = await prisma.vendor.findFirst({ where: { slug } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     res.json({ success: true, data: { vendor } });
   } catch (err) {
@@ -97,7 +97,7 @@ export const getVendorProducts = async (req: Request, res: Response) => {
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
-    const vendor = await prisma.vendor.findUnique({ where: { slug } });
+    const vendor = await prisma.vendor.findFirst({ where: { slug } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const where: any = { vendorId: vendor.id };
     if (category) where.category = { slug: category };
@@ -135,7 +135,7 @@ export const getVendorReviews = async (req: Request, res: Response) => {
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
-    const vendor = await prisma.vendor.findUnique({ where: { slug } });
+    const vendor = await prisma.vendor.findFirst({ where: { slug } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const where: any = { vendorId: vendor.id };
     if (rating) where.rating = parseInt(rating as string);
@@ -173,7 +173,7 @@ export const getVendorReviews = async (req: Request, res: Response) => {
 export const getBankDetails = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const bankDetails = await prisma.bankDetail.findMany({ where: { vendorId: vendor.id } });
     res.json({ success: true, data: { bankDetails } });
@@ -184,7 +184,7 @@ export const getBankDetails = async (req: Request, res: Response) => {
 export const addBankDetail = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const data = { ...req.body, vendorId: vendor.id };
     const bankDetail = await prisma.bankDetail.create({ data });
@@ -197,7 +197,7 @@ export const updateBankDetail = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const bankDetail = await prisma.bankDetail.update({ where: { id }, data: req.body });
     res.json({ success: true, message: 'Bank details updated successfully', data: { bankDetail } });
@@ -209,7 +209,7 @@ export const deleteBankDetail = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     await prisma.bankDetail.delete({ where: { id } });
     res.json({ success: true, message: 'Bank details deleted successfully' });
@@ -222,7 +222,7 @@ export const deleteBankDetail = async (req: Request, res: Response) => {
 export const getPolicies = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const policies = await prisma.vendorPolicy.findMany({ where: { vendorId: vendor.id } });
     res.json({ success: true, data: { policies } });
@@ -233,7 +233,7 @@ export const getPolicies = async (req: Request, res: Response) => {
 export const addPolicy = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const data = { ...req.body, vendorId: vendor.id };
     const policy = await prisma.vendorPolicy.create({ data });
@@ -246,7 +246,7 @@ export const updatePolicy = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const policy = await prisma.vendorPolicy.update({ where: { id }, data: req.body });
     res.json({ success: true, message: 'Policy updated successfully', data: { policy } });
@@ -258,7 +258,7 @@ export const deletePolicy = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     await prisma.vendorPolicy.delete({ where: { id } });
     res.json({ success: true, message: 'Policy deleted successfully' });
@@ -271,8 +271,19 @@ export const deletePolicy = async (req: Request, res: Response) => {
 export const getVendorAnalytics = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findUnique({ where: { userId } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
+    console.log('🔍 getVendorAnalytics - userId:', userId, 'type:', typeof userId);
+    
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
+    console.log('🔍 getVendorAnalytics - vendor lookup result:', vendor);
+    
+    if (!vendor) { 
+      console.log('❌ Vendor not found for userId:', userId);
+      res.status(404).json({ success: false, message: 'Vendor not found' }); 
+      return; 
+    }
+    
+    console.log('✅ Vendor found:', vendor.businessName);
+    
     // Example analytics: total sales, orders, products, reviews, etc.
     const [totalSales, totalOrders, averageOrderValue, totalProducts, activeProducts, totalReviews, averageRating] = await Promise.all([
       prisma.order.aggregate({ _sum: { total: true }, where: { items: { some: { vendorId: vendor.id } } } }),
@@ -298,6 +309,109 @@ export const getVendorAnalytics = async (req: Request, res: Response) => {
         }
       }
     });
+  } catch (err) {
+    console.error('❌ getVendorAnalytics error:', err);
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+// Product Management (for logged-in vendor)
+export const getMyProducts = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
+    
+    const products = await prisma.product.findMany({
+      where: { vendorId: vendor.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        category: { select: { name: true } },
+        brand: { select: { name: true } }
+      }
+    });
+    
+    res.json({ success: true, data: { products } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+export const addProduct = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
+    
+    const { name, description, price, stockQuantity, status = 'ACTIVE' } = req.body;
+    const slug = slugify(name, { lower: true, strict: true });
+    
+    const product = await prisma.product.create({
+      data: {
+        name,
+        description,
+        price: parseFloat(price),
+        stockQuantity: parseInt(stockQuantity),
+        status,
+        slug,
+        vendorId: vendor.id
+      }
+    });
+    
+    res.json({ success: true, message: 'Product added successfully', data: { product } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const productId = parseInt(req.params.id);
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
+    
+    // Check if product belongs to this vendor
+    const existingProduct = await prisma.product.findFirst({
+      where: { id: productId, vendorId: vendor.id }
+    });
+    if (!existingProduct) { res.status(404).json({ success: false, message: 'Product not found' }); return; }
+    
+    const { name, description, price, stockQuantity, status } = req.body;
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (price) updateData.price = parseFloat(price);
+    if (stockQuantity !== undefined) updateData.stockQuantity = parseInt(stockQuantity);
+    if (status) updateData.status = status;
+    
+    const product = await prisma.product.update({
+      where: { id: productId },
+      data: updateData
+    });
+    
+    res.json({ success: true, message: 'Product updated successfully', data: { product } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const productId = parseInt(req.params.id);
+    const vendor = await prisma.vendor.findFirst({ where: { userId } });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
+    
+    // Check if product belongs to this vendor
+    const existingProduct = await prisma.product.findFirst({
+      where: { id: productId, vendorId: vendor.id }
+    });
+    if (!existingProduct) { res.status(404).json({ success: false, message: 'Product not found' }); return; }
+    
+    await prisma.product.delete({ where: { id: productId } });
+    
+    res.json({ success: true, message: 'Product deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }

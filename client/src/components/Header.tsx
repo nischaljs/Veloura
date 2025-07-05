@@ -36,7 +36,7 @@ export default function Header() {
   const [catError, setCatError] = useState('');
   const [brandError, setBrandError] = useState('');
   const [search, setSearch] = useState('');
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
 
@@ -148,7 +148,9 @@ export default function Header() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Account</DropdownMenuLabel>
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard">Dashboard</Link>
+                    <Link to={user?.role === 'ADMIN' ? '/admin/dashboard' : user?.role === 'VENDOR' ? '/vendor/dashboard' : '/dashboard'}>
+                      Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/account">Profile</Link>
@@ -156,8 +158,13 @@ export default function Header() {
                   <DropdownMenuItem asChild>
                     <Link to="/orders">Orders</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/logout">Logout</Link>
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await logout();
+                      navigate('/login');
+                    }}
+                  >
+                    Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

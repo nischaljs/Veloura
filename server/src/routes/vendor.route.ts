@@ -32,4 +32,10 @@ router.delete('/policies/:id', authenticateVendor, vendorController.deletePolicy
 // Analytics
 router.get('/analytics', authenticateVendor, vendorController.getVendorAnalytics);
 
+// Product Management (for logged-in vendor)
+router.get('/products', authenticateVendor, vendorController.getMyProducts);
+router.post('/products', authenticateVendor, vendorController.addProduct);
+router.put('/products/:id', authenticateVendor, vendorController.updateProduct);
+router.delete('/products/:id', authenticateVendor, vendorController.deleteProduct);
+
 export default router; 

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
@@ -31,7 +31,7 @@ const LoginForm: React.FC = () => {
           navigate('/dashboard/customer');
           break;
         case 'VENDOR':
-          navigate('/dashboard/vendor');
+          navigate('/vendor/dashboard');
           break;
         case 'ADMIN':
           navigate('/dashboard/admin');
