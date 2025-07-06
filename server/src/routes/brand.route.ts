@@ -22,6 +22,7 @@ const router = Router();
 router.get('/', getAllBrands);
 router.get('/featured', getFeaturedBrands);
 router.get('/search', searchBrands);
+router.get('/analytics', authenticate, getBrandAnalytics);
 router.get('/:slug', getBrandBySlug);
 router.get('/:slug/products', getBrandProducts);
 
@@ -36,6 +37,5 @@ router.delete('/:id/logo', authenticate, removeBrandLogo);
 
 // Admin-only routes
 router.put('/featured-order', authenticate, updateFeaturedOrder);
-router.get('/analytics', authenticate, getBrandAnalytics);
 
 export default router; 

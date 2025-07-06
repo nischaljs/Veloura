@@ -129,3 +129,5 @@ homepage.webp
 
 test/
 jwt.md
+server/prisma/.migrated
+server/prisma/.seeded

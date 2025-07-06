@@ -27,6 +27,7 @@ router.get('/', getAllProducts);
 router.get('/featured', getFeaturedProducts);
 router.get('/trending', getTrendingProducts);
 router.get('/similar/:productId', getSimilarProducts);
+router.get('/:id/analytics', authenticateVendor, getProductAnalytics);
 router.get('/:slug', getProductBySlug);
 
 // Vendor-only routes
@@ -43,6 +44,5 @@ router.put('/:id/variants/:variantId', authenticateVendor, updateProductVariant)
 router.delete('/:id/variants/:variantId', authenticateVendor, deleteProductVariant);
 
 router.post('/:id/stock', authenticateVendor, updateProductStock);
-router.get('/:id/analytics', authenticateVendor, getProductAnalytics);
 
 export default router; 

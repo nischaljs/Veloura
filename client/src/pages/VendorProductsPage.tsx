@@ -196,7 +196,7 @@ const VendorProductsPage: React.FC = () => {
         </Card>
         {/* Add/Edit Product Dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Edit Product' : 'Add Product'}</DialogTitle>
             </DialogHeader>

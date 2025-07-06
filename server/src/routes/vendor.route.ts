@@ -12,6 +12,15 @@ router.put('/profile', authenticateVendor, vendorController.updateVendorProfile)
 router.post('/logo', authenticateVendor, upload.single('logo'), handleUploadError, vendorController.uploadLogo);
 router.post('/banner', authenticateVendor, upload.single('banner'), handleUploadError, vendorController.uploadBanner);
 
+// Analytics
+router.get('/analytics', (req, res, next) => { console.log('=== /api/vendors/analytics route hit ==='); next(); }, authenticateVendor, vendorController.getVendorAnalytics);
+
+// Product Management (for logged-in vendor)
+router.get('/products', authenticateVendor, vendorController.getMyProducts);
+router.post('/products', authenticateVendor, vendorController.addProduct);
+router.put('/products/:id', authenticateVendor, vendorController.updateProduct);
+router.delete('/products/:id', authenticateVendor, vendorController.deleteProduct);
+
 // Public vendor profile and data
 router.get('/:slug', vendorController.getPublicVendorProfile);
 router.get('/:slug/products', vendorController.getVendorProducts);
@@ -28,14 +37,5 @@ router.get('/policies', authenticateVendor, vendorController.getPolicies);
 router.post('/policies', authenticateVendor, vendorController.addPolicy);
 router.put('/policies/:id', authenticateVendor, vendorController.updatePolicy);
 router.delete('/policies/:id', authenticateVendor, vendorController.deletePolicy);
-
-// Analytics
-router.get('/analytics', authenticateVendor, vendorController.getVendorAnalytics);
-
-// Product Management (for logged-in vendor)
-router.get('/products', authenticateVendor, vendorController.getMyProducts);
-router.post('/products', authenticateVendor, vendorController.addProduct);
-router.put('/products/:id', authenticateVendor, vendorController.updateProduct);
-router.delete('/products/:id', authenticateVendor, vendorController.deleteProduct);
 
 export default router; 
