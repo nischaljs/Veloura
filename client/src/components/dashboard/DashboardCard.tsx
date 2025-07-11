@@ -1,7 +1,16 @@
- 
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { DashboardCardProps } from '../../types';
+
+interface DashboardCardProps {
+  title: string;
+  value: string | number;
+  description?: string;
+  icon?: React.ReactNode;
+  trend?: { isPositive: boolean; value: number };
+  className?: string;
+  isCurrency?: boolean;
+}
 
 const DashboardCard: React.FC<DashboardCardProps> = ({
   title,
@@ -9,16 +18,20 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   description,
   icon,
   trend,
-  className = ''
+  className = '',
+  isCurrency = false
 }) => {
   const formatValue = (val: string | number) => {
     if (typeof val === 'number') {
-      if (val >= 1000000) {
-        return `Rs.${(val / 1000000).toFixed(1)}M`;
-      } else if (val >= 1000) {
-        return `Rs.${(val / 1000).toFixed(1)}K`;
+      if (isCurrency) {
+        if (val >= 1000000) {
+          return `Rs.${(val / 1000000).toFixed(1)}M`;
+        } else if (val >= 1000) {
+          return `Rs.${(val / 1000).toFixed(1)}K`;
+        }
+        return `Rs.${val.toLocaleString()}`;
       }
-      return `Rs.${val.toLocaleString()}`;
+      return val;
     }
     return val;
   };

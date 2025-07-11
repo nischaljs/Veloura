@@ -165,7 +165,7 @@ const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           <Button asChild className="h-20 flex-col gap-2">
             <Link to="/admin/users">
               <div className="text-2xl">👥</div>
@@ -179,9 +179,27 @@ const AdminDashboardPage: React.FC = () => {
             </Link>
           </Button>
           <Button asChild className="h-20 flex-col gap-2">
+            <Link to="/admin/products">
+              <div className="text-2xl">📦</div>
+              <span>Manage Products</span>
+            </Link>
+          </Button>
+          <Button asChild className="h-20 flex-col gap-2">
+            <Link to="/admin/settings">
+              <div className="text-2xl">⚙️</div>
+              <span>System Settings</span>
+            </Link>
+          </Button>
+          <Button asChild className="h-20 flex-col gap-2">
             <Link to="/admin/analytics">
               <div className="text-2xl">📈</div>
               <span>View Analytics</span>
+            </Link>
+          </Button>
+          <Button asChild className="h-20 flex-col gap-2">
+            <Link to="/admin/activities">
+              <div className="text-2xl">📋</div>
+              <span>Activity Logs</span>
             </Link>
           </Button>
         </div>

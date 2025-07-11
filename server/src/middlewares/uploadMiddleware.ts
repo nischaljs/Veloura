@@ -8,7 +8,8 @@ const ensureUploadDirs = () => {
     'public/images/brands',
     'public/images/categories',
     'public/images/products',
-    'public/images/users'
+    'public/images/users',
+    'public/images/banners'
   ];
   
   dirs.forEach(dir => {
@@ -26,8 +27,10 @@ const storage = multer.diskStorage({
     // Determine destination based on route
     let uploadPath = 'public/images/';
     
-    if (req.route?.path?.includes('/brands/')) {
+    if (req.route?.path === '/logo') {
       uploadPath += 'brands/';
+    } else if (req.route?.path === '/banner') {
+      uploadPath += 'banners/';
     } else if (req.route?.path?.includes('/categories/')) {
       uploadPath += 'categories/';
     } else if (req.route?.path?.includes('/products/')) {
@@ -71,10 +74,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 1 // Only allow 1 file per request
-  }
+
 });
 
 // Error handling middleware

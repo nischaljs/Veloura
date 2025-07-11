@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import slugify from 'slugify';
 import path from 'path';
+import { addImageUrls } from '../utils/imageUtils';
 
 // Register as vendor
 export const registerVendor = async (req: Request, res: Response) => {
@@ -33,9 +34,10 @@ export const registerVendor = async (req: Request, res: Response) => {
 export const getVendorProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    res.json({ success: true, data: { vendor } });
+    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) }, include: { products: true } });
+    if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+    const vendorWithUrls = addImageUrls(vendor, ['logo', 'banner']);
+    res.json({ success: true, data: { vendor: vendorWithUrls } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -71,7 +73,7 @@ export const uploadBanner = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     if (!req.file) { res.status(400).json({ success: false, message: 'No file uploaded' }); return; }
-    const bannerPath = '/images/brands/' + path.basename(req.file.path);
+    const bannerPath = '/images/banners/' + path.basename(req.file.path);
     const vendor = await prisma.vendor.update({ where: { userId: Number(userId) }, data: { banner: bannerPath } });
     res.json({ success: true, message: 'Banner uploaded successfully', data: { banner: bannerPath } });
   } catch (err) {
@@ -82,9 +84,10 @@ export const uploadBanner = async (req: Request, res: Response) => {
 export const getPublicVendorProfile = async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    const vendor = await prisma.vendor.findFirst({ where: { slug } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    res.json({ success: true, data: { vendor } });
+    const vendor = await prisma.vendor.findUnique({ where: { slug } });
+    if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+    const vendorWithUrls = addImageUrls(vendor, ['logo', 'banner']);
+    res.json({ success: true, data: { vendor: vendorWithUrls } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -173,23 +176,26 @@ export const getVendorReviews = async (req: Request, res: Response) => {
 export const getBankDetails = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const bankDetails = await prisma.bankDetail.findMany({ where: { vendorId: vendor.id } });
-    res.json({ success: true, data: { bankDetails } });
+    console.log(`DEBUG: getBankDetails hit for userId: ${userId}`);
+    res.json({ success: true, message: 'DEBUG: Bank details endpoint hit' });
   } catch (err) {
+    console.error('❌ getBankDetails error:', err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };
 export const addBankDetail = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
+    console.log(`Attempting to add bank detail for userId: ${userId}`);
     const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
+    if (!vendor) { 
+      console.log(`Vendor not found for userId: ${userId}`);
+      res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const data = { ...req.body, vendorId: vendor.id };
     const bankDetail = await prisma.bankDetail.create({ data });
     res.json({ success: true, message: 'Bank details added successfully', data: { bankDetail } });
   } catch (err) {
+    console.error('❌ addBankDetail error:', err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };
@@ -269,18 +275,13 @@ export const deletePolicy = async (req: Request, res: Response) => {
 
 // Analytics
 export const getVendorAnalytics = async (req: Request, res: Response) => {
-  console.log('=== getVendorAnalytics called ===');
   try {
     const userId = (req as any).userId;
-    console.log('🔍 getVendorAnalytics - userId:', userId, 'type:', typeof userId);
     const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    console.log('🔍 getVendorAnalytics - vendor lookup result:', vendor);
     if (!vendor) { 
-      console.log('❌ Vendor not found for userId:', userId);
       res.status(404).json({ success: false, message: 'Vendor not found' }); 
       return; 
     }
-    console.log('✅ Vendor found:', vendor.businessName);
     // Example analytics: total sales, orders, products, reviews, etc.
     const [totalSales, totalOrders, averageOrderValue, totalProducts, activeProducts, totalReviews, averageRating] = await Promise.all([
       prisma.order.aggregate({ _sum: { total: true }, where: { items: { some: { vendorId: vendor.id } } } }),
@@ -324,11 +325,19 @@ export const getMyProducts = async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
       include: {
         category: { select: { name: true } },
-        brand: { select: { name: true } }
+        brand: { select: { name: true } },
+        images: { select: { url: true, altText: true, isPrimary: true, order: true } },
+        tags: { select: { name: true } },
+        attributes: { select: { name: true, value: true } },
       }
     });
+
+    const productsWithUrls = products.map(product => {
+      const productImagesWithUrls = product.images.map(image => addImageUrls(image, ['url']));
+      return { ...product, images: productImagesWithUrls };
+    });
     
-    res.json({ success: true, data: { products } });
+    res.json({ success: true, data: { products: productsWithUrls } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -340,23 +349,60 @@ export const addProduct = async (req: Request, res: Response) => {
     const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     
-    const { name, description, price, stockQuantity, status = 'ACTIVE' } = req.body;
+    const { 
+      name, description, shortDescription, price, salePrice, costPrice, sku, 
+      stockQuantity, status = 'ACTIVE', isFeatured = false, hasVariants = false, 
+      categoryId, brandId, weight, length, width, height,
+      images = [], // Default to empty array
+      tags = [],   // Default to empty array
+      attributes = [] // Default to empty array
+    } = req.body;
     const slug = slugify(name, { lower: true, strict: true });
     
     const product = await prisma.product.create({
       data: {
         name,
         description,
+        shortDescription,
         price: parseFloat(price),
+        salePrice: salePrice !== '' ? parseFloat(salePrice) : undefined,
+        costPrice: costPrice !== '' ? parseFloat(costPrice) : undefined,
+        sku,
         stockQuantity: parseInt(stockQuantity),
         status,
+        isFeatured,
+        hasVariants,
+        weight: weight !== '' ? parseFloat(weight) : undefined,
+        length: length !== '' ? parseFloat(length) : undefined,
+        width: width !== '' ? parseFloat(width) : undefined,
+        height: height !== '' ? parseFloat(height) : undefined,
         slug,
-        vendorId: vendor.id
+        vendorId: vendor.id,
+        categoryId: parseInt(categoryId),
+        brandId: brandId !== '' ? parseInt(brandId) : undefined,
+        images: {
+          create: images.map((image: { url: string; altText?: string; isPrimary?: boolean; order?: number; }) => ({
+            url: image.url.replace(/^(http|https):\/\/[^\/]+\/images\//, '/images/'), // Strip base URL
+            altText: image.altText,
+            isPrimary: image.isPrimary,
+            order: image.order
+          }))
+        },
+        tags: {
+          create: tags.map((tag: string) => ({ name: tag }))
+        },
+        attributes: {
+          create: attributes.map((attr: { name: string; value: string; }) => ({
+            name: attr.name,
+            value: attr.value
+          }))
+        }
       }
     });
     
     res.json({ success: true, message: 'Product added successfully', data: { product } });
-  } catch (err) {
+  } catch (err: any) {
+    console.error('❌ addProduct error:', err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };
@@ -388,7 +434,8 @@ export const updateProduct = async (req: Request, res: Response) => {
     });
     
     res.json({ success: true, message: 'Product updated successfully', data: { product } });
-  } catch (err) {
+  } catch (err: any) {
+    console.error('❌ updateProduct error:', err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };
@@ -397,19 +444,33 @@ export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const productId = parseInt(req.params.id);
+    console.log(`Attempting to delete product ${productId} for user ${userId}`);
+
     const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    
+    if (!vendor) { 
+      console.log(`Vendor not found for userId: ${userId}`);
+      res.status(404).json({ success: false, message: 'Vendor not found' }); 
+      return; 
+    }
+    console.log(`Vendor found: ${vendor.id}`);
+
     // Check if product belongs to this vendor
     const existingProduct = await prisma.product.findFirst({
       where: { id: productId, vendorId: vendor.id }
     });
-    if (!existingProduct) { res.status(404).json({ success: false, message: 'Product not found' }); return; }
+    if (!existingProduct) { 
+      console.log(`Product ${productId} not found or does not belong to vendor ${vendor.id}`);
+      res.status(404).json({ success: false, message: 'Product not found' }); 
+      return; 
+    }
+    console.log(`Existing product found: ${existingProduct.id}`);
     
     await prisma.product.delete({ where: { id: productId } });
+    console.log(`Product ${productId} deleted successfully.`);
     
     res.json({ success: true, message: 'Product deleted successfully' });
-  } catch (err) {
+  } catch (err: any) {
+    console.error('❌ deleteProduct error:', err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
-}; 
+};

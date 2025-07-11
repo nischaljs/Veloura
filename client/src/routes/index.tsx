@@ -17,6 +17,19 @@ import VendorPoliciesPage from '../pages/VendorPoliciesPage';
 import VendorAnalyticsPage from '../pages/VendorAnalyticsPage';
 import VendorProductsPage from '../pages/VendorProductsPage';
 import VendorRegistrationPage from '../pages/VendorRegistrationPage';
+import VendorOrderDetailPage from '../pages/VendorOrderDetailPage';
+import VendorReviewsPage from '../pages/VendorReviewsPage';
+import AdminUsersPage from '../pages/AdminUsersPage';
+import AdminVendorsPage from '../pages/AdminVendorsPage';
+import AdminProductsPage from '../pages/AdminProductsPage';
+import AdminSettingsPage from '../pages/AdminSettingsPage';
+import AdminAnalyticsPage from '../pages/AdminAnalyticsPage';
+
+import TestPage from '../pages/TestPage';
+import AdminOrdersPage from '../pages/AdminOrdersPage';
+import AdminCategoriesPage from '../pages/AdminCategoriesPage';
+import AdminBrandsPage from '../pages/AdminBrandsPage';
+import AdminCouponsPage from '../pages/AdminCouponsPage';
 
 const routes = [
   {
@@ -64,12 +77,53 @@ const routes = [
     element: <AdminDashboardPage/>,
   },
   {
+    path: '/admin/users',
+    element: <AdminUsersPage/>,
+  },
+  {
+    path: '/admin/vendors',
+    element: <AdminVendorsPage/>,
+  },
+  {
+    path: '/admin/products',
+    element: <AdminProductsPage/>,
+  },
+  {
+    path: '/admin/settings',
+    element: <AdminSettingsPage/>,
+  },
+  {
+    path: '/admin/analytics',
+    element: <AdminAnalyticsPage/>,
+  },
+  
+  {
+    path: '/admin/orders',
+    element: <AdminOrdersPage/>,
+  },
+  {
+    path: '/admin/categories',
+    element: <AdminCategoriesPage/>,
+  },
+  {
+    path: '/admin/brands',
+    element: <AdminBrandsPage/>,
+  },
+  {
+    path: '/admin/coupons',
+    element: <AdminCouponsPage/>,
+  },
+  {
     path: '/vendor/dashboard',
     element: <VendorDashboardPage/>,
   },
   {
     path: '/orders',
     element: <OrdersPage/>,
+  },
+  {
+    path: '/vendor/orders/:id',
+    element: <VendorOrderDetailPage />,
   },
   {
     path: '/vendor/profile',
@@ -95,6 +149,19 @@ const routes = [
     path: '/vendor/register',
     element: <VendorRegistrationPage />,
   },
+  {
+    path: '/vendor/orders',
+    element: <OrdersPage />,
+  },
+  {
+    path: '/vendor/reviews',
+    element: <VendorReviewsPage />,
+  },
+  {
+    path: '/test',
+    element: <TestPage />,
+  }
 ];
 
-export default routes; 
+export default routes;
+ 

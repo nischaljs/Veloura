@@ -54,6 +54,57 @@ export const updateProductStatus = (id: number, status: string) => api.put(`/adm
 
 export const deleteProduct = (id: number) => api.delete(`/admin/products/${id}`);
 
+// Order Management
+export const getOrders = (params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  paymentStatus?: string;
+  vendor?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) => api.get('/admin/orders', { params });
+
+export const updateOrderStatus = (id: number, status: string) => api.put(`/admin/orders/${id}/status`, { status });
+
+// Category Management
+export const getCategories = (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) => api.get('/admin/categories', { params });
+
+export const createCategory = (data: { name: string; description?: string; parentId?: number }) => api.post('/admin/categories', data);
+
+export const updateCategory = (id: number, data: { name?: string; description?: string; parentId?: number }) => api.put(`/admin/categories/${id}`, data);
+
+export const deleteCategory = (id: number) => api.delete(`/admin/categories/${id}`);
+
+// Brand Management
+export const getBrands = (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) => api.get('/admin/brands', { params });
+
+export const createBrand = (data: { name: string; description?: string; website?: string; }) => api.post('/admin/brands', data);
+
+export const updateBrand = (id: number, data: { name?: string; description?: string; website?: string; }) => api.put(`/admin/brands/${id}`, data);
+
+export const deleteBrand = (id: number) => api.delete(`/admin/brands/${id}`);
+
+// Coupon Management
+export const getCoupons = (params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}) => api.get('/admin/coupons', { params });
+
+export const createCoupon = (data: any) => api.post('/admin/coupons', data);
+
+export const deleteCoupon = (id: number) => api.delete(`/admin/coupons/${id}`);
+
 // Analytics
 export const getDashboardAnalytics = () => api.get('/admin/analytics/dashboard');
 
@@ -68,12 +119,4 @@ export const getSettings = () => api.get('/admin/settings');
 
 export const updateSettings = (data: any) => api.put('/admin/settings', data);
 
-// Activity Logs
-export const getActivities = () => api.get('/admin/activities');
-
-// Backup & Export
-export const createBackup = () => api.post('/admin/backup/create');
-
-export const getBackupList = () => api.get('/admin/backup/list');
-
-export const exportUsers = () => api.post('/admin/export/users'); 
+ 

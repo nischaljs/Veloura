@@ -35,6 +35,12 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 
+// Catch-all logger for debugging
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Serve static files from public folder
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 
@@ -52,7 +58,7 @@ app.use('/api/shipping', shippingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/vendors', vendorRoutes);
-app.use('/admin', adminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {

@@ -4,11 +4,11 @@ import DashboardTable from '../components/dashboard/DashboardTable';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Eye } from 'lucide-react';
-import { getOrders } from '../services/order';
+import { getVendorOrders } from '../services/order';
 import { useNavigate } from 'react-router-dom';
 import { Order } from '../types/dashboard';
 
-const OrdersPage: React.FC = () => {
+const VendorOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +19,7 @@ const OrdersPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getOrders({ page, limit: pagination.limit });
+      const res = await getVendorOrders({ page, limit: pagination.limit });
       setOrders(res.data.data.orders);
       setPagination(res.data.data.pagination);
     } catch (err: any) {
@@ -50,11 +50,17 @@ const OrdersPage: React.FC = () => {
         {value}
       </Badge>
     )},
+    { key: 'customer', label: 'Customer', render: (value: any, row: Order) => (
+      <span className="text-sm">{row.user ? `${row.user.firstName} ${row.user.lastName}` : 'N/A'}</span>
+    )},
+    { key: 'items', label: 'Items', render: (value: any, row: Order) => (
+      <span className="text-sm">{row.items?.length || 0}</span>
+    )},
     { key: 'total', label: 'Total', render: (value: any) => (
       <span className="font-semibold text-indigo-700">Rs.{value?.toLocaleString()}</span>
     )},
     { key: 'actions', label: '', render: (value: any, row: Order) => (
-      <Button size="sm" variant="outline" onClick={() => navigate(`/orders/${row.id}`)}>
+      <Button size="sm" variant="outline" onClick={() => navigate(`/vendor/orders/${row.id}`)}>
         <Eye className="w-4 h-4 mr-1" />
         View
       </Button>
@@ -62,9 +68,9 @@ const OrdersPage: React.FC = () => {
   ];
 
   return (
-    <DashboardLayout userRole="USER">
-      <div className="max-w-5xl mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-6">My Orders</h1>
+    <DashboardLayout userRole="VENDOR">
+      <div className="w-full px-8 py-8">
+        <h1 className="text-3xl font-bold mb-6">Vendor Orders</h1>
         <DashboardTable
           title="All Orders"
           data={orders}
@@ -97,4 +103,4 @@ const OrdersPage: React.FC = () => {
   );
 };
 
-export default OrdersPage; 
+export default VendorOrdersPage; 

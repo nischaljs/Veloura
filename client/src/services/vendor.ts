@@ -64,8 +64,8 @@ export const getVendorAnalytics = () => api.get('/vendors/analytics');
 // Product Management (for logged-in vendor)
 export const getMyProducts = () => api.get('/vendors/products');
 
-export const addProduct = (data: any) => api.post('/products', data);
+export const addProduct = (data: any) => api.post('/vendors/products', data);
 
-export const updateProduct = (id: number, data: any) => api.put(`/products/${id}`, data);
+export const updateProduct = (id: number, data: any) => api.put(`/vendors/products/${id}`, data);
 
-export const deleteProduct = (id: number) => api.delete(`/products/${id}`); 
+export const deleteProduct = (id: number) => api.delete(`/vendors/products/${id}`); 

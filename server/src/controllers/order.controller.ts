@@ -230,7 +230,7 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
   } catch (err) {
     next(err);
   }
-};
+  };
 
 /**
  * Vendor: Get vendor's orders (paginated)
@@ -248,7 +248,7 @@ export const getVendorOrders = async (req: Request, res: Response, next: NextFun
         skip: Number(skip),
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
-        include: { items: true }
+        include: { items: true, user: { select: { firstName: true, lastName: true } } }
       }),
       prisma.order.count({ where })
     ]);
@@ -289,6 +289,49 @@ export const updateVendorOrderStatus = async (req: Request, res: Response, next:
     // Remove per-item status update since OrderItem has no status field
     // await prisma.orderItem.updateMany({ where: { orderId: order.id, vendorId }, data: { status } });
     res.json({ success: true, message: 'Order item status update skipped (no per-item status field)' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Vendor: Get single order details for a vendor
+ */
+export const getVendorOrderDetails = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const vendorId = (req as any).vendorId;
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({
+      where: { id: Number(id), items: { some: { vendorId } } },
+      include: {
+        items: {
+          include: {
+            product: true, // Include product details for each item
+          },
+        },
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Check if any item in the order belongs to the authenticated vendor
+    // const isVendorOrder = order.items.some(item => item.vendorId === vendorId);
+
+    // if (!isVendorOrder) {
+    //   return res.status(403).json({ success: false, message: 'Access denied: Order does not belong to this vendor' });
+    // }
+
+    res.json({ success: true, data: { order } });
   } catch (err) {
     next(err);
   }
@@ -403,4 +446,4 @@ export const getAdminOrderAnalytics = async (req: Request, res: Response, next: 
   } catch (err) {
     next(err);
   }
-}; 
+};

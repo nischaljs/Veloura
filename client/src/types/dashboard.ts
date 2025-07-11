@@ -74,9 +74,8 @@ export interface BankDetail {
   vendorId: number;
   bankName: string;
   accountNumber: string;
-  accountHolderName: string;
-  ifscCode?: string;
-  branchName?: string;
+  accountName: string;
+  branch?: string;
 }
 
 export interface VendorPolicy {
@@ -94,6 +93,11 @@ export interface Order {
   total: number;
   createdAt: string;
   items?: OrderItem[];
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
 export interface OrderItem {

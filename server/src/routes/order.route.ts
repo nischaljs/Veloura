@@ -16,6 +16,7 @@ router.get('/invoice/:id', authenticate, orderController.getOrderInvoice);
 // Vendor Order Routes
 router.get('/vendors/orders', authenticateVendor, orderController.getVendorOrders);
 router.put('/vendors/orders/:id/status', authenticateVendor, orderController.updateVendorOrderStatus);
+router.get('/vendors/orders/:id', authenticateVendor, orderController.getVendorOrderDetails);
 router.get('/vendors/orders/analytics', authenticateVendor, orderController.getVendorOrderAnalytics);
 
 // Admin Order Routes

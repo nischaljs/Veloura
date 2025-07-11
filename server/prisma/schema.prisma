@@ -228,7 +228,7 @@ model ProductTag {
   name      String
   createdAt DateTime @default(now())
 
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ProductImage {
@@ -240,7 +240,7 @@ model ProductImage {
   order     Int      @default(0)
   createdAt DateTime @default(now())
 
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ProductVariant {
@@ -255,7 +255,7 @@ model ProductVariant {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  product    Product     @relation(fields: [productId], references: [id])
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
   cartItems  CartItem[]
 }
@@ -267,7 +267,7 @@ model ProductAttribute {
   value     String // e.g., "Cotton", "Machine wash cold"
   createdAt DateTime @default(now())
 
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Order {
@@ -314,7 +314,7 @@ model OrderItem {
   createdAt       DateTime @default(now())
 
   order   Order           @relation(fields: [orderId], references: [id])
-  product Product         @relation(fields: [productId], references: [id])
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   vendor  Vendor          @relation(fields: [vendorId], references: [id])
   variant ProductVariant? @relation(fields: [variantId], references: [id])
   reviews Review[]
@@ -378,7 +378,7 @@ model Review {
   updatedAt   DateTime @updatedAt
 
   user      User      @relation(fields: [userId], references: [id])
-  product   Product   @relation(fields: [productId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   orderItem OrderItem @relation(fields: [orderItemId], references: [id])
 }
 
@@ -535,7 +535,7 @@ model CartItem {
   updatedAt DateTime @updatedAt
 
   cart      Cart     @relation(fields: [cartId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
@@ -556,5 +556,5 @@ model WishlistItem {
   addedAt    DateTime @default(now())
 
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id])
-  product    Product  @relation(fields: [productId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -44,6 +44,12 @@ const VendorProductsPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [attributes, setAttributes] = useState<{ name: string; value: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -90,9 +96,10 @@ const VendorProductsPage: React.FC = () => {
       length: product.length,
       width: product.width,
       height: product.height,
-      images: product.images,
-      // Add more fields as needed
     });
+    setImagePreviews(product.images?.map(img => img.url) || []);
+    setTags(product.tags?.map(tag => tag.name) || []);
+    setAttributes(product.attributes?.map(attr => ({ name: attr.name, value: attr.value })) || []);
     setEditingId(product.id);
     setOpen(true);
   };
@@ -113,19 +120,64 @@ const VendorProductsPage: React.FC = () => {
     setForm((prev: any) => ({ ...prev, [name]: value }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setImages(files);
+    setImagePreviews(files.map(file => URL.createObjectURL(file)));
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
+
+  const handleAttributeChange = (idx: number, field: 'name' | 'value', value: string) => {
+    setAttributes(attrs => attrs.map((attr, i) => i === idx ? { ...attr, [field]: value } : attr));
+  };
+
+  const handleAddAttribute = () => {
+    setAttributes(attrs => [...attrs, { name: '', value: '' }]);
+  };
+
+  const handleRemoveAttribute = (idx: number) => {
+    setAttributes(attrs => attrs.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
+      let productRes;
       if (editingId) {
-        await updateProduct(editingId, form);
+        productRes = await updateProduct(editingId, { ...form, tags, attributes });
         toast.success('Product updated');
       } else {
-        await addProduct(form);
+        productRes = await addProduct({ ...form, tags, attributes });
         toast.success('Product added');
+      }
+      const productId = editingId || productRes.data.data.product.id;
+      // Upload images if any
+      if (images.length > 0) {
+        const formData = new FormData();
+        images.forEach(img => formData.append('images', img));
+        await fetch(`/api/products/${productId}/images`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          body: formData,
+        });
       }
       setOpen(false);
       fetchProducts();
+      setImages([]);
+      setImagePreviews([]);
+      setTags([]);
+      setAttributes([]);
     } catch {
       toast.error('Failed to save product');
     } finally {
@@ -146,50 +198,78 @@ const VendorProductsPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div>Loading...</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="w-full h-48 bg-gray-200 rounded-t-lg"></div>
+                    <CardHeader>
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             ) : error ? (
               <div className="text-red-500">{error}</div>
             ) : products.length === 0 ? (
-              <div>No products found.</div>
+              <div className="text-center py-8">
+                <p className="text-lg text-gray-600">No products found.</p>
+                <p className="text-sm text-gray-500">Click "Add Product" to get started!</p>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-2 px-4 text-left">Name</th>
-                      <th className="py-2 px-4 text-left">Price</th>
-                      <th className="py-2 px-4 text-left">Stock</th>
-                      <th className="py-2 px-4 text-left">Status</th>
-                      <th className="py-2 px-4 text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((product) => (
-                      <tr key={product.id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-4 font-medium">{product.name}</td>
-                        <td className="py-2 px-4">Rs.{product.price}</td>
-                        <td className="py-2 px-4">{product.stockQuantity}</td>
-                        <td className="py-2 px-4">
-                          <Badge variant={product.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                            {product.status}
-                          </Badge>
-                        </td>
-                        <td className="py-2 px-4 flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleOpenEdit(product)}>
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDelete(product.id)}>
-                            Delete
-                          </Button>
-                          {/* Placeholder for variant management */}
-                          <Button size="sm" variant="secondary" disabled>
-                            Variants
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <Card key={product.id} className="flex flex-col">
+                    <div className="relative w-full h-48 bg-gray-100 rounded-t-lg overflow-hidden">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0].url}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-6xl">📦</div>
+                      )}
+                      <Badge
+                        variant={product.status === 'ACTIVE' ? 'default' : 'secondary'}
+                        className="absolute top-2 left-2"
+                      >
+                        {product.status}
+                      </Badge>
+                    </div>
+                    <CardHeader className="flex-grow">
+                      <CardTitle className="text-lg">{product.name}</CardTitle>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {product.shortDescription || product.description}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold">Rs.{product.price}</span>
+                        <span className="text-sm text-gray-500">Stock: {product.stockQuantity}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Category: {product.category?.name || 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Brand: {product.brand?.name || 'N/A'}
+                      </div>
+                      <div className="flex gap-2 pt-4">
+                        <Button size="sm" variant="outline" onClick={() => handleOpenEdit(product)} className="flex-1">
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDelete(product.id)} className="flex-1">
+                          Delete
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </CardContent>
@@ -290,27 +370,63 @@ const VendorProductsPage: React.FC = () => {
                   <Input name="height" type="number" value={form.height} onChange={handleChange} />
                 </div>
               </div>
-              {/* Image upload UI (multiple, with primary selection) */}
+              {/* Images */}
               <div>
                 <label className="block mb-1 font-medium">Images</label>
-                {/* TODO: Implement image upload and preview UI here */}
-                <div className="border rounded p-2 bg-gray-50 text-gray-500">Image upload coming soon</div>
+                <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageChange} className="mb-2" />
+                <div className="flex gap-2 flex-wrap">
+                  {imagePreviews.map((src, i) => (
+                    <img key={i} src={src} alt="preview" className="w-20 h-20 object-cover rounded border" />
+                  ))}
+                </div>
               </div>
-              {/* Tags, Attributes, Variants management UI placeholders */}
+              {/* Tags */}
               <div>
                 <label className="block mb-1 font-medium">Tags</label>
-                <div className="border rounded p-2 bg-gray-50 text-gray-500">Tags management coming soon</div>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+                    className="border rounded px-2 py-1"
+                    placeholder="Add tag and press Enter"
+                  />
+                  <Button type="button" onClick={handleAddTag} size="sm">Add</Button>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {tags.map(tag => (
+                    <span key={tag} className="bg-gray-200 rounded px-2 py-1 text-xs flex items-center gap-1">
+                      {tag}
+                      <button type="button" onClick={() => handleRemoveTag(tag)} className="ml-1 text-red-500">&times;</button>
+                    </span>
+                  ))}
+                </div>
               </div>
+              {/* Attributes */}
               <div>
                 <label className="block mb-1 font-medium">Attributes</label>
-                <div className="border rounded p-2 bg-gray-50 text-gray-500">Attributes management coming soon</div>
+                {attributes.map((attr, idx) => (
+                  <div key={idx} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={attr.name}
+                      onChange={e => handleAttributeChange(idx, 'name', e.target.value)}
+                      placeholder="Name"
+                      className="border rounded px-2 py-1 w-1/3"
+                    />
+                    <input
+                      type="text"
+                      value={attr.value}
+                      onChange={e => handleAttributeChange(idx, 'value', e.target.value)}
+                      placeholder="Value"
+                      className="border rounded px-2 py-1 w-1/2"
+                    />
+                    <button type="button" onClick={() => handleRemoveAttribute(idx)} className="text-red-500">&times;</button>
+                  </div>
+                ))}
+                <Button type="button" onClick={handleAddAttribute} size="sm">Add Attribute</Button>
               </div>
-              {form.hasVariants && (
-                <div>
-                  <label className="block mb-1 font-medium">Variants</label>
-                  <div className="border rounded p-2 bg-gray-50 text-gray-500">Variants management coming soon</div>
-                </div>
-              )}
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
                 <Button type="submit" disabled={saving}>{saving ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Product')}</Button>

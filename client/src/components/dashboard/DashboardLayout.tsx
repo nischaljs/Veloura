@@ -52,8 +52,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { label: 'Coupons', href: '/admin/coupons', icon: 'coupons' },
           { label: 'Analytics', href: '/admin/analytics', icon: 'analytics' },
           { label: 'Settings', href: '/admin/settings', icon: 'settings' },
-          { label: 'Activity Logs', href: '/admin/activities', icon: 'activity' },
-          { label: 'Backup', href: '/admin/backup', icon: 'backup' }
+          
         ];
       case 'VENDOR':
         return [
@@ -99,7 +98,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
 
         {/* Navigation */}
-        <nav className="p-4">
+        <nav className="p-4 flex-grow overflow-y-auto">
           <div className="space-y-2">
             {navItems.map((item) => (
               <Link

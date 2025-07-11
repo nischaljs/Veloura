@@ -1,4 +1,5 @@
 import { Router } from 'express';
+console.log('Vendor routes loaded');
 import * as vendorController from '../controllers/vendor.controller';
 import { authenticate, authenticateVendor } from '../middlewares/authMiddleware';
 import { upload, handleUploadError } from '../middlewares/uploadMiddleware';
@@ -27,8 +28,8 @@ router.get('/:slug/products', vendorController.getVendorProducts);
 router.get('/:slug/reviews', vendorController.getVendorReviews);
 
 // Bank details
-router.get('/bank-details', authenticateVendor, vendorController.getBankDetails);
-router.post('/bank-details', authenticateVendor, vendorController.addBankDetail);
+router.get('/bank-details', (req, res, next) => { console.log('DEBUG: Reached /bank-details GET route'); next(); }, authenticateVendor, vendorController.getBankDetails);
+router.post('/bank-details', (req, res, next) => { console.log('DEBUG: Reached /bank-details POST route'); next(); }, authenticateVendor, vendorController.addBankDetail);
 router.put('/bank-details/:id', authenticateVendor, vendorController.updateBankDetail);
 router.delete('/bank-details/:id', authenticateVendor, vendorController.deleteBankDetail);
 

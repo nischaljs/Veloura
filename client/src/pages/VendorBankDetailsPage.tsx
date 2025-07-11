@@ -12,9 +12,8 @@ import { toast } from 'sonner';
 const emptyForm = {
   bankName: '',
   accountNumber: '',
-  accountHolderName: '',
-  ifscCode: '',
-  branchName: ''
+  accountName: '',
+  branch: ''
 };
 
 const VendorBankDetailsPage: React.FC = () => {
@@ -96,7 +95,7 @@ const VendorBankDetailsPage: React.FC = () => {
 
   return (
     <DashboardLayout userRole="VENDOR">
-      <div className="max-w-2xl mx-auto py-8">
+      <div className="max-w-5xl mx-auto py-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Bank Details</CardTitle>
@@ -106,11 +105,32 @@ const VendorBankDetailsPage: React.FC = () => {
             {loading ? (
               <div className="py-8 text-center">Loading...</div>
             ) : bankDetails.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">No bank details found.</div>
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-bank-note text-gray-400 mb-4"
+                >
+                  <rect width="20" height="12" x="2" y="6" rx="3" />
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M6 12h.01" />
+                  <path d="M18 12h.01" />
+                </svg>
+                <p className="text-xl font-semibold text-gray-700 mb-2">No Bank Details Added Yet</p>
+                <p className="text-muted-foreground mb-6">Add your bank account to receive payments.</p>
+                <Button onClick={openAddModal}>Add Your First Bank Detail</Button>
+              </div>
             ) : (
               <div className="space-y-4">
                 {bankDetails.map(detail => (
-                  <div key={detail.id} className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 bg-gray-50">
+                  <div key={detail.id} className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow">
                     <div>
                       <div className="font-semibold text-lg">{detail.bankName}</div>
                       <div className="text-sm text-gray-600">A/C: {detail.accountNumber}</div>
@@ -145,16 +165,12 @@ const VendorBankDetailsPage: React.FC = () => {
               <Input id="accountNumber" name="accountNumber" value={form.accountNumber} onChange={handleInputChange} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="accountHolderName">Account Holder Name</Label>
-              <Input id="accountHolderName" name="accountHolderName" value={form.accountHolderName} onChange={handleInputChange} required />
+              <Label htmlFor="accountName">Account Holder Name</Label>
+              <Input id="accountName" name="accountName" value={form.accountName} onChange={handleInputChange} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ifscCode">IFSC Code</Label>
-              <Input id="ifscCode" name="ifscCode" value={form.ifscCode} onChange={handleInputChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="branchName">Branch Name</Label>
-              <Input id="branchName" name="branchName" value={form.branchName} onChange={handleInputChange} />
+              <Label htmlFor="branch">Branch Name</Label>
+              <Input id="branch" name="branch" value={form.branch} onChange={handleInputChange} />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
