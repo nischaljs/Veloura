@@ -4,6 +4,9 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardDescription, CardTitle } from './ui/card';
 import { addToCart } from '../services/cart';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useState } from 'react';
 
 interface ProductsCardProps {
@@ -80,8 +83,15 @@ const ProductsCard = ({
     );
   };
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const handleAddToCart = async (product: AllProduct) => {
     if (onAddToCart) return onAddToCart(product);
+    if (!user) {
+      toast.info('Please login to add items to your cart.');
+      navigate('/login');
+      return;
+    }
     setCartLoading((prev) => ({ ...prev, [product.id]: true }));
     setCartMessage((prev) => ({ ...prev, [product.id]: null }));
     try {

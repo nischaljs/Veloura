@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { getCart, updateCartItem, removeCartItem, clearCart, applyCoupon, removeCoupon } from '../services/cart';
+import { applyCoupon, removeCoupon } from '../services/cart';
+import { useCart } from '../context/CartContext';
 import { Card, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 
 const CartPage: React.FC = () => {
-  const [cart, setCart] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { cart, loading, error, fetchCart, updateCartItem, removeCartItem, clearCart } = useCart();
   const [updating, setUpdating] = useState<{ [key: string]: boolean }>({});
   const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   const [clearing, setClearing] = useState(false);
@@ -16,19 +15,6 @@ const CartPage: React.FC = () => {
   const [couponStatus, setCouponStatus] = useState<string | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const navigate = useNavigate();
-
-  const fetchCart = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getCart();
-      setCart(res.data.data.cart);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch cart');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchCart();
@@ -38,7 +24,6 @@ const CartPage: React.FC = () => {
     setUpdating((prev) => ({ ...prev, [itemId]: true }));
     try {
       await updateCartItem(itemId, quantity);
-      await fetchCart();
     } catch (err) {
       // Optionally show error
     } finally {
@@ -48,24 +33,8 @@ const CartPage: React.FC = () => {
 
   const handleRemoveItem = async (itemId: number) => {
     setRemoving((prev) => ({ ...prev, [itemId]: true }));
-    // Optimistically update UI
-    setCart((prev: any) => {
-      if (!prev) return prev;
-      const newItems = prev.items.filter((item: any) => item.id !== itemId);
-      const newItemCount = newItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-      return {
-        ...prev,
-        items: newItems,
-        summary: {
-          ...prev.summary,
-          itemCount: newItemCount
-        }
-      };
-    });
     try {
       await removeCartItem(itemId);
-      // Optionally refetch for accuracy
-      fetchCart();
     } catch (err) {
       // Optionally show error
     } finally {
@@ -77,7 +46,6 @@ const CartPage: React.FC = () => {
     setClearing(true);
     try {
       await clearCart();
-      await fetchCart();
     } catch (err) {
       // Optionally show error
     } finally {

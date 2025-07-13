@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import slugify from 'slugify';
 import path from 'path';
-import { addImageUrls } from '../utils/imageUtils';
+import { addImageUrls, addImageUrlsToArray } from '../utils/imageUtils';
 
 // Register as vendor
 export const registerVendor = async (req: Request, res: Response) => {
@@ -111,13 +111,18 @@ export const getVendorProducts = async (req: Request, res: Response) => {
     if (sort === 'rating') orderBy = { rating: 'desc' };
     if (sort === 'newest') orderBy = { createdAt: 'desc' };
     const [products, total] = await Promise.all([
-      prisma.product.findMany({ where, skip, take: limitNum, orderBy }),
+      prisma.product.findMany({ where, skip, take: limitNum, orderBy, include: { images: true, category: true, brand: true } }),
       prisma.product.count({ where })
     ]);
+    // Add full URLs to all images in each product
+    const productsWithImageUrls = products.map(product => ({
+      ...product,
+      images: addImageUrlsToArray(product.images, ['url'])
+    }));
     res.json({
       success: true,
       data: {
-        products,
+        products: productsWithImageUrls,
         pagination: {
           page: pageNum,
           limit: limitNum,

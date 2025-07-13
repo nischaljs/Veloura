@@ -19,7 +19,7 @@ import {
   getFeaturedBrands 
 } from '../services/brand';
 import ProductsCard from '../components/ProductsCard';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowRight, 
   Star, 
@@ -33,6 +33,9 @@ import {
   Shield,
   RefreshCw
 } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
+import { useCart } from '../context/CartContext';
+import { toast } from 'sonner';
 
 interface Product {
   id: number;
@@ -56,6 +59,7 @@ interface Product {
   };
   status: string;
   createdAt: string;
+  stockQuantity?: number;
 }
 
 interface Category {
@@ -86,6 +90,8 @@ function LandingPage() {
   const [featuredBrands, setFeaturedBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const [cartLoading, setCartLoading] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -103,10 +109,10 @@ function LandingPage() {
           getFeaturedProducts(8),
           getTrendingProducts(8),
           getAllProducts({ limit: 8, sort: 'newest' }),
-          getAllCategories({ limit: 8 }),
-          getFeaturedCategories(6),
-          getAllBrands({ limit: 8 }),
-          getFeaturedBrands(6)
+          getAllCategories({ limit: 20 }), // Increased limit
+          getFeaturedCategories(20), // Increased limit
+          getAllBrands({ limit: 20 }), // Increased limit
+          getFeaturedBrands(20) // Increased limit
         ]);
 
         setFeaturedProducts(featuredRes.data?.data?.products || []);
@@ -127,11 +133,114 @@ function LandingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="w-6 h-6 animate-spin" />
-          <span className="text-lg">Loading amazing products...</span>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50">
+        {/* Hero Section Skeleton */}
+        <section className="relative overflow-hidden py-16 lg:py-24 bg-gradient-to-br from-indigo-50 to-purple-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-3 gap-6 items-center">
+              {/* Left Column Skeleton */}
+              <div className="lg:col-span-2 space-y-8">
+                <Skeleton className="w-32 h-8 mb-4" />
+                <Skeleton className="w-2/3 h-16 mb-4" />
+                <Skeleton className="w-1/2 h-6 mb-4" />
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Skeleton className="h-12 w-40 rounded-xl" />
+                  <Skeleton className="h-12 w-40 rounded-xl" />
+                </div>
+                <div className="grid grid-cols-3 gap-4 pt-8">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full rounded-xl" />
+                  ))}
+                </div>
+              </div>
+              {/* Right Column Skeleton */}
+              <div className="lg:col-span-1 relative h-[400px] lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl">
+                <Skeleton className="w-full h-full rounded-3xl" />
+              </div>
+            </div>
+          </div>
+        </section>
+        {/* Features Section Skeleton */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-4 gap-8">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </section>
+        <Separator />
+        {/* Categories Skeleton */}
+        <section className="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+            <div className="text-center space-y-4 mb-8">
+              <Skeleton className="h-8 w-48 mx-auto" />
+              <Skeleton className="h-5 w-80 mx-auto" />
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 md:gap-6">
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} className="w-20 h-20 rounded-full mx-auto" />
+              ))}
+            </div>
+          </div>
+        </section>
+        {/* Products Skeleton */}
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+            <div className="flex items-center justify-between mb-8 md:mb-12">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-72 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </section>
+        {/* Trending Products Skeleton */}
+        <section className="py-20 bg-gradient-to-br from-purple-50 to-pink-50">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+            <div className="flex items-center gap-2 md:gap-3 mb-8 md:mb-12">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-6 w-32" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-72 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </section>
+        {/* Brands Skeleton */}
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+            <div className="text-center space-y-4 mb-8 md:mb-12">
+              <Skeleton className="h-8 w-48 mx-auto" />
+              <Skeleton className="h-5 w-80 mx-auto" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </section>
+        {/* New Arrivals Skeleton */}
+        <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-50">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+            <div className="flex items-center gap-2 md:gap-3 mb-8 md:mb-12">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-6 w-32" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-72 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
@@ -141,25 +250,24 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 via-purple-600/10 to-pink-600/10" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-12">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8 animate-slide-in-left">
+      {/* Hero Section - Bento Box Inspired */}
+      <section className="relative overflow-hidden py-16 lg:py-24 bg-gradient-to-br from-indigo-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-3 gap-6 items-center">
+            {/* Left Column - Text Content */}
+            <div className="lg:col-span-2 space-y-8 animate-slide-in-left">
               <div className="space-y-4">
-                <Badge variant="secondary" className="px-4 py-2 text-sm font-medium animate-scale-in">
+                <Badge variant="secondary" className="px-4 py-2 text-sm font-medium animate-scale-in bg-purple-200 text-purple-800">
                   <Sparkles className="w-4 h-4 mr-2" />
                   New Collection 2024
                 </Badge>
-                <h1 className="text-5xl lg:text-7xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient-shift">
-                  Elevate Your
+                <h1 className="text-5xl lg:text-7xl font-bold tracking-tight bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 bg-clip-text text-transparent animate-gradient-shift">
+                  Discover Your
                   <br />
-                  <span className="text-slate-900">Style Game</span>
+                  <span className="text-slate-900">Next Favorite</span>
                 </h1>
                 <p className="text-xl text-slate-600 max-w-lg leading-relaxed">
-                  Discover curated collections that blend comfort, style, and performance. 
-                  From workout essentials to casual elegance.
+                  Explore a curated selection of premium products, blending innovation with timeless style.
                 </p>
               </div>
               
@@ -182,48 +290,41 @@ function LandingPage() {
                 </Button>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-8 pt-8">
-                <div className="text-center animate-stagger-1">
-                  <div className="text-2xl font-bold text-indigo-600">{featuredProducts.length}+</div>
+              {/* Stats - Integrated into the bento feel */}
+              <div className="grid grid-cols-3 gap-4 pt-8">
+                <Card className="p-4 text-center bg-white/70 backdrop-blur-sm shadow-md rounded-xl animate-stagger-1">
+                  <div className="text-3xl font-bold text-indigo-600">{featuredProducts.length}+</div>
                   <div className="text-sm text-slate-500">Featured Products</div>
-                </div>
-                <div className="text-center animate-stagger-2">
-                  <div className="text-2xl font-bold text-purple-600">{categories.length}+</div>
+                </Card>
+                <Card className="p-4 text-center bg-white/70 backdrop-blur-sm shadow-md rounded-xl animate-stagger-2">
+                  <div className="text-3xl font-bold text-purple-600">{categories.length}+</div>
                   <div className="text-sm text-slate-500">Categories</div>
-                </div>
-                <div className="text-center animate-stagger-3">
-                  <div className="text-2xl font-bold text-pink-600">{brands.length}+</div>
+                </Card>
+                <Card className="p-4 text-center bg-white/70 backdrop-blur-sm shadow-md rounded-xl animate-stagger-3">
+                  <div className="text-3xl font-bold text-pink-600">{brands.length}+</div>
                   <div className="text-sm text-slate-500">Premium Brands</div>
-                </div>
+                </Card>
               </div>
             </div>
 
-            <div className="relative animate-slide-in-right">
+            {/* Right Column - Hero Image (Bento Style) */}
+            <div className="lg:col-span-1 relative h-[400px] lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl animate-slide-in-right group">
               {heroImage && (
-                <div className="relative group animate-float">
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-                  <img 
-                    src={heroImage} 
-                    alt={heroProduct?.name} 
-                    className="relative w-full h-[600px] object-cover rounded-3xl shadow-2xl group-hover:scale-105 transition-all duration-500" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-3xl" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4">
-                      <h3 className="font-semibold text-slate-900">{heroProduct?.name}</h3>
-                      <p className="text-slate-600 text-sm">{heroProduct?.brand?.name}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-lg font-bold text-indigo-600">Rs.{heroProduct?.price}</span>
-                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                          <ShoppingBag className="w-4 h-4 mr-2" />
-                          Add to Cart
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <img 
+                  src={heroImage} 
+                  alt={heroProduct?.name} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
               )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6 text-white">
+                <h3 className="font-semibold text-2xl mb-1">{heroProduct?.name || 'Featured Product'}</h3>
+                <p className="text-lg text-gray-200">{heroProduct?.brand?.name || 'Explore Now'}</p>
+                <Button size="sm" className="mt-3 bg-white text-indigo-600 hover:bg-gray-100">
+                  View Product
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -267,59 +368,51 @@ function LandingPage() {
 
       <Separator />
 
-      {/* Featured Categories */}
+      {/* Featured Categories - Circle Grid */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-indigo-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 mb-12 animate-fade-in">
-            <h2 className="text-4xl font-bold text-slate-900">Shop by Category</h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="text-center space-y-4 mb-8 animate-fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Shop by Category</h2>
+            <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto">
               Explore our carefully curated categories designed for every lifestyle and occasion
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {featuredCategories.map((category, index) => (
-              <Card 
-                key={category.id} 
-                className={`group cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white/80 backdrop-blur-sm animate-scale-in animate-stagger-${index + 1}`}
-                onClick={() => navigate(`/categories/${category.slug}`)}
-              >
-                <CardContent className="p-6 text-center space-y-4">
-                  <div className="relative">
-                    <AspectRatio ratio={1} className="rounded-2xl overflow-hidden">
-                      <img 
-                        src={category.image || 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
-                        alt={category.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                      />
-                    </AspectRatio>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                      {category.name}
-                    </h3>
-                    <p className="text-sm text-slate-500">
-                      {category.productCount || 0} products
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 md:gap-6">
+            {categories.map((category, index) => (
+              <Link to={`/category/${category.slug}`} key={category.id} className={`group flex flex-col items-center justify-center p-2 md:p-3 cursor-pointer border-0 shadow-none hover:shadow-md transition-all duration-200 bg-transparent animate-scale-in animate-stagger-${index + 1}`}>
+                <div className="relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-slate-200 group-hover:border-indigo-500 transition-all duration-200 bg-white">
+                  <img 
+                    src={category.image || 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
+                    alt={category.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                  />
+                </div>
+                <div className="mt-2 text-center">
+                  <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors text-xs md:text-sm truncate max-w-[80px] md:max-w-[100px]">
+                    {category.name}
+                  </h3>
+                  <p className="text-[10px] md:text-xs text-slate-500">
+                    {category.productCount || 0} products
+                  </p>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Featured Products - Bento Grid */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-12">
-            <div className="space-y-2">
-              <h2 className="text-4xl font-bold text-slate-900">Featured Products</h2>
-              <p className="text-xl text-slate-600">Handpicked for you</p>
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between mb-8 md:mb-12">
+            <div className="space-y-1 md:space-y-2">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Featured Products</h2>
+              <p className="text-base md:text-xl text-slate-600">Handpicked for you</p>
             </div>
             <Button 
               variant="outline" 
-              className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="border border-slate-300 text-slate-700 hover:bg-slate-50"
               onClick={() => navigate('/search')}
             >
               View All
@@ -327,111 +420,75 @@ function LandingPage() {
             </Button>
           </div>
 
-          <Carousel className="w-full">
-            <CarouselContent className="-ml-2 md:-ml-4">
-              {featuredProducts.map((product) => (
-                <CarouselItem key={product.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                  <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white/80 backdrop-blur-sm">
-                    <CardContent className="p-6">
-                      <div className="relative mb-4">
-                        <AspectRatio ratio={1} className="rounded-2xl overflow-hidden">
-                          <img 
-                            src={product.image?.url || 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
-                            alt={product.name} 
-                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" 
-                          />
-                        </AspectRatio>
-                        {product.status === 'ACTIVE' && (
-                          <Badge className="absolute top-2 left-2 bg-green-500">
-                            In Stock
-                          </Badge>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="secondary" 
-                          className="absolute top-2 right-2 w-8 h-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Heart className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          {product.brand && (
-                            <Badge variant="outline" className="text-xs">
-                              {product.brand.name}
-                            </Badge>
-                          )}
-                          {product.rating && (
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm text-slate-600">{product.rating}</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <h3 className="font-semibold text-slate-900 line-clamp-2">{product.name}</h3>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-1">
-                            <span className="text-lg font-bold text-indigo-600">Rs.{product.price}</span>
-                            {product.salePrice && product.salePrice > product.price && (
-                              <span className="text-sm text-slate-400 line-through">Rs.{product.salePrice}</span>
-                            )}
-                          </div>
-                          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                            <ShoppingBag className="w-4 h-4 mr-2" />
-                            Add
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-      </section>
-
-      {/* Trending Products */}
-      <section className="py-20 bg-gradient-to-br from-purple-50 to-pink-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 mb-12">
-            <TrendingUp className="w-8 h-8 text-purple-600" />
-            <div>
-              <h2 className="text-4xl font-bold text-slate-900">Trending Now</h2>
-              <p className="text-xl text-slate-600">What's hot this season</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {trendingProducts.slice(0, 4).map((product) => (
-              <Card key={product.id} className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <div className="relative mb-4">
-                    <AspectRatio ratio={1} className="rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+            {featuredProducts.slice(0, 5).map((product, index) => (
+              <Card 
+                key={product.id} 
+                className={`group cursor-pointer border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 bg-white/90 backdrop-blur-sm rounded-xl animate-scale-in animate-stagger-${index + 1}`}
+                onClick={() => navigate(`/products/${product.slug}`)}
+              >
+                <CardContent className="p-3 md:p-4">
+                  <div className="relative mb-2 md:mb-3">
+                    <AspectRatio ratio={1} className="rounded-lg overflow-hidden">
                       <img 
                         src={product.image?.url || 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
                         alt={product.name} 
-                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
                       />
                     </AspectRatio>
-                    <Badge className="absolute top-2 left-2 bg-red-500">
-                      Trending
-                    </Badge>
+                    {product.status === 'ACTIVE' && (
+                      <Badge className="absolute top-2 left-2 bg-green-500 text-xs px-2 py-0.5 rounded">
+                        In Stock
+                      </Badge>
+                    )}
+                    <Button 
+                      size="icon" 
+                      variant="secondary" 
+                      className="absolute top-2 right-2 w-7 h-7 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Heart className="w-4 h-4" />
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-slate-900 line-clamp-2">{product.name}</h3>
-                    <p className="text-sm text-slate-500">{product.brand?.name}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-purple-600">Rs.{product.price}</span>
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                        <ShoppingBag className="w-4 h-4 mr-2" />
-                        Add
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1">
+                      {product.brand && (
+                        <Badge variant="outline" className="text-xs px-2 py-0.5">
+                          {product.brand.name}
+                        </Badge>
+                      )}
+                      {product.rating && (
+                        <div className="flex items-center gap-0.5">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          <span className="text-xs text-slate-600">{product.rating}</span>
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-slate-900 line-clamp-2 text-sm md:text-base">{product.name}</h3>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-base font-bold text-indigo-600">Rs.{product.price}</span>
+                      <Button 
+                        size="icon" 
+                        className="bg-indigo-600 hover:bg-indigo-700 w-8 h-8" 
+                        onClick={async e => {
+                          e.stopPropagation();
+                          setCartLoading(prev => ({ ...prev, [product.id]: true }));
+                          try {
+                            await addToCart({ productId: product.id, quantity: 1 });
+                            toast.success('Added to cart!');
+                          } catch (err) {
+                            toast.error('Failed to add to cart');
+                          } finally {
+                            setCartLoading(prev => ({ ...prev, [product.id]: false }));
+                          }
+                        }}
+                        disabled={cartLoading[product.id] || product.stockQuantity === 0}
+                      >
+                        {cartLoading[product.id] ? (
+                          <span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full block mx-auto" />
+                        ) : (
+                          <ShoppingBag className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -442,36 +499,100 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Featured Brands */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-4xl font-bold text-slate-900">Premium Brands</h2>
-            <p className="text-xl text-slate-600">Shop your favorite brands</p>
+      {/* Trending Products */}
+      <section className="py-20 bg-gradient-to-br from-purple-50 to-pink-50">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="flex items-center gap-2 md:gap-3 mb-8 md:mb-12">
+            <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Trending Now</h2>
+              <p className="text-base md:text-xl text-slate-600">What's hot this season</p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-            {featuredBrands.map((brand) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+            {trendingProducts.slice(0, 5).map((product, index) => (
+              <Card key={product.id} className="border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 bg-white/90 backdrop-blur-sm rounded-xl group cursor-pointer animate-scale-in animate-stagger-1">
+                <CardContent className="p-3 md:p-4">
+                  <div className="relative mb-2 md:mb-3">
+                    <AspectRatio ratio={1} className="rounded-lg overflow-hidden">
+                      <img 
+                        src={product.image?.url || 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                      />
+                    </AspectRatio>
+                    <Badge className="absolute top-2 left-2 bg-red-500 text-xs px-2 py-0.5 rounded">
+                      Trending
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-slate-900 line-clamp-2 text-sm md:text-base">{product.name}</h3>
+                    <p className="text-xs md:text-sm text-slate-500">{product.brand?.name}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-base font-bold text-purple-600">Rs.{product.price}</span>
+                      <Button 
+                        size="icon" 
+                        className="bg-purple-600 hover:bg-purple-700 w-8 h-8"
+                        onClick={async e => {
+                          e.stopPropagation();
+                          setCartLoading(prev => ({ ...prev, [product.id]: true }));
+                          try {
+                            await addToCart({ productId: product.id, quantity: 1 });
+                            toast.success('Added to cart!');
+                          } catch (err) {
+                            toast.error('Failed to add to cart');
+                          } finally {
+                            setCartLoading(prev => ({ ...prev, [product.id]: false }));
+                          }
+                        }}
+                        disabled={cartLoading[product.id] || product.stockQuantity === 0}
+                      >
+                        {cartLoading[product.id] ? (
+                          <span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full block mx-auto" />
+                        ) : (
+                          <ShoppingBag className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Brands - Bento Grid */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="text-center space-y-4 mb-8 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Premium Brands</h2>
+            <p className="text-base md:text-xl text-slate-600">Shop your favorite brands</p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+            {featuredBrands.map((brand, index) => (
               <Card 
                 key={brand.id} 
-                className="group cursor-pointer border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white/80 backdrop-blur-sm"
+                className={`group cursor-pointer border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 bg-white/90 backdrop-blur-sm rounded-xl animate-scale-in animate-stagger-${index + 1}`}
                 onClick={() => navigate(`/brands/${brand.slug}`)}
               >
-                <CardContent className="p-6 text-center space-y-4">
-                  <div className="relative">
-                    <AspectRatio ratio={1} className="rounded-2xl overflow-hidden bg-gray-50">
+                <CardContent className="p-3 md:p-4 text-center flex flex-col h-full">
+                  <div className="relative flex-grow">
+                    <AspectRatio ratio={1} className="rounded-lg overflow-hidden bg-gray-50">
                       <img 
                         src={brand.logo || 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
                         alt={brand.name} 
-                        className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-300" 
+                        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200" 
                       />
                     </AspectRatio>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                  <div className="mt-2 md:mt-3">
+                    <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors text-base md:text-lg">
                       {brand.name}
                     </h3>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-xs md:text-sm text-slate-500">
                       {brand.productCount || 0} products
                     </p>
                   </div>
@@ -482,42 +603,64 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* New Arrivals */}
+      {/* New Arrivals - Bento Grid */}
       <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 mb-12">
-            <Zap className="w-8 h-8 text-indigo-600" />
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+          <div className="flex items-center gap-2 md:gap-3 mb-8 md:mb-12">
+            <Zap className="w-6 h-6 md:w-8 md:h-8 text-indigo-600" />
             <div>
-              <h2 className="text-4xl font-bold text-slate-900">New Arrivals</h2>
-              <p className="text-xl text-slate-600">Fresh products just in</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900">New Arrivals</h2>
+              <p className="text-base md:text-xl text-slate-600">Fresh products just in</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {newArrivals.slice(0, 4).map((product) => (
-              <Card key={product.id} className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <div className="relative mb-4">
-                    <AspectRatio ratio={1} className="rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+            {newArrivals.slice(0, 5).map((product, index) => (
+              <Card 
+                key={product.id} 
+                className={`group cursor-pointer border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 bg-white/90 backdrop-blur-sm rounded-xl animate-scale-in animate-stagger-${index + 1}`}
+                onClick={() => navigate(`/products/${product.slug}`)}
+              >
+                <CardContent className="p-3 md:p-4">
+                  <div className="relative mb-2 md:mb-3">
+                    <AspectRatio ratio={1} className="rounded-lg overflow-hidden">
                       <img 
                         src={product.image?.url || 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
                         alt={product.name} 
-                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
                       />
                     </AspectRatio>
-                    <Badge className="absolute top-2 left-2 bg-blue-500">
+                    <Badge className="absolute top-2 left-2 bg-blue-500 text-xs px-2 py-0.5 rounded">
                       New
                     </Badge>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-slate-900 line-clamp-2">{product.name}</h3>
-                    <p className="text-sm text-slate-500">{product.brand?.name}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-indigo-600">Rs.{product.price}</span>
-                      <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                        <ShoppingBag className="w-4 h-4 mr-2" />
-                        Add
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-slate-900 line-clamp-2 text-sm md:text-base">{product.name}</h3>
+                    <p className="text-xs md:text-sm text-slate-500">{product.brand?.name}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-base font-bold text-indigo-600">Rs.{product.price}</span>
+                      <Button 
+                        size="icon" 
+                        className="bg-indigo-600 hover:bg-indigo-700 w-8 h-8"
+                        onClick={async e => {
+                          e.stopPropagation();
+                          setCartLoading(prev => ({ ...prev, [product.id]: true }));
+                          try {
+                            await addToCart({ productId: product.id, quantity: 1 });
+                            toast.success('Added to cart!');
+                          } catch (err) {
+                            toast.error('Failed to add to cart');
+                          } finally {
+                            setCartLoading(prev => ({ ...prev, [product.id]: false }));
+                          }
+                        }}
+                        disabled={cartLoading[product.id] || product.stockQuantity === 0}
+                      >
+                        {cartLoading[product.id] ? (
+                          <span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full block mx-auto" />
+                        ) : (
+                          <ShoppingBag className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>

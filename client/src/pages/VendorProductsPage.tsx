@@ -11,6 +11,7 @@ import { getMyProducts, addProduct, updateProduct, deleteProduct } from '../serv
 import { Product } from '../types/product';
 import { getAllCategories } from '../services/category';
 import { getAllBrands } from '../services/brand';
+import { Link } from 'react-router-dom';
 
 const emptyForm = {
   name: '',
@@ -254,7 +255,9 @@ const VendorProductsPage: React.FC = () => {
                         <span className="text-sm text-gray-500">Stock: {product.stockQuantity}</span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        Category: {product.category?.name || 'N/A'}
+                        Category: {product.category ? (
+                          <Link to={`/category/${product.category.slug}`} className="text-indigo-600 hover:underline">{product.category.name}</Link>
+                        ) : 'N/A'}
                       </div>
                       <div className="text-xs text-gray-500">
                         Brand: {product.brand?.name || 'N/A'}

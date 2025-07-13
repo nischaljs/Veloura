@@ -63,35 +63,51 @@ export const getOrders = (params?: {
   vendor?: string;
   dateFrom?: string;
   dateTo?: string;
-}) => api.get('/admin/orders', { params });
+}) => api.get('/orders/admin/orders', { params });
 
-export const updateOrderStatus = (id: number, status: string) => api.put(`/admin/orders/${id}/status`, { status });
+export const updateOrderStatus = (id: number, status: string) => api.put(`/orders/admin/orders/${id}/status`, { status });
 
 // Category Management
 export const getCategories = (params?: {
   page?: number;
   limit?: number;
   search?: string;
-}) => api.get('/admin/categories', { params });
+}) => api.get('/categories', { params });
 
-export const createCategory = (data: { name: string; description?: string; parentId?: number }) => api.post('/admin/categories', data);
+export const createCategory = (data: { name: string; description?: string; parentId?: number }) => api.post('/categories', data);
 
-export const updateCategory = (id: number, data: { name?: string; description?: string; parentId?: number }) => api.put(`/admin/categories/${id}`, data);
+export const updateCategory = (id: number, data: { name?: string; description?: string; parentId?: number }) => api.put(`/categories/${id}`, data);
 
-export const deleteCategory = (id: number) => api.delete(`/admin/categories/${id}`);
+export const deleteCategory = (id: number) => api.delete(`/categories/${id}`);
 
 // Brand Management
 export const getBrands = (params?: {
   page?: number;
   limit?: number;
   search?: string;
-}) => api.get('/admin/brands', { params });
+}) => api.get('/brands', { params });
 
-export const createBrand = (data: { name: string; description?: string; website?: string; }) => api.post('/admin/brands', data);
+export const createBrand = (data: { name: string; description?: string; website?: string; }) => api.post('/brands', data);
 
-export const updateBrand = (id: number, data: { name?: string; description?: string; website?: string; }) => api.put(`/admin/brands/${id}`, data);
+export const updateBrand = (id: number, data: { name?: string; description?: string; website?: string; }) => api.put(`/brands/${id}`, data);
 
-export const deleteBrand = (id: number) => api.delete(`/admin/brands/${id}`);
+export const deleteBrand = (id: number) => api.delete(`/brands/${id}`);
+
+export const uploadBrandLogo = (id: number, formData: FormData) => api.post(`/brands/${id}/logo`, formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data',
+  },
+});
+
+export const removeBrandLogo = (id: number) => api.delete(`/brands/${id}/logo`);
+
+export const uploadCategoryImage = (id: number, formData: FormData) => api.post(`/categories/${id}/image`, formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data',
+  },
+});
+
+export const removeCategoryImage = (id: number) => api.delete(`/categories/${id}/image`);
 
 // Coupon Management
 export const getCoupons = (params?: {

@@ -343,11 +343,24 @@ export const getFeaturedProducts = async (req: Request, res: Response): Promise<
     const products = await prisma.product.findMany({
       where: { isFeatured: true },
       take: parseInt(limit as string),
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: { images: true } // Include images
     });
+
+    // Map to add a single image field (primary or first) and complete URL
+    const productsWithImage = products.map(p => {
+      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find(img => img.isPrimary) || p.images[0]) : null;
+      const image = primaryImageObj ? addImageUrls(primaryImageObj, ['url']) : null;
+      const { images, ...rest } = p; // Remove images array
+      return {
+        ...rest,
+        image,
+      };
+    });
+
     res.json({
       success: true,
-      data: { products: addImageUrlsToArray(products, ['image']) }
+      data: { products: productsWithImage }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
@@ -377,19 +390,33 @@ export const getTrendingProducts = async (req: Request, res: Response): Promise<
         orderBy: [
           { orderItems: { _count: 'desc' } }
         ],
-        take: parseInt(limit as string)
+        take: parseInt(limit as string),
+        include: { images: true } // Include images
       });
     } else {
       trendingProducts = await prisma.product.findMany({
         orderBy: [
           { orderItems: { _count: 'desc' } }
         ],
-        take: parseInt(limit as string)
+        take: parseInt(limit as string),
+        include: { images: true } // Include images
       });
     }
+
+    // Map to add a single image field (primary or first) and complete URL
+    const productsWithImage = trendingProducts.map(p => {
+      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find(img => img.isPrimary) || p.images[0]) : null;
+      const image = primaryImageObj ? addImageUrls(primaryImageObj, ['url']) : null;
+      const { images, ...rest } = p; // Remove images array
+      return {
+        ...rest,
+        image,
+      };
+    });
+
     res.json({
       success: true,
-      data: { products: addImageUrlsToArray(trendingProducts, ['image']) }
+      data: { products: productsWithImage }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });

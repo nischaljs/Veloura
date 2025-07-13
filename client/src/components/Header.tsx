@@ -7,7 +7,7 @@ import { fetchCategories } from '@/services/category';
 import { fetchBrands } from '@/services/brand';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
-import { getCart } from '../services/cart';
+import { useCart } from '../context/CartContext';
 
 const navLinks = [
   { name: 'Home', to: '/' },
@@ -38,7 +38,7 @@ export default function Header() {
   const [search, setSearch] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [cartCount, setCartCount] = useState(0);
+  const { cartCount } = useCart();
 
   useEffect(() => {
     fetchCategories(100)
@@ -49,14 +49,6 @@ export default function Header() {
       .then(data => setBrands(data.data?.brands || []))
       .catch(() => setBrandError('Failed to load brands'))
       .finally(() => setBrandLoading(false));
-    // Fetch cart count
-    getCart()
-      .then(res => {
-        const cart = res.data?.data?.cart;
-        const count = cart?.summary?.itemCount || 0;
-        setCartCount(count);
-      })
-      .catch(() => setCartCount(0));
   }, []);
 
   return (

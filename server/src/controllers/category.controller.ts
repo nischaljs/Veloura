@@ -148,8 +148,65 @@ export const getCategoryBySlug = async (req: Request, res: Response): Promise<vo
 
 // GET /categories/:slug/products - Get products by category
 export const getCategoryProducts = async (req: Request, res: Response): Promise<void> => {
-  res.status(501).json({ success: false, message: 'Category products functionality yet to be implemented' });
-  return;
+  try {
+    const { slug } = req.params;
+    const { page = 1, limit = 20, sort, minPrice, maxPrice } = req.query;
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const skip = (pageNum - 1) * limitNum;
+
+    const category = await prisma.category.findUnique({ where: { slug } });
+    if (!category) {
+      res.status(404).json({ success: false, message: 'Category not found' });
+      return;
+    }
+
+    const where: any = { categoryId: category.id };
+    if (minPrice) where.price = { ...(where.price || {}), gte: parseFloat(minPrice as string) };
+    if (maxPrice) where.price = { ...(where.price || {}), lte: parseFloat(maxPrice as string) };
+    let orderBy: any = { createdAt: 'desc' };
+    if (sort === 'price') orderBy = { price: 'asc' };
+    if (sort === 'rating') orderBy = { rating: 'desc' };
+    if (sort === 'newest') orderBy = { createdAt: 'desc' };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy,
+        include: {
+          images: true,
+          category: { select: { name: true, slug: true } },
+          brand: { select: { name: true, slug: true } }
+        }
+      }),
+      prisma.product.count({ where })
+    ]);
+
+    // Add full URLs to all images in each product
+    const productsWithImageUrls = products.map(product => ({
+      ...product,
+      images: addImageUrlsToArray(product.images, ['url'])
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        products: productsWithImageUrls,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        }
+      }
+    });
+    return;
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+    return;
+  }
 };
 
 // POST /categories - Create new category (admin only)

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import DashboardTable from '../components/dashboard/DashboardTable';
-import { getCategories, createCategory, updateCategory, deleteCategory } from '../services/admin';
+import { getCategories, createCategory, updateCategory, deleteCategory, uploadCategoryImage, removeCategoryImage } from '../services/admin';
 import { Category } from '../types';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ const AdminCategoriesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fetchCategories = async (page = pagination.page) => {
     setLoading(true);
@@ -59,9 +60,63 @@ const AdminCategoriesPage: React.FC = () => {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const handleUploadImage = async (categoryId: number) => {
+    if (!selectedFile) {
+      toast.error('Please select a file to upload.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', selectedFile);
+
+    try {
+      await uploadCategoryImage(categoryId, formData);
+      toast.success('Category image uploaded successfully!');
+      setSelectedFile(null);
+      fetchCategories(); // Refresh categories to show new image
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to upload image.');
+    }
+  };
+
+  const handleRemoveImage = async (categoryId: number) => {
+    if (!window.confirm('Are you sure you want to remove this image?')) return;
+    try {
+      await removeCategoryImage(categoryId);
+      toast.success('Category image removed successfully!');
+      fetchCategories(); // Refresh categories to show no image
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to remove image.');
+    }
+  };
+
   const categoryTableColumns = [
     { key: 'name', label: 'Name', render: (value: any) => (
       <div className="font-medium">{value}</div>
+    )},
+    { key: 'imageUrl', label: 'Image', render: (value: any, row: Category) => (
+      <div className="flex items-center gap-2">
+        {row.image ? (
+          <img src={row.image} alt={row.name} className="w-10 h-10 object-cover rounded-full" />
+        ) : (
+          <span className="text-gray-500">No Image</span>
+        )}
+        <Input type="file" onChange={handleFileChange} className="w-auto" />
+        {selectedFile && (
+          <Button size="sm" onClick={() => handleUploadImage(row.id)}>Upload</Button>
+        )}
+        {row.image && (
+          <Button size="sm" variant="outline" onClick={() => handleRemoveImage(row.id)}>Remove</Button>
+        )}
+      </div>
     )},
     { key: 'productCount', label: 'Products' },
     { key: 'subcategoryCount', label: 'Subcategories' },

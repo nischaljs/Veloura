@@ -30,6 +30,13 @@ import AdminOrdersPage from '../pages/AdminOrdersPage';
 import AdminCategoriesPage from '../pages/AdminCategoriesPage';
 import AdminBrandsPage from '../pages/AdminBrandsPage';
 import AdminCouponsPage from '../pages/AdminCouponsPage';
+import NotFoundPage from '../pages/NotFoundPage';
+import PublicVendorProfilePage from '../pages/PublicVendorProfilePage';
+import CategoryPage from '../pages/CategoryPage';
+import CategoryDetailPage from '../pages/CategoryDetailPage';
+import BrandDetailPage from '../pages/BrandDetailPage';
+
+import ProtectedRoute from '../components/auth/ProtectedRoute'; // Import the ProtectedRoute component
 
 const routes = [
   {
@@ -70,96 +77,120 @@ const routes = [
   },
   {
     path: '/dashboard',
-    element: <DashboardPage/>,
+    element: <ProtectedRoute allowedRoles={['CUSTOMER']}><DashboardPage/></ProtectedRoute>,
   },
   {
     path: '/admin/dashboard',
-    element: <AdminDashboardPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboardPage/></ProtectedRoute>,
   },
   {
     path: '/admin/users',
-    element: <AdminUsersPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminUsersPage/></ProtectedRoute>,
   },
   {
     path: '/admin/vendors',
-    element: <AdminVendorsPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminVendorsPage/></ProtectedRoute>,
   },
   {
     path: '/admin/products',
-    element: <AdminProductsPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminProductsPage/></ProtectedRoute>,
   },
   {
     path: '/admin/settings',
-    element: <AdminSettingsPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminSettingsPage/></ProtectedRoute>,
   },
   {
     path: '/admin/analytics',
-    element: <AdminAnalyticsPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminAnalyticsPage/></ProtectedRoute>,
   },
   
   {
     path: '/admin/orders',
-    element: <AdminOrdersPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminOrdersPage/></ProtectedRoute>,
   },
   {
     path: '/admin/categories',
-    element: <AdminCategoriesPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminCategoriesPage/></ProtectedRoute>,
   },
   {
     path: '/admin/brands',
-    element: <AdminBrandsPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminBrandsPage/></ProtectedRoute>,
   },
   {
     path: '/admin/coupons',
-    element: <AdminCouponsPage/>,
+    element: <ProtectedRoute allowedRoles={['ADMIN']}><AdminCouponsPage/></ProtectedRoute>,
+  },
+  {
+    path: '/category/:slug',
+    element: <CategoryPage />,
+  },
+  {
+    path: '/category/:slug',
+    element: <CategoryDetailPage />,
+  },
+  {
+    path: '/brand/:slug',
+    element: <BrandDetailPage />,
   },
   {
     path: '/vendor/dashboard',
-    element: <VendorDashboardPage/>,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorDashboardPage/></ProtectedRoute>,
   },
   {
     path: '/orders',
-    element: <OrdersPage/>,
+    element: <ProtectedRoute allowedRoles={['CUSTOMER', 'VENDOR', 'ADMIN']}><OrdersPage/></ProtectedRoute>,
   },
   {
     path: '/vendor/orders/:id',
-    element: <VendorOrderDetailPage />,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorOrderDetailPage /></ProtectedRoute>,
   },
   {
     path: '/vendor/profile',
-    element: <VendorProfilePage/>,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorProfilePage/></ProtectedRoute>,
   },
   {
     path: '/vendor/bank-details',
-    element: <VendorBankDetailsPage/>,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorBankDetailsPage/></ProtectedRoute>,
   },
   {
     path: '/vendor/policies',
-    element: <VendorPoliciesPage/>,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorPoliciesPage/></ProtectedRoute>,
   },
   {
     path: '/vendor/analytics',
-    element: <VendorAnalyticsPage/>,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorAnalyticsPage/></ProtectedRoute>,
   },
   {
     path: '/vendor/products',
-    element: <VendorProductsPage />,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorProductsPage /></ProtectedRoute>,
   },
   {
     path: '/vendor/register',
-    element: <VendorRegistrationPage />,
+    element: <ProtectedRoute allowedRoles={['CUSTOMER']}><VendorRegistrationPage /></ProtectedRoute>, // Only customers can register as vendors
   },
   {
     path: '/vendor/orders',
-    element: <OrdersPage />,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><OrdersPage /></ProtectedRoute>,
   },
   {
     path: '/vendor/reviews',
-    element: <VendorReviewsPage />,
+    element: <ProtectedRoute allowedRoles={['VENDOR']}><VendorReviewsPage /></ProtectedRoute>,
+  },
+  {
+    path: '/vendors/:slug',
+    element: <PublicVendorProfilePage />,
   },
   {
     path: '/test',
     element: <TestPage />,
+  },
+  {
+    path: '/404',
+    element: <NotFoundPage />,
+  },
+  {
+    path: '*',
+    element: <NotFoundPage />,
   }
 ];
 

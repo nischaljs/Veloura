@@ -47,11 +47,11 @@ const AdminOrdersPage: React.FC = () => {
     { key: 'orderNumber', label: 'Order Number', render: (value: any) => (
       <div className="font-medium">{value}</div>
     )},
-    { key: 'customer', label: 'Customer', render: (value: any) => (
-      <div>{value.name}</div>
+    { key: 'customer', label: 'Customer', render: (value: any, row: any) => (
+      <div>{row.user ? `${row.user.firstName || ''} ${row.user.lastName || ''}`.trim() || 'N/A' : 'N/A'}</div>
     )},
-    { key: 'vendor', label: 'Vendor', render: (value: any) => (
-      <div>{value.businessName}</div>
+    { key: 'vendor', label: 'Vendor', render: (value: any, row: any) => (
+      <div>{row.items?.[0]?.vendor?.businessName || 'N/A'}</div>
     )},
     { key: 'total', label: 'Total', render: (value: any) => (
       <span>Rs.{value?.toLocaleString()}</span>
@@ -74,6 +74,15 @@ const AdminOrdersPage: React.FC = () => {
       <Badge variant={value === 'COMPLETED' ? 'default' : 'destructive'}>
         {value}
       </Badge>
+    )},
+    { key: 'paymentMethod', label: 'Payment Method' },
+    { key: 'createdAt', label: 'Order Date', render: (value: any) => (
+      <span>{new Date(value).toLocaleDateString()}</span>
+    )},
+    { key: 'shippingAddress', label: 'Shipping Address', render: (value: any) => (
+      <div>
+        {value.street}, {value.city}, {value.state}, {value.zipCode}
+      </div>
     )},
   ];
 

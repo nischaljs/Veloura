@@ -403,7 +403,39 @@ export const getSettings = async (req: Request, res: Response) => res.json({ suc
 export const updateSettings = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });
 
 // Analytics
-export const getDashboardAnalytics = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });
+export const getDashboardAnalytics = async (req: Request, res: Response) => {
+  try {
+    const [totalUsers, totalVendors, pendingVendors, totalSalesResult] = await Promise.all([
+      prisma.user.count(),
+      prisma.vendor.count(),
+      prisma.vendor.count({ where: { isApproved: false } }),
+      prisma.order.aggregate({
+        _sum: {
+          total: true,
+        },
+        where: {
+          status: {
+            not: 'CANCELLED',
+          },
+        },
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        analytics: {
+          totalUsers,
+          totalVendors,
+          pendingVendors,
+          totalSales: totalSalesResult._sum.total || 0,
+        },
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
 export const getUserAnalytics = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });
 export const getVendorAnalytics = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });
 export const getSalesAnalytics = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });

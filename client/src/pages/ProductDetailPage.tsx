@@ -5,7 +5,11 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { getProductBySlug } from '../services/product';
 import { addToWishlist } from '../services/wishlist';
-import { addToCart } from '../services/cart';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { User } from 'lucide-react';
 
 const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -40,8 +44,16 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   const handleAddToCart = async () => {
     if (!product) return;
+    if (!user) {
+      toast.info('Please login to add items to your cart.');
+      navigate('/login');
+      return;
+    }
     setCartLoading(true);
     setCartMessage(null);
     try {
@@ -91,6 +103,28 @@ const ProductDetailPage: React.FC = () => {
         </div>
         {/* Product Info */}
         <div className="flex-1 flex flex-col gap-4">
+          {/* Vendor Info */}
+          {product.vendor && (
+            <div
+              className="flex items-center gap-3 cursor-pointer hover:bg-indigo-50 p-2 rounded-lg w-fit transition"
+              onClick={() => product.vendor.slug && navigate(`/vendors/${product.vendor.slug}`)}
+            >
+              {product.vendor.logo ? (
+                <img
+                  src={product.vendor.logo}
+                  alt={product.vendor.businessName}
+                  className="w-10 h-10 rounded-full object-cover border"
+                  onError={e => { e.currentTarget.style.display = 'none'; }}
+                />
+              ) : (
+                <User className="w-10 h-10 text-gray-400 bg-gray-100 rounded-full p-2" />
+              )}
+              <div className="flex flex-col">
+                <span className="font-semibold text-indigo-700 text-base">{product.vendor.businessName}</span>
+                <span className="text-xs text-gray-500">View Vendor Profile</span>
+              </div>
+            </div>
+          )}
           <CardTitle className="text-3xl font-bold">{product.name}</CardTitle>
           <CardDescription className="text-lg text-gray-600">{product.description}</CardDescription>
           <div className="flex gap-2 items-center flex-wrap">

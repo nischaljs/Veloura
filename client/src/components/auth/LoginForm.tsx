@@ -28,7 +28,7 @@ const LoginForm: React.FC = () => {
     if (!error && user) {
       switch (user.role) {
         case 'CUSTOMER':
-          navigate('/dashboard/customer');
+          navigate('/dashboard');
           break;
         case 'VENDOR':
           navigate('/vendor/dashboard');
