@@ -35,4 +35,8 @@ router.delete('/bank-details/:id', authenticateVendor, vendorController.deleteBa
 router.post('/payout-requests', authenticateVendor, createPayoutRequest);
 router.get('/payout-requests', authenticateVendor, getPayoutRequests);
 
+// Coupons
+router.post('/coupons', authenticateVendor, vendorController.createCoupon);
+router.delete('/coupons/:id', authenticateVendor, vendorController.deleteCoupon);
+
 export default router; 

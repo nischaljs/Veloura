@@ -22,7 +22,7 @@ export const registerVendor = async (req: Request, res: Response) => {
         facebook,
         instagram,
         twitter,
-        verified: false
+        isApproved: false
       }
     });
     res.json({ success: true, message: 'Vendor registration submitted for approval', data: { vendor } });
@@ -84,7 +84,7 @@ export const uploadBanner = async (req: Request, res: Response) => {
 export const getPublicVendorProfile = async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    const vendor = await prisma.vendor.findUnique({ where: { slug, verified: true } });
+    const vendor = await prisma.vendor.findUnique({ where: { slug, isApproved: true } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const vendorWithUrls = addImageUrls(vendor, ['logo', 'banner']);
     res.json({ success: true, data: { vendor: vendorWithUrls } });
@@ -100,7 +100,7 @@ export const getVendorProducts = async (req: Request, res: Response) => {
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
-    const vendor = await prisma.vendor.findFirst({ where: { slug, verified: true } });
+    const vendor = await prisma.vendor.findFirst({ where: { slug, isApproved: true } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const where: any = { vendorId: vendor.id, verified: true };
     if (category) where.category = { slug: category };
@@ -434,6 +434,71 @@ export const getPayoutRequests = async (req: Request, res: Response) => {
     }
     const payouts = await prisma.payoutRequest.findMany({ where: { vendorId: vendor.id }, orderBy: { requestedAt: 'desc' } });
     res.json({ success: true, data: { payouts } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+export const createCoupon = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+    const {
+      code,
+      description,
+      discountType = 'percentage',
+      discountValue,
+      startDate,
+      endDate,
+      minOrderAmount,
+      maxUses
+    } = req.body;
+    if (!code || !discountValue || !startDate) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    const coupon = await prisma.coupon.create({
+      data: {
+        code,
+        description,
+        discountType,
+        discountValue: parseFloat(discountValue),
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : null,
+        minOrderAmount: minOrderAmount ? parseFloat(minOrderAmount) : null,
+        maxUses: maxUses ? parseInt(maxUses) : null,
+        isActive: true,
+        vendors: {
+          create: [{ vendorId: vendor.id }]
+        }
+      }
+    });
+    res.status(201).json({ success: true, message: 'Coupon created successfully', data: { coupon } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+export const deleteCoupon = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const couponId = Number(req.params.id);
+    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+    // Check if coupon belongs to this vendor
+    const couponVendor = await prisma.couponVendor.findFirst({ where: { couponId, vendorId: vendor.id } });
+    if (!couponVendor) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to delete this coupon' });
+    }
+    // Delete CouponVendor relation first
+    await prisma.couponVendor.deleteMany({ where: { couponId } });
+    // Then delete the coupon
+    await prisma.coupon.delete({ where: { id: couponId } });
+    res.json({ success: true, message: 'Coupon deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
