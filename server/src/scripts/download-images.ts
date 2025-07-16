@@ -4,32 +4,6 @@ import https from "https";
 
 // Updated image configuration with real URLs
 const IMAGE_CONFIG = {
-  brands: {
-    nike: {
-      url: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg",
-      filename: "nike-logo.svg",
-    },
-    adidas: {
-      url: "https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg",
-      filename: "adidas-logo.svg",
-    },
-    loreal: {
-      url: "https://images.pexels.com/photos/4509086/pexels-photo-4509086.jpeg",
-      filename: "loreal-logo.jpg",
-    },
-    sephora: {
-      url: "https://images.pexels.com/photos/7187156/pexels-photo-7187156.jpeg",
-      filename: "sephora-logo.jpg",
-    },
-    zara: {
-      url: "https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg",
-      filename: "zara-logo.jpg",
-    },
-    hm: {
-      url: "https://images.pexels.com/photos/2983465/pexels-photo-2983465.jpeg",
-      filename: "hm-logo.jpg",
-    },
-  },
   categories: {
     fashion: {
       url: "https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg",
@@ -107,7 +81,6 @@ const IMAGE_CONFIG = {
 };
 
 const PUBLIC_FOLDERS = {
-  brands: "public/images/brands",
   categories: "public/images/categories",
   users: "public/images/users",
   products: "public/images/products",
@@ -207,7 +180,6 @@ async function main() {
   try {
     ensureDirectories();
 
-    await downloadImagesForType("brands", IMAGE_CONFIG.brands);
     await downloadImagesForType("categories", IMAGE_CONFIG.categories);
     await downloadImagesForType("products", IMAGE_CONFIG.products);
     await downloadImagesForType("users", IMAGE_CONFIG.users);
@@ -219,7 +191,6 @@ async function main() {
     });
 
     console.log("\nImage URLs will be accessible at:");
-    console.log("   http://localhost:5000/images/brands/");
     console.log("   http://localhost:5000/images/categories/");
     console.log("   http://localhost:5000/images/products/");
     console.log("   http://localhost:5000/images/users/");

@@ -19,6 +19,11 @@ router.put('/vendors/:id/approve', authenticateAdmin, adminController.approveVen
 router.put('/vendors/:id/reject', authenticateAdmin, adminController.rejectVendor);
 router.put('/vendors/:id/suspend', authenticateAdmin, adminController.suspendVendor);
 
+// --- Payout Management ---
+router.get('/payout-requests', authenticateAdmin, adminController.getPayoutRequests);
+router.put('/payout-requests/:id/approve', authenticateAdmin, adminController.approvePayoutRequest);
+router.put('/payout-requests/:id/reject', authenticateAdmin, adminController.rejectPayoutRequest);
+
 // Product Management
 router.get('/products', authenticateAdmin, adminController.getProducts);
 router.put('/products/:id/status', authenticateAdmin, adminController.updateProductStatus);

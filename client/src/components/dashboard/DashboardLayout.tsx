@@ -16,12 +16,9 @@ const IconMap: Record<string, string> = {
   settings: '⚙️',
   profile: '👤',
   addresses: '📍',
-  bankDetails: '🏦',
   reviews: '⭐',
   categories: '🏷️',
   coupons: '🎫',
-  notifications: '🔔',
-  backup: '💾',
   activity: '📝',
   logout: '🚪'
 };
@@ -59,7 +56,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { label: 'Analytics', href: '/vendor/analytics', icon: 'analytics' },
           { label: 'Reviews', href: '/vendor/reviews', icon: 'reviews' },
           { label: 'Profile', href: '/vendor/profile', icon: 'profile' },
-          { label: 'Bank Details', href: '/vendor/bank-details', icon: 'bankDetails' },
         ];
       case 'USER':
       default:
@@ -68,7 +64,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { label: 'Profile', href: '/account', icon: 'profile' },
           { label: 'Addresses', href: '/account#addresses', icon: 'addresses' },
           { label: 'Orders', href: '/orders', icon: 'orders' },
-          { label: 'Wishlist', href: '/wishlist', icon: 'products' }
         ];
     }
   };

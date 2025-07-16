@@ -22,23 +22,17 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   RETURNED
-  REFUNDED
 }
 
 enum PaymentMethod {
   KHALTI
-  ESEWA
   COD
-  CARD
-  WALLET
 }
 
 enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
-  REFUNDED
-  PARTIALLY_REFUNDED
 }
 
 enum ProductStatus {
@@ -51,61 +45,76 @@ enum ProductStatus {
 model User {
   id           Int       @id @default(autoincrement())
   email        String    @unique
-  passwordHash String
+  passwordHash String?
   firstName    String
   lastName     String
   phone        String?
   avatar       String?
-  role         UserRole  @default(CUSTOMER)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  updatedBy    Int?      @map("updated_by")
   lastLogin    DateTime?
   isActive     Boolean   @default(true)
+  role         UserRole  @default(CUSTOMER)
 
-  // Relationships
-  addresses             Address[]
-  orders                Order[]
-  reviews               Review[]
-  vendorProfile         Vendor?
-  adminActivities       AdminActivity[]
-  carts                 Cart[]
-  Wishlist              Wishlist?
-  UserCoupon            UserCoupon[]
-  CouponUserRestriction CouponUserRestriction[]
-  Notification          Notification[]
+  // Relations
+  addresses             Address[]          @relation("AddressUser")
+  updatedAddresses      Address[]          @relation("AddressUpdatedBy")
+  orders                Order[]            @relation("OrderUser")
+  updatedOrders         Order[]            @relation("OrderUpdatedBy")
+  reviews               Review[]           @relation("ReviewUser")
+  updatedReviews        Review[]           @relation("ReviewUpdatedBy")
+  vendorProfile         Vendor?            @relation("VendorUser")
+  updatedVendors        Vendor[]           @relation("VendorUpdatedBy")
+  updatedCategories     Category[]         @relation("CategoryUpdatedBy")
+  updatedProducts       Product[]          @relation("ProductUpdatedBy")
+  updatedProductTags    ProductTag[]       @relation("ProductTagUpdatedBy")
+  updatedProductImages  ProductImage[]     @relation("ProductImageUpdatedBy")
+  updatedProductAttrs   ProductAttribute[] @relation("ProductAttributeUpdatedBy")
+  updatedOrderItems     OrderItem[]        @relation("OrderItemUpdatedBy")
+  updatedPayments       Payment[]          @relation("PaymentUpdatedBy")
+  updatedShipments      Shipment[]         @relation("ShipmentUpdatedBy")
+  updatedCommissions    Commission[]       @relation("CommissionUpdatedBy")
+  updatedPayoutRequests PayoutRequest[]    @relation("PayoutRequestUpdatedBy")
+  cart                  Cart?
+
+  @@index([updatedBy])
 }
 
 model Vendor {
-  id            Int       @id @default(autoincrement())
-  userId        Int       @unique
-  businessName  String
-  businessEmail String    @unique
-  businessPhone String
-  slug          String    @unique
-  taxId         String?
-  description   String?
-  logo          String?
-  banner        String?
-  website       String?
-  facebook      String?
-  instagram     String?
-  twitter       String?
-  isApproved    Boolean   @default(false)
-  approvedAt    DateTime?
-  rating        Float     @default(0)
-  totalReviews  Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              Int       @id @default(autoincrement())
+  userId          Int       @unique
+  businessName    String
+  businessEmail   String    @unique
+  businessPhone   String
+  slug            String    @unique
+  taxId           String?
+  description     String?
+  logo            String?
+  banner          String?
+  website         String?
+  facebook        String?
+  instagram       String?
+  twitter         String?
+  backgroundColor String?
+  brandColor      String?
+  isApproved      Boolean   @default(false)
+  isAdminTeam     Boolean   @default(false)
+  approvedAt      DateTime?
+  rating          Float     @default(0)
+  totalReviews    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  updatedBy       Int?      @map("updated_by")
 
-  // Relationships
-  user         User           @relation(fields: [userId], references: [id])
-  products     Product[]
-  bankDetails  BankDetail[]
-  orderItems   OrderItem[]
-  VendorPolicy VendorPolicy[]
-  CouponVendor CouponVendor[]
-  commissions  Commission[]
+  user           User            @relation("VendorUser", fields: [userId], references: [id], onDelete: Cascade)
+  products       Product[]
+  orderItems     OrderItem[]
+  commissions    Commission[]
   payoutRequests PayoutRequest[]
+  updated        User?           @relation("VendorUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([userId])
 }
 
 model Address {
@@ -122,8 +131,12 @@ model Address {
   isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  updatedBy     Int?     @map("updated_by")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User  @relation("AddressUser", fields: [userId], references: [id], onDelete: Cascade)
+  updated User? @relation("AddressUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([userId])
 }
 
 model Category {
@@ -137,80 +150,51 @@ model Category {
   featuredOrder Int?     @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  updatedBy     Int?     @map("updated_by")
 
-  // Relationships
-  parent         Category?           @relation("CategoryToCategory", fields: [parentId], references: [id])
-  children       Category[]          @relation("CategoryToCategory")
-  products       Product[]
-  attributes     CategoryAttribute[]
-  CouponCategory CouponCategory[]
-}
-
-model CategoryAttribute {
-  id           Int      @id @default(autoincrement())
-  categoryId   Int
-  name         String
-  isRequired   Boolean  @default(false)
-  isFilterable Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryToCategory")
+  products Product[]
+  updated  User?      @relation("CategoryUpdatedBy", fields: [updatedBy], references: [id])
 }
 
 model Product {
   id               Int           @id @default(autoincrement())
   vendorId         Int
   categoryId       Int
-  brandId          Int?
   name             String
   slug             String        @unique
   description      String
   shortDescription String?
-  price            Float
-  salePrice        Float?
-  costPrice        Float?
+  price            Decimal       @default(0.00)
+  salePrice        Decimal?
+  costPrice        Decimal?
   sku              String        @unique
   stockQuantity    Int           @default(0)
   status           ProductStatus @default(DRAFT)
   isFeatured       Boolean       @default(false)
-  hasVariants      Boolean       @default(false)
   weight           Float?
   length           Float?
   width            Float?
   height           Float?
-  rating           Float?        @default(0)
+  rating           Float         @default(0)
   reviewCount      Int           @default(0)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  updatedBy        Int?          @map("updated_by")
 
-  // Relationships
-  vendor       Vendor             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  category     Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  brand        Brand?             @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  images       ProductImage[]
-  variants     ProductVariant[]
-  attributes   ProductAttribute[]
-  reviews      Review[]
-  tags         ProductTag[]
-  orderItems   OrderItem[]
-  cartItems    CartItem[]
-  WishlistItem WishlistItem[]
-}
+  vendor     Vendor?            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  category   Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images     ProductImage[]
+  attributes ProductAttribute[]
+  reviews    Review[]
+  tags       ProductTag[]
+  orderItems OrderItem[]
+  updated    User?              @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
+  cartItems  CartItem[]
 
-model Brand {
-  id            Int      @id @default(autoincrement())
-  name          String
-  slug          String   @unique
-  description   String?
-  logo          String?
-  website       String?
-  isFeatured    Boolean  @default(false)
-  featuredOrder Int?     @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  products Product[]
+  @@index([vendorId])
+  @@index([categoryId])
 }
 
 model ProductTag {
@@ -218,8 +202,13 @@ model ProductTag {
   productId Int
   name      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy Int?     @map("updated_by")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  updated User?   @relation("ProductTagUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([productId])
 }
 
 model ProductImage {
@@ -230,35 +219,28 @@ model ProductImage {
   isPrimary Boolean  @default(false)
   order     Int      @default(0)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy Int?     @map("updated_by")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
+  updated User?   @relation("ProductImageUpdatedBy", fields: [updatedBy], references: [id])
 
-model ProductVariant {
-  id              Int      @id @default(autoincrement())
-  productId       Int
-  name            String // e.g., "Color", "Size"
-  value           String // e.g., "Red", "XL"
-  priceDifference Float    @default(0)
-  stockQuantity   Int      @default(0)
-  sku             String?
-  image           String? // Variant-specific image
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
-  cartItems  CartItem[]
+  @@index([productId])
 }
 
 model ProductAttribute {
   id        Int      @id @default(autoincrement())
   productId Int
-  name      String // e.g., "Material", "Care Instructions"
-  value     String // e.g., "Cotton", "Machine wash cold"
+  name      String
+  value     String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy Int?     @map("updated_by")
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  updated User?   @relation("ProductAttributeUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([productId])
 }
 
 model Order {
@@ -268,59 +250,66 @@ model Order {
   status          OrderStatus   @default(PENDING)
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus @default(PENDING)
-  subtotal        Float
-  shippingFee     Float         @default(0)
-  total           Float
-  shippingAddress Json // Snapshot of address at time of order
+  subtotal        Decimal       @default(0.00)
+  shippingFee     Decimal       @default(0.00)
+  total           Decimal       @default(0.00)
+  shippingAddress Json
   customerNote    String?
   completedAt     DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  updatedBy       Int?          @map("updated_by")
 
-  // Relationships
-  user       User         @relation(fields: [userId], references: [id])
-  items      OrderItem[]
-  payments   Payment[]
-  Shipment   Shipment[]
-  Refund     Refund[]
-  UserCoupon UserCoupon[]
+  user      User        @relation("OrderUser", fields: [userId], references: [id], onDelete: Restrict)
+  updated   User?       @relation("OrderUpdatedBy", fields: [updatedBy], references: [id])
+  items     OrderItem[]
+  payments  Payment[]
+  shipments Shipment[]
+
+  @@index([userId])
 }
 
 model OrderItem {
   id              Int      @id @default(autoincrement())
   orderId         Int
   productId       Int
-  vendorId        Int
-  variantId       Int?
   quantity        Int
-  price           Float // Price at time of purchase
-  salePrice       Float? // Sale price at time of purchase
-  productSnapshot Json // Product details snapshot
-  variantSnapshot Json? // Variant details snapshot
+  price           Decimal  @default(0.00)
+  salePrice       Decimal?
+  productSnapshot Json
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  updatedBy       Int?     @map("updated_by")
 
-  order   Order           @relation(fields: [orderId], references: [id])
-  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  vendor  Vendor          @relation(fields: [vendorId], references: [id])
-  variant ProductVariant? @relation(fields: [variantId], references: [id])
-  reviews Review[]
+  order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  reviews    Review[]
   commission Commission?
+  updated    User?       @relation("OrderItemUpdatedBy", fields: [updatedBy], references: [id])
+  Vendor     Vendor?     @relation(fields: [vendorId], references: [id])
+  vendorId   Int?
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Payment {
   id             Int           @id @default(autoincrement())
   orderId        Int
-  amount         Float
+  amount         Decimal       @default(0.00)
   method         PaymentMethod
   transactionId  String?
   status         PaymentStatus @default(PENDING)
-  paymentDetails Json? // Gateway-specific response data
+  paymentDetails Json?
   processedAt    DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  updatedBy      Int?          @map("updated_by")
 
-  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  khaltiDetails KhaltiPayment?
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  updated User? @relation("PaymentUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([orderId])
 }
 
 model Shipment {
@@ -333,21 +322,12 @@ model Shipment {
   deliveredAt    DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  updatedBy      Int?      @map("updated_by")
 
-  order Order @relation(fields: [orderId], references: [id])
-}
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  updated User? @relation("ShipmentUpdatedBy", fields: [updatedBy], references: [id])
 
-model Refund {
-  id          Int           @id @default(autoincrement())
-  orderId     Int
-  amount      Float
-  reason      String?
-  processedBy Int
-  status      PaymentStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  order Order @relation(fields: [orderId], references: [id])
+  @@index([orderId])
 }
 
 model Review {
@@ -358,208 +338,70 @@ model Review {
   rating      Int
   title       String?
   comment     String?
-  images      Json? // Array of image URLs stored as JSON
-  isApproved  Boolean  @default(true) // Auto-approve for now
+  images      Json?
+  isApproved  Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  updatedBy   Int?     @map("updated_by")
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation("ReviewUser", fields: [userId], references: [id], onDelete: Cascade)
+  updated   User?     @relation("ReviewUpdatedBy", fields: [updatedBy], references: [id])
   product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
-}
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 
-model BankDetail {
-  id            Int      @id @default(autoincrement())
-  vendorId      Int
-  bankName      String
-  accountName   String
-  accountNumber String
-  branch        String?
-  isDefault     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-}
-
-model AdminActivity {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  action     String
-  entityType String?
-  entityId   Int?
-  details    Json?
-  ipAddress  String?
-  createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model SystemSetting {
-  id          Int      @id @default(autoincrement())
-  key         String   @unique
-  value       Json
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model VendorPolicy {
-  id          Int      @id @default(autoincrement())
-  vendorId    Int
-  policyType  String // e.g., "shipping", "return", "privacy"
-  title       String
-  description String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  vendor Vendor @relation(fields: [vendorId], references: [id])
-}
-
-// Payment Gateway Specific Models
-model KhaltiPayment {
-  id         Int      @id @default(autoincrement())
-  paymentId  Int      @unique
-  pidx       String
-  paymentUrl String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-
-  payment Payment @relation(fields: [paymentId], references: [id])
-}
-
-model Cart {
-  id        Int        @id @default(autoincrement())
-  userId    Int        @unique
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-model CartItem {
-  id        Int      @id @default(autoincrement())
-  cartId    Int
-  productId Int
-  variantId Int?
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variant ProductVariant? @relation(fields: [variantId], references: [id])
-}
-
-model Wishlist {
-  id        Int            @id @default(autoincrement())
-  userId    Int            @unique
-  items     WishlistItem[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-model WishlistItem {
-  id         Int      @id @default(autoincrement())
-  wishlistId Int
-  productId  Int
-  addedAt    DateTime @default(now())
-
-  wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-model Coupon {
-  id             Int       @id @default(autoincrement())
-  code           String    @unique
-  description    String?
-  discountType   String    @default("percentage") // "percentage" or "fixed"
-  discountValue  Float
-  minOrderAmount Float?
-  maxUses        Int?
-  uses           Int       @default(0)
-  startDate      DateTime
-  endDate        DateTime?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  categories       CouponCategory[]
-  vendors          CouponVendor[]
-  userCoupons      UserCoupon[]
-  userRestrictions CouponUserRestriction[]
-}
-
-model CouponCategory {
-  id         Int @id @default(autoincrement())
-  couponId   Int
-  categoryId Int
-
-  coupon   Coupon   @relation(fields: [couponId], references: [id])
-  category Category @relation(fields: [categoryId], references: [id])
-}
-
-model CouponVendor {
-  id       Int @id @default(autoincrement())
-  couponId Int
-  vendorId Int
-
-  coupon Coupon @relation(fields: [couponId], references: [id])
-  vendor Vendor @relation(fields: [vendorId], references: [id])
-}
-
-model UserCoupon {
-  id       Int       @id @default(autoincrement())
-  userId   Int
-  couponId Int
-  usedAt   DateTime?
-  orderId  Int?
-
-  user   User   @relation(fields: [userId], references: [id])
-  coupon Coupon @relation(fields: [couponId], references: [id])
-  order  Order? @relation(fields: [orderId], references: [id])
-}
-
-model CouponUserRestriction {
-  id       Int @id @default(autoincrement())
-  couponId Int
-  userId   Int
-
-  coupon Coupon @relation(fields: [couponId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
-}
-
-model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  title     String
-  message   String
-  isRead    Boolean  @default(false)
-  link      String?
-  type      String
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  @@index([userId])
+  @@index([productId])
+  @@index([orderItemId])
 }
 
 model Commission {
-  id        Int      @id @default(autoincrement())
-  vendorId  Int
-  amount    Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  vendorId    Int
+  orderItemId Int?     @unique
+  amount      Decimal  @default(0.00)
+  rate        Float    @default(0.1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedBy   Int?     @map("updated_by")
+
+  vendor    Vendor     @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  orderItem OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  updated   User?      @relation("CommissionUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([vendorId])
 }
 
 model PayoutRequest {
   id        Int      @id @default(autoincrement())
   vendorId  Int
-  amount    Float
-  status    String
+  amount    Decimal  @default(0.00)
+  status    String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  updatedBy Int?     @map("updated_by")
+
+  vendor  Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  updated User?  @relation("PayoutRequestUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([vendorId])
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int        @unique
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

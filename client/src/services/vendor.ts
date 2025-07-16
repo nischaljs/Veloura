@@ -1,5 +1,5 @@
 import api from './api';
-import { Vendor, Product, BankDetail, VendorPolicy, DashboardStats } from '../types';
+import { Vendor, Product, DashboardStats } from '../types';
 
 // Vendor Profile
 export const getVendorProfile = () => api.get('/vendors/profile');
@@ -39,24 +39,6 @@ export const getVendorReviews = (slug: string, params?: {
   limit?: number;
   rating?: number;
 }) => api.get(`/vendors/${slug}/reviews`, { params });
-
-// Bank Details
-export const getBankDetails = () => api.get('/vendors/bank-details');
-
-export const addBankDetail = (data: Omit<BankDetail, 'id' | 'vendorId'>) => api.post('/vendors/bank-details', data);
-
-export const updateBankDetail = (id: number, data: Partial<BankDetail>) => api.put(`/vendors/bank-details/${id}`, data);
-
-export const deleteBankDetail = (id: number) => api.delete(`/vendors/bank-details/${id}`);
-
-// Policies
-export const getPolicies = () => api.get('/vendors/policies');
-
-export const addPolicy = (data: Omit<VendorPolicy, 'id' | 'vendorId'>) => api.post('/vendors/policies', data);
-
-export const updatePolicy = (id: number, data: Partial<VendorPolicy>) => api.put(`/vendors/policies/${id}`, data);
-
-export const deletePolicy = (id: number) => api.delete(`/vendors/policies/${id}`);
 
 // Analytics
 export const getVendorAnalytics = () => api.get('/vendors/analytics');

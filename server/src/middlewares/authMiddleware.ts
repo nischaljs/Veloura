@@ -80,6 +80,19 @@ export const authenticateVendor = (req: Request, res: Response, next: NextFuncti
     }
     (req as any).userId = decoded.userId;
     (req as any).role = decoded.role;
+    // Look up vendorId for this user
+    if (decoded.role === 'VENDOR' || decoded.role === 'ADMIN') {
+      const prisma = require('../utils/prisma').default;
+      prisma.vendor.findFirst({ where: { userId: decoded.userId } }).then((vendor: any) => {
+        if (vendor) {
+          (req as any).vendorId = vendor.id;
+        }
+        next();
+      }).catch((err: any) => {
+        res.status(500).json({ message: 'Error looking up vendor profile' });
+      });
+      return;
+    }
     console.log('Authentication successful, calling next()');
     next();
   } catch (err) {

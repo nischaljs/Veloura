@@ -193,7 +193,6 @@ export const getVendors = async (req: Request, res: Response) => {
         include: {
           user: { select: { firstName: true, lastName: true, email: true } },
           products: true,
-          bankDetails: true,
         }
       }),
       prisma.vendor.count({ where })
@@ -238,8 +237,6 @@ export const getVendorById = async (req: Request, res: Response) => {
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
         products: { select: { id: true, name: true, status: true, price: true } },
-        bankDetails: true,
-        
       }
     });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
@@ -267,8 +264,6 @@ export const getVendorById = async (req: Request, res: Response) => {
           createdAt: vendor.createdAt,
           user: vendor.user,
           products: vendor.products,
-          bankDetails: vendor.bankDetails,
-
         }
       }
     });
@@ -284,6 +279,11 @@ export const approveVendor = async (req: Request, res: Response) => {
       where: { id },
       data: { isApproved: true, approvedAt: new Date() }
     });
+    // Also set the user's role to VENDOR if not already
+    const user = await prisma.user.findUnique({ where: { id: vendor.userId } });
+    if (user && user.role !== 'VENDOR') {
+      await prisma.user.update({ where: { id: vendor.userId }, data: { role: 'VENDOR' } });
+    }
     res.json({ success: true, message: 'Vendor approved successfully', data: { vendor } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
@@ -314,6 +314,87 @@ export const suspendVendor = async (req: Request, res: Response) => {
       data: { isApproved: false }
     });
     res.json({ success: true, message: 'Vendor suspended successfully', data: { vendor } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+// --- Payout Management ---
+
+/**
+ * GET /admin/payout-requests - List all payout requests (paginated)
+ */
+export const getPayoutRequests = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 20, status, vendorId } = req.query;
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const skip = (pageNum - 1) * limitNum;
+    const where: any = {};
+    if (status) where.status = status;
+    if (vendorId) where.vendorId = Number(vendorId);
+    const [payouts, total] = await Promise.all([
+      prisma.payoutRequest.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        include: { vendor: { select: { id: true, businessName: true, businessEmail: true } } }
+      }),
+      prisma.payoutRequest.count({ where })
+    ]);
+    res.json({
+      success: true,
+      data: {
+        payouts,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        }
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+/**
+ * PUT /admin/payout-requests/:id/approve - Approve a payout request
+ */
+export const approvePayoutRequest = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const payout = await prisma.payoutRequest.findUnique({ where: { id } });
+    if (!payout) { res.status(404).json({ success: false, message: 'Payout request not found' }); return; }
+    if (payout.status === 'PAID') { res.status(400).json({ success: false, message: 'Payout already approved' }); return; }
+    const updated = await prisma.payoutRequest.update({
+      where: { id },
+      data: { status: 'PAID', updatedAt: new Date() }
+    });
+    // Optionally: log admin action
+    res.json({ success: true, message: 'Payout request approved', data: { payout: updated } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+/**
+ * PUT /admin/payout-requests/:id/reject - Reject a payout request
+ */
+export const rejectPayoutRequest = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const payout = await prisma.payoutRequest.findUnique({ where: { id } });
+    if (!payout) { res.status(404).json({ success: false, message: 'Payout request not found' }); return; }
+    if (payout.status === 'REJECTED') { res.status(400).json({ success: false, message: 'Payout already rejected' }); return; }
+    const updated = await prisma.payoutRequest.update({
+      where: { id },
+      data: { status: 'REJECTED', updatedAt: new Date() }
+    });
+    // Optionally: log admin action
+    res.json({ success: true, message: 'Payout request rejected', data: { payout: updated } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
@@ -350,8 +431,7 @@ export const getProducts = async (req: Request, res: Response) => {
         orderBy: { createdAt: 'desc' },
         include: {
           vendor: { select: { businessName: true, slug: true } },
-          category: { select: { name: true, slug: true } },
-          brand: { select: { name: true, slug: true } }
+          category: { select: { name: true, slug: true } }
         }
       }),
       prisma.product.count({ where })

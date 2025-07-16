@@ -1,4 +1,5 @@
-import { PrismaClient, UserRole } from '@prisma/client';
+
+import { PrismaClient, UserRole, OrderStatus, PaymentMethod, PaymentStatus, ProductStatus } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { downloadImages } from '../src/scripts/download-images';
 
@@ -15,39 +16,21 @@ async function main() {
     // Clean up all existing data before seeding (in correct order to respect foreign key constraints)
     console.log('Cleaning up existing data...');
     
-    // Delete all dependent records first
     await prisma.review.deleteMany();
     await prisma.orderItem.deleteMany();
     await prisma.payment.deleteMany();
-    await prisma.refund.deleteMany();
     await prisma.shipment.deleteMany();
-    await prisma.cartItem.deleteMany();
-    await prisma.cart.deleteMany();
-    await prisma.wishlistItem.deleteMany();
-    await prisma.wishlist.deleteMany();
-    await prisma.notification.deleteMany();
-    await prisma.order.deleteMany();
+    await prisma.commission.deleteMany();
+    await prisma.payoutRequest.deleteMany();
     await prisma.productImage.deleteMany();
     await prisma.productTag.deleteMany();
-    await prisma.productVariant.deleteMany();
     await prisma.productAttribute.deleteMany();
-    await prisma.address.deleteMany();
-    await prisma.adminActivity.deleteMany();
-    await prisma.bankDetail.deleteMany();
-    
-    // Delete products and related data
+    await prisma.address.deleteMany(); // address references userId
+    await prisma.order.deleteMany(); // <-- add this line to delete orders before vendor and user
     await prisma.product.deleteMany();
-    
-    // Delete categories (subcategories will be deleted automatically due to cascade)
     await prisma.category.deleteMany();
-    
-    // Delete brands
-    // await prisma.brand.deleteMany(); // REMOVE this line
-    
-    // Delete vendors
-    await prisma.vendor.deleteMany();
-    
-    // Delete users last
+    await prisma.vendor.deleteMany(); // vendor references userId
+    // Now it's safe to delete users
     await prisma.user.deleteMany();
     
     console.log('Existing data cleaned up!');
@@ -57,22 +40,24 @@ async function main() {
     const password2 = await bcrypt.hash('customer456', 10);
     const password3 = await bcrypt.hash('vendor123', 10);
     const password4 = await bcrypt.hash('vendor456', 10);
+    const password5 = await bcrypt.hash('vendor789', 10);
     const adminPassword = await bcrypt.hash('admin123', 10);
 
     console.log('Creating users...');
 
-    // Users - Using upsert to avoid unique constraint errors
+    // Users
     const customer1 = await prisma.user.upsert({
       where: { email: 'customer1@example.com' },
       update: {},
       create: {
         email: 'customer1@example.com',
         passwordHash: password1,
-        firstName: 'Alice',
-        lastName: 'Smith',
+        firstName: 'Anita',
+        lastName: 'Sharma',
         phone: '+977-9800000001',
         role: UserRole.CUSTOMER,
         avatar: '/images/users/customer1-avatar.jpg',
+        lastLogin: new Date('2025-07-15T10:00:00+05:45'),
       },
     });
 
@@ -82,11 +67,12 @@ async function main() {
       create: {
         email: 'customer2@example.com',
         passwordHash: password2,
-        firstName: 'Bob',
-        lastName: 'Johnson',
+        firstName: 'Suman',
+        lastName: 'Thapa',
         phone: '+977-9800000002',
         role: UserRole.CUSTOMER,
         avatar: '/images/users/customer2-avatar.jpg',
+        lastLogin: new Date('2025-07-14T14:30:00+05:45'),
       },
     });
 
@@ -96,11 +82,12 @@ async function main() {
       create: {
         email: 'vendor1@example.com',
         passwordHash: password3,
-        firstName: 'Charlie',
-        lastName: 'Vendor',
+        firstName: 'Ravi',
+        lastName: 'Gurung',
         phone: '+977-9800000003',
         role: UserRole.VENDOR,
         avatar: '/images/users/vendor1-avatar.jpg',
+        lastLogin: new Date('2025-07-16T09:15:00+05:45'),
       },
     });
 
@@ -110,11 +97,27 @@ async function main() {
       create: {
         email: 'vendor2@example.com',
         passwordHash: password4,
-        firstName: 'Diana',
-        lastName: 'Vendor',
+        firstName: 'Priya',
+        lastName: 'Tamang',
         phone: '+977-9800000004',
         role: UserRole.VENDOR,
         avatar: '/images/users/vendor2-avatar.jpg',
+        lastLogin: new Date('2025-07-15T16:20:00+05:45'),
+      },
+    });
+
+    const vendorUser3 = await prisma.user.upsert({
+      where: { email: 'vendor3@example.com' },
+      update: {},
+      create: {
+        email: 'vendor3@example.com',
+        passwordHash: password5,
+        firstName: 'Kiran',
+        lastName: 'Rai',
+        phone: '+977-9800000005',
+        role: UserRole.VENDOR,
+        avatar: '/images/users/vendor3-avatar.jpg',
+        lastLogin: new Date('2025-07-13T11:00:00+05:45'),
       },
     });
 
@@ -129,49 +132,26 @@ async function main() {
         phone: '+977-9800000000',
         role: UserRole.ADMIN,
         avatar: '/images/users/admin-avatar.jpg',
+        lastLogin: new Date('2025-07-16T15:00:00+05:45'),
       },
     });
-
-    // --- INHOUSE/ADMIN VENDOR ---
-    const adminVendor = await prisma.vendor.upsert({
-      where: { userId: admin.id },
-      update: {},
-      create: {
-        userId: admin.id,
-        businessName: 'Inhouse',
-        businessEmail: 'admin@inhouse.com',
-        businessPhone: '+977-9800009999',
-        slug: 'inhouse',
-        description: 'Our inhouse products and exclusive items',
-        isApproved: true,
-        website: 'https://yourstore.com/inhouse',
-        logo: '/images/brands/inhouse-logo.jpg',
-      },
-    });
-
-    // After user upserts
-    // Fetch users for later use
-    const customer1Db = await prisma.user.findUnique({ where: { email: 'customer1@example.com' } });
-    const customer2Db = await prisma.user.findUnique({ where: { email: 'customer2@example.com' } });
-    const vendorUser1Db = await prisma.user.findUnique({ where: { email: 'vendor1@example.com' } });
-    const vendorUser2Db = await prisma.user.findUnique({ where: { email: 'vendor2@example.com' } });
 
     console.log('Creating vendors...');
 
-    // Vendors - Using upsert to avoid unique constraint errors
+    // Vendors (one approved, one unapproved, one admin team)
     const vendor1 = await prisma.vendor.upsert({
       where: { userId: vendorUser1.id },
       update: {},
       create: {
         userId: vendorUser1.id,
-        businessName: 'Fashion Boutique',
+        businessName: 'Beauty Bliss',
         businessEmail: 'vendor1biz@example.com',
         businessPhone: '+977-9800001001',
-        slug: 'fashion-boutique',
-        description: 'Trendy fashion items',
+        slug: 'beauty-bliss',
+        description: 'Premium beauty and skincare products',
         isApproved: true,
-        website: 'https://fashionboutique.com',
-        logo: '/images/brands/zara-logo.jpg',
+        approvedAt: new Date('2025-07-08T12:00:00+05:45'),
+        website: 'https://beautybliss.com',
       },
     });
 
@@ -180,33 +160,86 @@ async function main() {
       update: {},
       create: {
         userId: vendorUser2.id,
-        businessName: 'Fashion Hub',
+        businessName: 'Tech Trends',
         businessEmail: 'vendor2biz@example.com',
         businessPhone: '+977-9800001002',
-        slug: 'fashion-hub',
-        description: 'Trendy fashion items',
-        isApproved: true,
-        website: 'https://fashionhub.com',
-        logo: '/images/brands/nike-logo.jpg',
+        slug: 'tech-trends',
+        description: 'Latest electronics and gadgets',
+        isApproved: false, // Unapproved vendor
+        website: 'https://techtrends.com',
       },
     });
 
-    // After vendor upserts
-    // Fetch vendors for later use
-    const vendor1Db = await prisma.vendor.findUnique({ where: { slug: 'fashion-boutique' } });
-    const vendor2Db = await prisma.vendor.findUnique({ where: { slug: 'fashion-hub' } });
+    const adminVendor = await prisma.vendor.upsert({
+      where: { userId: admin.id },
+      update: {},
+      create: {
+        userId: admin.id,
+        businessName: 'Platform Store',
+        businessEmail: 'admin@platformstore.com',
+        businessPhone: '+977-9800009999',
+        slug: 'platform-store',
+        description: 'Exclusive products from our platform',
+        isApproved: true,
+        approvedAt: new Date('2025-07-07T09:00:00+05:45'),
+        website: 'https://platformstore.com',
+      },
+    });
 
-    // REMOVE: Creating brands and all brand upserts
-    // REMOVE: All code that creates or upserts brands
-    // REMOVE: All code that fetches brands for product seeding
+    console.log('Creating addresses...');
 
-    // --- SEED CATEGORIES ---
+    // Addresses
+    await prisma.address.createMany({
+      data: [
+        {
+          userId: customer1.id,
+          label: 'Home',
+          recipientName: 'Anita Sharma',
+          street: '123 Main St',
+          city: 'Kathmandu',
+          state: 'Bagmati',
+          postalCode: '44600',
+          country: 'Nepal',
+          phone: '+977-9800000001',
+          isDefault: true,
+        },
+        {
+          userId: customer1.id,
+          label: 'Office',
+          recipientName: 'Anita Sharma',
+          street: '456 Office Rd',
+          city: 'Lalitpur',
+          state: 'Bagmati',
+          postalCode: '44700',
+          country: 'Nepal',
+          phone: '+977-9800000001',
+          isDefault: false,
+        },
+        {
+          userId: customer2.id,
+          label: 'Home',
+          recipientName: 'Suman Thapa',
+          street: '789 Home St',
+          city: 'Bhaktapur',
+          state: 'Bagmati',
+          postalCode: '44800',
+          country: 'Nepal',
+          phone: '+977-9800000002',
+          isDefault: true,
+        },
+      ],
+    });
+
     console.log('Creating categories...');
 
-    // Categories - Using upsert for each category
+    // Categories
     const categories = [
-      { name: 'Fashion', slug: 'fashion', description: 'Clothing and accessories', isFeatured: true, featuredOrder: 1, image: '/images/categories/fashion.jpg' },
-      { name: 'Beauty', slug: 'beauty', description: 'Beauty and personal care products', isFeatured: true, featuredOrder: 2, image: '/images/categories/beauty.jpg' },
+      { name: 'Skincare', slug: 'skincare', description: 'Skincare products for all skin types', isFeatured: true, featuredOrder: 1, image: '/images/categories/skincare.jpg' },
+      { name: 'Home Appliances', slug: 'home-appliances', description: 'Appliances for your home', isFeatured: true, featuredOrder: 2, image: '/images/categories/home-appliances.jpg' },
+      { name: 'Computers and Tech', slug: 'computers-and-tech', description: 'Latest tech gadgets', isFeatured: true, featuredOrder: 3, image: '/images/categories/computers-and-tech.jpg' },
+      { name: 'Male Skincare', slug: 'male-skincare', description: 'Skincare tailored for men', isFeatured: false, image: '/images/categories/male-skincare.jpg' },
+      { name: 'Women’s Fashion', slug: 'womens-fashion', description: 'Trendy fashion for women', isFeatured: true, featuredOrder: 4, image: '/images/categories/womens-fashion.jpg' },
+      { name: 'Men’s Fashion', slug: 'mens-fashion', description: 'Stylish fashion for men', isFeatured: false, image: '/images/categories/mens-fashion.jpg' },
     ];
 
     for (const categoryData of categories) {
@@ -217,103 +250,225 @@ async function main() {
       });
     }
 
-    // Create subcategory after parent exists
-    const fashionCategoryForSub = await prisma.category.findUnique({
-      where: { slug: 'fashion' },
-    });
+    // Subcategories
+    const skincareCategory = await prisma.category.findUnique({ where: { slug: 'skincare' } });
+    const homeAppliancesCategory = await prisma.category.findUnique({ where: { slug: 'home-appliances' } });
+    const computersAndTechCategory = await prisma.category.findUnique({ where: { slug: 'computers-and-tech' } });
 
-    if (fashionCategoryForSub) {
+    if (skincareCategory) {
       await prisma.category.upsert({
-        where: { slug: 'mens-fashion' },
-        update: { image: '/images/categories/mens-fashion.jpg' },
+        where: { slug: 'moisturizers' },
+        update: { image: '/images/categories/moisturizers.jpg' },
         create: {
-          name: `Men's Fashion`,
-          slug: 'mens-fashion',
-          description: 'Fashion for men',
-          parentId: fashionCategoryForSub.id,
-          image: '/images/categories/mens-fashion.jpg',
-        },
-      });
-      await prisma.category.upsert({
-        where: { slug: 'womens-fashion' },
-        update: { image: '/images/categories/womens-fashion.jpg' },
-        create: {
-          name: `Women's Fashion`,
-          slug: 'womens-fashion',
-          description: 'Fashion for women',
-          parentId: fashionCategoryForSub.id,
-          image: '/images/categories/womens-fashion.jpg',
+          name: 'Moisturizers',
+          slug: 'moisturizers',
+          description: 'Hydrating skincare products',
+          parentId: skincareCategory.id,
+          image: '/images/categories/moisturizers.jpg',
         },
       });
     }
 
-    const beautyCategoryForSub = await prisma.category.findUnique({
-      where: { slug: 'beauty' },
-    });
-
-    if (beautyCategoryForSub) {
+    if (homeAppliancesCategory) {
       await prisma.category.upsert({
-        where: { slug: 'skincare' },
-        update: { image: '/images/categories/skincare.jpg' },
+        where: { slug: 'kitchen-appliances' },
+        update: { image: '/images/categories/kitchen-appliances.jpg' },
         create: {
-          name: 'Skincare',
-          slug: 'skincare',
-          description: 'Skincare products',
-          parentId: beautyCategoryForSub.id,
-          image: '/images/categories/skincare.jpg',
-        },
-      });
-      await prisma.category.upsert({
-        where: { slug: 'makeup' },
-        update: { image: '/images/categories/makeup.jpg' },
-        create: {
-          name: 'Makeup',
-          slug: 'makeup',
-          description: 'Makeup products',
-          parentId: beautyCategoryForSub.id,
-          image: '/images/categories/makeup.jpg',
+          name: 'Kitchen Appliances',
+          slug: 'kitchen-appliances',
+          description: 'Appliances for your kitchen',
+          parentId: homeAppliancesCategory.id,
+          image: '/images/categories/kitchen-appliances.jpg',
         },
       });
     }
 
-    // --- SEED PRODUCTS ---
+    if (computersAndTechCategory) {
+      await prisma.category.upsert({
+        where: { slug: 'smartphones' },
+        update: { image: '/images/categories/smartphones.jpg' },
+        create: {
+          name: 'Smartphones',
+          slug: 'smartphones',
+          description: 'Latest smartphones',
+          parentId: computersAndTechCategory.id,
+          image: '/images/categories/smartphones.jpg',
+        },
+      });
+    }
+
     console.log('Creating products...');
 
-    // Fetch mensFashion and womensFashion categories for product seeding
-    const mensFashion = await prisma.category.findUnique({ where: { slug: 'mens-fashion' } });
-    const womensFashion = await prisma.category.findUnique({ where: { slug: 'womens-fashion' } });
+    // Products (10 products across categories, including platform store)
+    const maleSkincareCategory = await prisma.category.findUnique({ where: { slug: 'male-skincare' } });
+    const womensFashionCategory = await prisma.category.findUnique({ where: { slug: 'womens-fashion' } });
+    const mensFashionCategory = await prisma.category.findUnique({ where: { slug: 'mens-fashion' } });
 
-    // --- INHOUSE PRODUCTS ---
-    const inhouseProducts = [
+    const products = [
       {
-        name: 'Inhouse Exclusive 1',
-        slug: 'inhouse-exclusive-1',
-        description: 'Exclusive product from our inhouse brand.',
-        shortDescription: 'Inhouse product 1.',
-        price: 150,
-        sku: 'IH1-001',
+        name: 'Hydrating Moisturizer',
+        slug: 'hydrating-moisturizer',
+        description: 'Lightweight moisturizer for daily use',
+        shortDescription: 'Hydrates all skin types',
+        price: 25.00,
+        salePrice: 20.00,
+        costPrice: 15.00,
+        sku: 'BB-MOIST-001',
         stockQuantity: 100,
-        categoryId: mensFashion?.id!,
-        vendorId: adminVendor.id,
-        image: '/images/products/inhouse1.jpg',
+        status: ProductStatus.ACTIVE,
+        categoryId: skincareCategory?.id!,
+        vendorId: vendor1.id,
         isFeatured: true,
+        weight: 0.2,
       },
       {
-        name: 'Inhouse Exclusive 2',
-        slug: 'inhouse-exclusive-2',
-        description: 'Another exclusive inhouse product.',
-        shortDescription: 'Inhouse product 2.',
-        price: 200,
-        sku: 'IH2-001',
-        stockQuantity: 80,
-        categoryId: womensFashion?.id!,
-        vendorId: adminVendor.id,
-        image: '/images/products/inhouse2.jpg',
+        name: 'Matte Lipstick Red',
+        slug: 'matte-lipstick-red',
+        description: 'Long-lasting red matte lipstick',
+        shortDescription: 'Bold red color',
+        price: 15.00,
+        sku: 'BB-LIP-001',
+        stockQuantity: 50,
+        status: ProductStatus.ACTIVE,
+        categoryId: skincareCategory?.id!,
+        vendorId: vendor1.id,
         isFeatured: false,
+        weight: 0.05,
+      },
+      {
+        name: 'Air Fryer 5L',
+        slug: 'air-fryer-5l',
+        description: 'Healthy cooking with 5L air fryer',
+        shortDescription: 'Oil-free frying',
+        price: 120.00,
+        salePrice: 100.00,
+        costPrice: 80.00,
+        sku: 'TT-AIRFRY-001',
+        stockQuantity: 30,
+        status: ProductStatus.ACTIVE,
+        categoryId: homeAppliancesCategory?.id!,
+        vendorId: vendor2.id,
+        isFeatured: true,
+        weight: 5.0,
+      },
+      {
+        name: 'Smartphone 128GB',
+        slug: 'smartphone-128gb',
+        description: 'High-performance smartphone with 128GB storage',
+        shortDescription: 'Fast and reliable',
+        price: 500.00,
+        salePrice: 450.00,
+        costPrice: 400.00,
+        sku: 'TT-PHONE-001',
+        stockQuantity: 20,
+        status: ProductStatus.ACTIVE,
+        categoryId: computersAndTechCategory?.id!,
+        vendorId: vendor2.id,
+        isFeatured: true,
+        weight: 0.3,
+      },
+      {
+        name: 'Men’s Face Wash',
+        slug: 'mens-face-wash',
+        description: 'Gentle face wash for men',
+        shortDescription: 'Cleanses without drying',
+        price: 18.00,
+        sku: 'BB-MFACE-001',
+        stockQuantity: 80,
+        status: ProductStatus.ACTIVE,
+        categoryId: maleSkincareCategory?.id,
+        vendorId: vendor1.id,
+        isFeatured: false,
+        weight: 0.15,
+      },
+      {
+        name: 'Women’s Kurta Set',
+        slug: 'womens-kurta-set',
+        description: 'Elegant kurta set for women',
+        shortDescription: 'Traditional style',
+        price: 45.00,
+        sku: 'BB-KURTA-001',
+        stockQuantity: 40,
+        status: ProductStatus.ACTIVE,
+        categoryId: womensFashionCategory?.id,
+        vendorId: vendor1.id,
+        isFeatured: true,
+        weight: 0.5,
+      },
+      {
+        name: 'Men’s Casual Shirt',
+        slug: 'mens-casual-shirt',
+        description: 'Comfortable casual shirt for men',
+        shortDescription: 'Stylish and comfy',
+        price: 30.00,
+        sku: 'BB-SHIRT-001',
+        stockQuantity: 60,
+        status: ProductStatus.ACTIVE,
+        categoryId: mensFashionCategory?.id,
+        vendorId: vendor1.id,
+        isFeatured: false,
+        weight: 0.3,
+      },
+      {
+        name: 'Platform Vitamin C Serum',
+        slug: 'platform-vitamin-c-serum',
+        description: 'Brightening vitamin C serum by platform',
+        shortDescription: 'Brightens skin',
+        price: 30.00,
+        sku: 'PS-SERUM-001',
+        stockQuantity: 50,
+        status: ProductStatus.ACTIVE,
+        categoryId: skincareCategory?.id!,
+        vendorId: adminVendor.id,
+        isFeatured: true,
+        weight: 0.15,
+      },
+      {
+        name: 'Platform Wireless Mouse',
+        slug: 'platform-wireless-mouse',
+        description: 'Ergonomic wireless mouse by platform',
+        shortDescription: 'Smooth and precise',
+        price: 25.00,
+        sku: 'PS-MOUSE-001',
+        stockQuantity: 70,
+        status: ProductStatus.ACTIVE,
+        categoryId: computersAndTechCategory?.id!,
+        vendorId: adminVendor.id,
+        isFeatured: false,
+        weight: 0.1,
+      },
+      {
+        name: 'Electric Kettle 1.8L',
+        slug: 'electric-kettle-1.8l',
+        description: 'Fast-boiling 1.8L electric kettle',
+        shortDescription: 'Quick and efficient',
+        price: 35.00,
+        sku: 'TT-KETTLE-001',
+        stockQuantity: 0,
+        status: ProductStatus.OUT_OF_STOCK,
+        categoryId: homeAppliancesCategory?.id!,
+        vendorId: vendor2.id,
+        isFeatured: false,
+        weight: 1.2,
+      },
+      {
+        name: 'Men’s Beard Oil',
+        slug: 'mens-beard-oil',
+        description: 'Nourishing beard oil for men',
+        shortDescription: 'Softens beard',
+        price: 20.00,
+        sku: 'BB-BEARD-001',
+        stockQuantity: 90,
+        status: ProductStatus.DRAFT,
+        categoryId: maleSkincareCategory?.id,
+        vendorId: vendor1.id,
+        isFeatured: false,
+        weight: 0.1,
       },
     ];
-    for (const p of inhouseProducts) {
-      if (p.categoryId && p.vendorId) {
+
+    for (const p of products) {
+      if (p.categoryId) {
         await prisma.product.upsert({
           where: { slug: p.slug },
           update: {},
@@ -323,84 +478,41 @@ async function main() {
             description: p.description,
             shortDescription: p.shortDescription,
             price: p.price,
+            salePrice: p.salePrice,
+            costPrice: p.costPrice,
             sku: p.sku,
             stockQuantity: p.stockQuantity,
+            status: p.status,
             categoryId: p.categoryId,
             vendorId: p.vendorId,
             isFeatured: p.isFeatured,
+            weight: p.weight,
             images: {
-              create: [{ url: p.image, altText: p.name, isPrimary: true, order: 1 }]
-            }
+              create: [
+                { url: `/images/products/${p.slug}.jpg`, altText: p.name, isPrimary: true, order: 1 },
+                { url: `/images/products/${p.slug}-2.jpg`, altText: `${p.name} Alternate`, isPrimary: false, order: 2 },
+              ],
+            },
+            tags: {
+          create: [
+                { name: p.status === ProductStatus.ACTIVE ? 'Active' : p.status === ProductStatus.OUT_OF_STOCK ? 'Out of Stock' : 'Draft' },
+                { name: p.isFeatured ? 'Featured' : 'Standard' },
+              ],
+            },
+            attributes: {
+          create: [
+                { name: 'Brand', value: p.vendorId === vendor1.id ? 'Beauty Bliss' : p.vendorId === vendor2.id ? 'Tech Trends' : 'Platform Store' },
+                { name: 'Category', value: p.categoryId === skincareCategory?.id ? 'Skincare' : p.categoryId === homeAppliancesCategory?.id ? 'Home Appliances' : p.categoryId === computersAndTechCategory?.id ? 'Computers and Tech' : p.categoryId === maleSkincareCategory?.id ? 'Male Skincare' : p.categoryId === womensFashionCategory?.id ? 'Women’s Fashion' : mensFashionCategory?.id ? 'Men’s Fashion' : 'Unknown' },
+              ],
+            },
           },
         });
       }
     }
-    console.log('Products created!');
 
-    // After product upserts
-    // Fetch products for later use
-    const sampleProduct1 = await prisma.product.findUnique({ where: { slug: 'sample-product-1' } });
-    const sampleProduct2 = await prisma.product.findUnique({ where: { slug: 'sample-product-2' } });
+    console.log('Creating orders...');
 
-    // --- SEED CARTS & WISHLISTS ---
-    console.log('Creating carts and wishlists...');
-
-    // Cart for customer1
-    const cart1 = await prisma.cart.upsert({
-      where: { userId: customer1.id },
-      update: {},
-      create: {
-        userId: customer1.id,
-        items: {
-          create: [
-            { productId: sampleProduct1?.id!, quantity: 1 },
-            { productId: sampleProduct2?.id!, quantity: 1 },
-          ]
-        }
-      }
-    });
-    // Cart for customer2
-    const cart2 = await prisma.cart.upsert({
-      where: { userId: customer2.id },
-      update: {},
-      create: {
-        userId: customer2.id,
-        items: {
-          create: [
-            { productId: sampleProduct2?.id!, quantity: 2 },
-          ]
-        }
-      }
-    });
-    // Wishlist for customer1
-    const wishlist1 = await prisma.wishlist.create({
-      data: {
-        userId: customer1.id,
-        items: {
-          create: [
-            { productId: sampleProduct1?.id! },
-            { productId: sampleProduct2?.id! },
-          ]
-        }
-      }
-    });
-    // Wishlist for customer2
-    const wishlist2 = await prisma.wishlist.create({
-      data: {
-        userId: customer2.id,
-        items: {
-          create: [
-            { productId: sampleProduct2?.id! },
-          ]
-        }
-      }
-    });
-    console.log('Carts and wishlists created!');
-
-    // --- SEED ORDERS ---
-    console.log('Creating demo orders...');
-
-    // Helper: snapshot for product and variant
+    // Helper: product snapshot
     const productSnapshot = (product: any) => ({
       id: product.id,
       name: product.name,
@@ -409,28 +521,31 @@ async function main() {
       salePrice: product.salePrice,
       sku: product.sku,
     });
-    const variantSnapshot = (variant: any) => variant ? ({
-      id: variant.id,
-      name: variant.name,
-      value: variant.value,
-      priceDifference: variant.priceDifference,
-      sku: variant.sku,
-    }) : undefined;
 
-    // Order 1: PENDING
-    await prisma.order.create({
-      data: {
+    // Fetch products for orders
+    const moisturizer = await prisma.product.findUnique({ where: { slug: 'hydrating-moisturizer' } });
+    const lipstick = await prisma.product.findUnique({ where: { slug: 'matte-lipstick-red' } });
+    const airFryer = await prisma.product.findUnique({ where: { slug: 'air-fryer-5l' } });
+    const smartphone = await prisma.product.findUnique({ where: { slug: 'smartphone-128gb' } });
+    const faceWash = await prisma.product.findUnique({ where: { slug: 'mens-face-wash' } });
+    const kurta = await prisma.product.findUnique({ where: { slug: 'womens-kurta-set' } });
+    const shirt = await prisma.product.findUnique({ where: { slug: 'mens-casual-shirt' } });
+    const serum = await prisma.product.findUnique({ where: { slug: 'platform-vitamin-c-serum' } });
+
+    // Orders (covering all statuses)
+    const orders = [
+      {
         orderNumber: 'ORD-1001',
         userId: customer1.id,
-        status: 'PENDING',
-        paymentMethod: 'KHALTI',
-        paymentStatus: 'PENDING',
-        subtotal: 120,
-        shippingFee: 50,
-        total: 170,
+        status: OrderStatus.DRAFT,
+        paymentMethod: PaymentMethod.KHALTI,
+        paymentStatus: PaymentStatus.PENDING,
+        subtotal: 20.00,
+        shippingFee: 5.00,
+        total: 25.00,
         shippingAddress: {
           label: 'Home',
-          recipientName: 'Alice Smith',
+          recipientName: 'Anita Sharma',
           street: '123 Main St',
           city: 'Kathmandu',
           state: 'Bagmati',
@@ -438,36 +553,30 @@ async function main() {
           country: 'Nepal',
           phone: '+977-9800000001',
         },
-        items: {
-          create: [
+        items: [
             {
-              productId: sampleProduct1?.id!,
-              vendorId: vendor1Db!.id,
+            productId: moisturizer?.id!,
+            vendorId: moisturizer?.vendorId,
               quantity: 1,
-              price: 120,
-              salePrice: null,
-              productSnapshot: productSnapshot(sampleProduct1),
-              variantSnapshot: undefined,
-            },
-          ],
-        },
+            price: 20.00,
+            salePrice: 20.00,
+            productSnapshot: productSnapshot(moisturizer),
+          },
+        ],
+        createdAt: new Date('2025-07-16T10:00:00+05:45'),
       },
-    });
-
-    // Order 2: PROCESSING
-    await prisma.order.create({
-      data: {
+      {
         orderNumber: 'ORD-1002',
         userId: customer1.id,
-        status: 'PROCESSING',
-        paymentMethod: 'ESEWA',
-        paymentStatus: 'COMPLETED',
-        subtotal: 30,
-        shippingFee: 50,
-        total: 80,
+        status: OrderStatus.PENDING,
+        paymentMethod: PaymentMethod.KHALTI,
+        paymentStatus: PaymentStatus.PENDING,
+        subtotal: 15.00,
+        shippingFee: 5.00,
+        total: 20.00,
         shippingAddress: {
           label: 'Office',
-          recipientName: 'Alice Smith',
+          recipientName: 'Anita Sharma',
           street: '456 Office Rd',
           city: 'Lalitpur',
           state: 'Bagmati',
@@ -475,36 +584,29 @@ async function main() {
           country: 'Nepal',
           phone: '+977-9800000001',
         },
-        items: {
-          create: [
+        items: [
             {
-              productId: sampleProduct2?.id!,
-              vendorId: vendor2Db!.id,
+            productId: lipstick?.id!,
+            vendorId: lipstick?.vendorId,
               quantity: 1,
-              price: 30,
-              salePrice: null,
-              productSnapshot: productSnapshot(sampleProduct2),
-              variantSnapshot: undefined,
-            },
-          ],
-        },
+            price: 15.00,
+            productSnapshot: productSnapshot(lipstick),
+          },
+        ],
+        createdAt: new Date('2025-07-15T14:00:00+05:45'),
       },
-    });
-
-    // Order 3: SHIPPED
-    const order3 = await prisma.order.create({
-      data: {
+      {
         orderNumber: 'ORD-1003',
         userId: customer2.id,
-        status: 'SHIPPED',
-        paymentMethod: 'COD',
-        paymentStatus: 'PENDING',
-        subtotal: 40,
-        shippingFee: 50,
-        total: 90,
+        status: OrderStatus.RESERVED,
+        paymentMethod: PaymentMethod.COD,
+        paymentStatus: PaymentStatus.PENDING,
+        subtotal: 450.00,
+        shippingFee: 10.00,
+        total: 460.00,
         shippingAddress: {
           label: 'Home',
-          recipientName: 'Bob Johnson',
+          recipientName: 'Suman Thapa',
           street: '789 Home St',
           city: 'Bhaktapur',
           state: 'Bagmati',
@@ -512,333 +614,438 @@ async function main() {
           country: 'Nepal',
           phone: '+977-9800000002',
         },
-        items: {
-          create: [
-            {
-              productId: sampleProduct2?.id!,
-              vendorId: vendor2Db!.id,
-              quantity: 2,
-              price: 20,
-              salePrice: null,
-              productSnapshot: productSnapshot(sampleProduct2),
-              variantSnapshot: undefined,
-            },
-          ],
-        },
+        items: [
+          {
+            productId: smartphone?.id!,
+            vendorId: smartphone?.vendorId,
+            quantity: 1,
+            price: 450.00,
+            salePrice: 450.00,
+            productSnapshot: productSnapshot(smartphone),
+          },
+        ],
+        createdAt: new Date('2025-07-14T09:00:00+05:45'),
       },
-    });
-    // Seed shipment for SHIPPED order
-    await prisma.shipment.create({
-      data: {
-        orderId: order3.id,
-        trackingNumber: 'TRK1003',
-        carrier: 'Nepal Post',
-        status: 'shipped',
-        shippedAt: new Date('2024-01-16T10:30:00Z'),
-        deliveredAt: null,
-      }
-    });
-
-    // Order 4: DELIVERED
-    const order4 = await prisma.order.create({
-      data: {
+      {
         orderNumber: 'ORD-1004',
         userId: customer2.id,
-        status: 'DELIVERED',
-        paymentMethod: 'CARD',
-        paymentStatus: 'COMPLETED',
-        subtotal: 120,
-        shippingFee: 40,
-        total: 160,
+        status: OrderStatus.PROCESSING,
+        paymentMethod: PaymentMethod.KHALTI,
+        paymentStatus: PaymentStatus.COMPLETED,
+        subtotal: 100.00,
+        shippingFee: 10.00,
+        total: 110.00,
         shippingAddress: {
-          label: 'Work',
-          recipientName: 'Bob Johnson',
-          street: '321 Work Ave',
-          city: 'Kathmandu',
+          label: 'Home',
+          recipientName: 'Suman Thapa',
+          street: '789 Home St',
+          city: 'Bhaktapur',
           state: 'Bagmati',
-          postalCode: '44601',
+          postalCode: '44800',
           country: 'Nepal',
           phone: '+977-9800000002',
         },
-        items: {
-          create: [
+        items: [
             {
-              productId: sampleProduct1?.id!,
-              vendorId: vendor1Db!.id,
+            productId: airFryer?.id!,
+            vendorId: airFryer?.vendorId,
               quantity: 1,
-              price: 120,
-              salePrice: null,
-              productSnapshot: productSnapshot(sampleProduct1),
-              variantSnapshot: undefined,
-            },
-          ],
-        },
+            price: 100.00,
+            salePrice: 100.00,
+            productSnapshot: productSnapshot(airFryer),
+          },
+        ],
+        createdAt: new Date('2025-07-13T11:00:00+05:45'),
       },
-    });
-    // Seed shipment for DELIVERED order
-    await prisma.shipment.create({
-      data: {
-        orderId: order4.id,
-        trackingNumber: 'TRK1004',
-        carrier: 'DHL',
-        status: 'delivered',
-        shippedAt: new Date('2024-01-17T09:00:00Z'),
-        deliveredAt: new Date('2024-01-19T15:30:00Z'),
-      }
-    });
-
-    // Order 5: CANCELLED
-    await prisma.order.create({
-      data: {
+      {
         orderNumber: 'ORD-1005',
         userId: customer1.id,
-        status: 'CANCELLED',
-        paymentMethod: 'WALLET',
-        paymentStatus: 'FAILED',
-        subtotal: 45,
-        shippingFee: 60,
-        total: 105,
+        status: OrderStatus.SHIPPED,
+        paymentMethod: PaymentMethod.COD,
+        paymentStatus: PaymentStatus.PENDING,
+        subtotal: 18.00,
+        shippingFee: 5.00,
+        total: 23.00,
         shippingAddress: {
-          label: 'Other',
-          recipientName: 'Alice Smith',
-          street: '999 Cancelled St',
-          city: 'Pokhara',
-          state: 'Gandaki',
-          postalCode: '33700',
+          label: 'Home',
+          recipientName: 'Anita Sharma',
+          street: '123 Main St',
+          city: 'Kathmandu',
+          state: 'Bagmati',
+          postalCode: '44600',
           country: 'Nepal',
           phone: '+977-9800000001',
         },
-        items: {
-          create: [
+        items: [
             {
-              productId: sampleProduct2?.id!,
-              vendorId: vendor2Db!.id,
+            productId: faceWash?.id!,
+            vendorId: faceWash?.vendorId,
               quantity: 1,
-              price: 45,
-              salePrice: null,
-              productSnapshot: productSnapshot(sampleProduct2),
-              variantSnapshot: undefined,
-            },
-          ],
-        },
+            price: 18.00,
+            productSnapshot: productSnapshot(faceWash),
+          },
+        ],
+        createdAt: new Date('2025-07-12T12:00:00+05:45'),
       },
-    });
-
-    // Order 6: RETURNED
-    await prisma.order.create({
-      data: {
+      {
         orderNumber: 'ORD-1006',
         userId: customer2.id,
-        status: 'RETURNED',
-        paymentMethod: 'COD',
-        paymentStatus: 'REFUNDED',
-        subtotal: 20,
-        shippingFee: 30,
-        total: 50,
+        status: OrderStatus.DELIVERED,
+        paymentMethod: PaymentMethod.KHALTI,
+        paymentStatus: PaymentStatus.COMPLETED,
+        subtotal: 45.00,
+        shippingFee: 5.00,
+        total: 50.00,
         shippingAddress: {
-          label: 'Return',
-          recipientName: 'Bob Johnson',
-          street: '111 Return Rd',
-          city: 'Lalitpur',
+          label: 'Home',
+          recipientName: 'Suman Thapa',
+          street: '789 Home St',
+          city: 'Bhaktapur',
           state: 'Bagmati',
-          postalCode: '44701',
+          postalCode: '44800',
           country: 'Nepal',
           phone: '+977-9800000002',
         },
-        items: {
-          create: [
+        items: [
+          {
+            productId: kurta?.id!,
+            vendorId: kurta?.vendorId,
+            quantity: 1,
+            price: 45.00,
+            productSnapshot: productSnapshot(kurta),
+          },
+        ],
+        createdAt: new Date('2025-07-11T10:00:00+05:45'),
+        completedAt: new Date('2025-07-13T15:00:00+05:45'),
+      },
+      {
+        orderNumber: 'ORD-1007',
+        userId: customer1.id,
+        status: OrderStatus.CANCELLED,
+        paymentMethod: PaymentMethod.KHALTI,
+        paymentStatus: PaymentStatus.FAILED,
+        subtotal: 65.00,
+        shippingFee: 10.00,
+        total: 75.00,
+        shippingAddress: {
+          label: 'Office',
+          recipientName: 'Anita Sharma',
+          street: '456 Office Rd',
+          city: 'Lalitpur',
+          state: 'Bagmati',
+          postalCode: '44700',
+          country: 'Nepal',
+          phone: '+977-9800000001',
+        },
+        items: [
+          {
+            productId: moisturizer?.id!,
+            vendorId: moisturizer?.vendorId,
+            quantity: 1,
+            price: 20.00,
+            salePrice: 20.00,
+            productSnapshot: productSnapshot(moisturizer),
+          },
+          {
+            productId: kurta?.id!,
+            vendorId: kurta?.vendorId,
+            quantity: 1,
+            price: 45.00,
+            productSnapshot: productSnapshot(kurta),
+          },
+        ],
+        createdAt: new Date('2025-07-10T14:00:00+05:45'),
+      },
+      {
+        orderNumber: 'ORD-1008',
+        userId: customer2.id,
+        status: OrderStatus.RETURNED,
+        paymentMethod: PaymentMethod.COD,
+        paymentStatus: PaymentStatus.PENDING,
+        subtotal: 30.00,
+        shippingFee: 5.00,
+        total: 35.00,
+        shippingAddress: {
+          label: 'Home',
+          recipientName: 'Suman Thapa',
+          street: '789 Home St',
+          city: 'Bhaktapur',
+          state: 'Bagmati',
+          postalCode: '44800',
+          country: 'Nepal',
+          phone: '+977-9800000002',
+        },
+        items: [
             {
-              productId: sampleProduct2?.id!,
-              vendorId: vendor2Db!.id,
+            productId: shirt?.id!,
+            vendorId: shirt?.vendorId,
               quantity: 1,
-              price: 20,
-              salePrice: null,
-              productSnapshot: productSnapshot(sampleProduct2),
-              variantSnapshot: undefined,
-            },
-          ],
+            price: 30.00,
+            productSnapshot: productSnapshot(shirt),
+          },
+        ],
+        createdAt: new Date('2025-07-09T09:00:00+05:45'),
+        completedAt: new Date('2025-07-12T12:00:00+05:45'),
+      },
+      {
+        orderNumber: 'ORD-1009',
+        userId: customer1.id,
+        status: OrderStatus.DELIVERED,
+        paymentMethod: PaymentMethod.KHALTI,
+        paymentStatus: PaymentStatus.COMPLETED,
+        subtotal: 30.00,
+        shippingFee: 5.00,
+        total: 35.00,
+        shippingAddress: {
+          label: 'Home',
+          recipientName: 'Anita Sharma',
+          street: '123 Main St',
+          city: 'Kathmandu',
+          state: 'Bagmati',
+          postalCode: '44600',
+          country: 'Nepal',
+          phone: '+977-9800000001',
         },
-      },
-    });
-    console.log('Demo orders created!');
-
-    // --- SEED REVIEWS ---
-    console.log('Creating demo reviews...');
-
-    // Fetch order items for reviews
-    const orderItems = await prisma.orderItem.findMany({
-      include: {
-        order: true,
-        product: true,
-      },
-      where: {
-        order: {
-          userId: { in: [customer1Db!.id, customer2Db!.id] },
-        },
-      },
-    });
-
-    // Helper to find order item for a user and product
-    function findOrderItem(userId: number, productId: number) {
-      return orderItems.find(
-        (oi) => oi.order.userId === userId && oi.productId === productId
-      );
-    }
-
-    // Demo reviews
-    const demoReviews = [
-      {
-        user: customer1Db,
-        product: sampleProduct1,
-        orderItem: findOrderItem(customer1Db!.id, sampleProduct1?.id!),
-        rating: 5,
-        title: 'Great running shoes!',
-        comment: 'Comfortable and stylish, perfect for my daily runs.',
-        images: JSON.stringify(['/images/reviews/nike-shoes-review.jpg']),
-      },
-      {
-        user: customer1Db,
-        product: sampleProduct2,
-        orderItem: findOrderItem(customer1Db!.id, sampleProduct2?.id!),
-        rating: 4,
-        title: 'Good moisturizer',
-        comment: 'Leaves my skin feeling soft, but a bit pricey.',
-        images: JSON.stringify(['/images/reviews/loreal-cream-review.jpg']),
-      },
-      {
-        user: customer2Db,
-        product: sampleProduct2,
-        orderItem: findOrderItem(customer2Db!.id, sampleProduct2?.id!),
-        rating: 5,
-        title: 'Amazing color!',
-        comment: 'Love the shade and how long it lasts.',
-        images: JSON.stringify(['/images/reviews/sephora-lipstick-review.jpg']),
-      },
-      {
-        user: customer2Db,
-        product: sampleProduct1,
-        orderItem: findOrderItem(customer2Db!.id, sampleProduct1?.id!),
-        rating: 3,
-        title: 'Decent t-shirt',
-        comment: 'Comfortable, but the fit is a bit loose.',
-        images: JSON.stringify([]),
+        items: [
+          {
+            productId: serum?.id!,
+            vendorId: serum?.vendorId,
+            quantity: 1,
+            price: 30.00,
+            productSnapshot: productSnapshot(serum),
+          },
+        ],
+        createdAt: new Date('2025-07-08T11:00:00+05:45'),
+        completedAt: new Date('2025-07-10T15:00:00+05:45'),
       },
     ];
 
-    for (const r of demoReviews) {
-      if (r.user && r.product && r.orderItem) {
+    for (const order of orders) {
+      await prisma.order.create({
+        data: {
+          orderNumber: order.orderNumber,
+          userId: order.userId,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          subtotal: order.subtotal,
+          shippingFee: order.shippingFee,
+          total: order.total,
+          shippingAddress: order.shippingAddress,
+          createdAt: order.createdAt,
+          completedAt: order.completedAt,
+          items: {
+            create: order.items.map((item) => ({
+              product: { connect: { id: item.productId } },
+              Vendor: { connect: { id: item.vendorId } }, // Capital V
+              quantity: item.quantity,
+              price: item.price,
+              ...("salePrice" in item ? { salePrice: item.salePrice } : {}),
+              productSnapshot: item.productSnapshot,
+            })),
+          },
+          payments: order.paymentStatus === PaymentStatus.COMPLETED ? {
+            create: {
+              amount: order.total,
+              method: order.paymentMethod,
+              transactionId: `TXN-${order.orderNumber}`,
+              status: PaymentStatus.COMPLETED,
+              processedAt: order.createdAt,
+              paymentDetails: { gateway: order.paymentMethod, status: 'success' },
+            },
+          } : undefined,
+      },
+    });
+    }
+
+    console.log('Creating shipments...');
+
+    // Shipments for SHIPPED, DELIVERED, and RETURNED orders
+    const order5 = await prisma.order.findUnique({ where: { orderNumber: 'ORD-1005' } });
+    const order6 = await prisma.order.findUnique({ where: { orderNumber: 'ORD-1006' } });
+    const order8 = await prisma.order.findUnique({ where: { orderNumber: 'ORD-1008' } });
+    const order9 = await prisma.order.findUnique({ where: { orderNumber: 'ORD-1009' } });
+
+    await prisma.shipment.createMany({
+      data: [
+        {
+          orderId: order5?.id!,
+          trackingNumber: 'TRK1005',
+          carrier: 'Nepal Post',
+          status: 'shipped',
+          shippedAt: new Date('2025-07-13T10:00:00+05:45'),
+        },
+        {
+          orderId: order6?.id!,
+          trackingNumber: 'TRK1006',
+          carrier: 'DHL',
+          status: 'delivered',
+          shippedAt: new Date('2025-07-12T09:00:00+05:45'),
+          deliveredAt: new Date('2025-07-13T15:00:00+05:45'),
+        },
+        {
+          orderId: order8?.id!,
+          trackingNumber: 'TRK1008',
+          carrier: 'Nepal Post',
+          status: 'returned',
+          shippedAt: new Date('2025-07-10T10:00:00+05:45'),
+          deliveredAt: new Date('2025-07-11T12:00:00+05:45'),
+        },
+        {
+          orderId: order9?.id!,
+          trackingNumber: 'TRK1009',
+          carrier: 'DHL',
+          status: 'delivered',
+          shippedAt: new Date('2025-07-09T09:00:00+05:45'),
+          deliveredAt: new Date('2025-07-10T15:00:00+05:45'),
+        },
+      ],
+    });
+
+    console.log('Creating reviews...');
+
+    // Reviews
+    const orderItems = await prisma.orderItem.findMany({
+      include: { order: true, product: true },
+      where: { order: { userId: { in: [customer1.id, customer2.id] } } },
+    });
+
+    const findOrderItem = (userId: number, productId: number) => {
+      return orderItems.find(oi => oi.order.userId === userId && oi.productId === productId);
+    };
+
+    const reviews = [
+      {
+        userId: customer1.id,
+        productId: moisturizer?.id!,
+        orderItemId: findOrderItem(customer1.id, moisturizer?.id!)?.id!,
+        rating: 5,
+        title: 'Amazing Moisturizer',
+        comment: 'Keeps my skin hydrated all day!',
+        images: JSON.stringify(['/images/reviews/moisturizer-review.jpg']),
+        createdAt: new Date('2025-07-14T14:00:00+05:45'),
+        isApproved: true,
+      },
+      {
+        userId: customer1.id,
+        productId: kurta?.id!,
+        orderItemId: findOrderItem(customer1.id, kurta?.id!)?.id!,
+        rating: 4,
+        title: 'Elegant Kurta',
+        comment: 'Beautiful design, but sizing is slightly off.',
+        images: JSON.stringify([]),
+        createdAt: new Date('2025-07-13T16:00:00+05:45'),
+        isApproved: true,
+      },
+      {
+        userId: customer2.id,
+        productId: smartphone?.id!,
+        orderItemId: findOrderItem(customer2.id, smartphone?.id!)?.id!,
+        rating: 5,
+        title: 'Fantastic Phone',
+        comment: 'Super fast and great camera!',
+        images: JSON.stringify(['/images/reviews/smartphone-review.jpg']),
+        createdAt: new Date('2025-07-15T10:00:00+05:45'),
+        isApproved: true,
+      },
+      {
+        userId: customer2.id,
+        productId: kurta?.id!,
+        orderItemId: findOrderItem(customer2.id, kurta?.id!)?.id!,
+        rating: 5,
+        title: 'Love This Kurta',
+        comment: 'Perfect fit and vibrant colors!',
+        images: JSON.stringify(['/images/reviews/kurta-review.jpg']),
+        createdAt: new Date('2025-07-14T12:00:00+05:45'),
+        isApproved: true,
+      },
+      {
+        userId: customer2.id,
+        productId: shirt?.id!,
+        orderItemId: findOrderItem(customer2.id, shirt?.id!)?.id!,
+        rating: 3,
+        title: 'Okay Shirt',
+        comment: 'Comfortable but faded after wash.',
+        images: JSON.stringify([]),
+        createdAt: new Date('2025-07-12T18:00:00+05:45'),
+        isApproved: false, // Unapproved review
+      },
+      {
+        userId: customer1.id,
+        productId: serum?.id!,
+        orderItemId: findOrderItem(customer1.id, serum?.id!)?.id!,
+        rating: 4,
+        title: 'Good Serum',
+        comment: 'Brightens skin, but takes time to see results.',
+        images: JSON.stringify([]),
+        createdAt: new Date('2025-07-11T10:00:00+05:45'),
+        isApproved: true,
+      },
+    ];
+
+    for (const r of reviews) {
+      if (r.orderItemId) {
         await prisma.review.create({
           data: {
-            userId: r.user.id,
-            productId: r.product.id,
-            orderItemId: r.orderItem.id,
+            userId: r.userId,
+            productId: r.productId,
+            orderItemId: r.orderItemId,
             rating: r.rating,
             title: r.title,
             comment: r.comment,
             images: r.images,
-            isApproved: true,
+            isApproved: r.isApproved,
+            createdAt: r.createdAt,
           },
         });
       }
     }
-    console.log('Demo reviews created!');
 
-    // --- SEED NOTIFICATIONS ---
-    console.log('Creating demo notifications...');
-    // User notifications
-    await prisma.notification.createMany({
+    console.log('Creating commissions...');
+
+    // Commissions for DELIVERED orders
+    for (const item of orderItems) {
+      if (item.order.status === OrderStatus.DELIVERED) {
+        const product = await prisma.product.findUnique({ where: { id: item.productId } });
+        if (product && product.vendorId) {
+          const commissionRate = 0.1; // 10% commission
+          const commissionAmount = Number(item.salePrice || item.price) * commissionRate;
+          await prisma.commission.create({
+            data: {
+              vendorId: product.vendorId,
+              orderItemId: item.id,
+              amount: commissionAmount,
+              rate: commissionRate,
+              createdAt: item.order.completedAt || item.createdAt,
+            },
+          });
+        }
+      }
+    }
+
+    console.log('Creating payout requests...');
+
+    // Payout Requests (pending and completed)
+    await prisma.payoutRequest.createMany({
       data: [
         {
-          userId: customer1.id,
-          title: 'Order Shipped',
-          message: 'Your order ORD-1001 has been shipped',
-          type: 'order',
-          isRead: false,
-          link: '/orders/1',
-          createdAt: new Date('2024-01-15T10:30:00Z'),
+          vendorId: vendor1.id,
+          amount: 50.00,
+          status: 'pending',
+          createdAt: new Date('2025-07-15T12:00:00+05:45'),
         },
         {
-          userId: customer1.id,
-          title: 'Price Drop Alert',
-          message: 'Nike Running Shoes price dropped by 10%',
-          type: 'promotion',
-          isRead: true,
-          link: '/products/nike-running-shoes',
-          createdAt: new Date('2024-01-14T15:20:00Z'),
+          vendorId: adminVendor.id,
+          amount: 100.00,
+          status: 'completed',
+          createdAt: new Date('2025-07-14T10:00:00+05:45'),
+          updatedAt: new Date('2025-07-15T14:00:00+05:45'),
         },
-        {
-          userId: customer2.id,
-          title: 'Order Delivered',
-          message: 'Your order ORD-1004 has been delivered',
-          type: 'order',
-          isRead: false,
-          link: '/orders/4',
-          createdAt: new Date('2024-01-19T15:30:00Z'),
-        },
-        {
-          userId: customer2.id,
-          title: 'Product Review',
-          message: 'Thank you for reviewing Sephora Cream Lipstick',
-          type: 'review',
-          isRead: true,
-          link: '/products/sephora-cream-lipstick/reviews',
-          createdAt: new Date('2024-01-14T15:20:00Z'),
-        },
-        // Vendor notifications (using vendorUser1 and vendorUser2)
-        {
-          userId: vendorUser1.id,
-          title: 'New Order Received',
-          message: 'You have received a new order ORD-1003',
-          type: 'order',
-          isRead: false,
-          link: '/vendors/orders/3',
-          createdAt: new Date('2024-01-15T10:30:00Z'),
-        },
-        {
-          userId: vendorUser2.id,
-          title: 'Product Review',
-          message: 'New review received for L\'Oreal Revitalift Cream',
-          type: 'review',
-          isRead: true,
-          link: '/vendors/products/loreal-revitalift-cream/reviews',
-          createdAt: new Date('2024-01-14T15:20:00Z'),
-        },
-      ]
+      ],
     });
-    console.log('Demo notifications created!');
-
-    // --- SEED PAYMENT OPTIONS & SHIPPING METHODS ---
-    console.log('Seeding payment options and shipping methods...');
-
-    // Payment options (from PaymentMethod enum)
-    const paymentOptions = [
-      { method: 'KHALTI', label: 'Khalti', description: 'Pay with Khalti wallet', enabled: true },
-      { method: 'ESEWA', label: 'eSewa', description: 'Pay with eSewa wallet', enabled: true },
-      { method: 'COD', label: 'Cash on Delivery', description: 'Pay with cash on delivery', enabled: true },
-      { method: 'CARD', label: 'Credit/Debit Card', description: 'Pay with card (coming soon)', enabled: false },
-      { method: 'WALLET', label: 'Wallet', description: 'Pay with site wallet (coming soon)', enabled: false },
-    ];
-    await prisma.systemSetting.upsert({
-      where: { key: 'payment_options' },
-      update: { value: paymentOptions },
-      create: { key: 'payment_options', value: paymentOptions, description: 'Available payment options for checkout' },
-    });
-
-    // Shipping methods
-    const shippingMethods = [
-      { id: 1, name: 'Standard Delivery', description: '3-5 business days', fee: 100, estimatedDays: '3-5' },
-      { id: 2, name: 'Express Delivery', description: '1-2 business days', fee: 200, estimatedDays: '1-2' },
-      { id: 3, name: 'Same Day Delivery', description: 'Same day delivery in Kathmandu', fee: 300, estimatedDays: '0-1' },
-    ];
-    await prisma.systemSetting.upsert({
-      where: { key: 'shipping_methods' },
-      update: { value: shippingMethods },
-      create: { key: 'shipping_methods', value: shippingMethods, description: 'Available shipping methods for checkout' },
-    });
-    console.log('Payment options and shipping methods seeded!');
 
     console.log('Seed data created successfully!');
-    console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.category.count()} categories`);
+    console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.category.count()} categories, ${await prisma.product.count()} products, ${await prisma.order.count()} orders`);
 
   } catch (error) {
     console.error('Error during seeding:', error);

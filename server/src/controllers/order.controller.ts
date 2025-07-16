@@ -10,19 +10,12 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
   try {
     const userId = (req as any).userId;
     const { items, shippingAddress, paymentMethod, customerNote, couponCode } = req.body;
-    // If items not provided, use cart
-    let orderItems = items;
-    if (!orderItems || !orderItems.length) {
-      const cart = await prisma.cart.findUnique({ where: { userId }, include: { items: { include: { product: true, variant: true } } } });
-      if (!cart || !cart.items.length) { res.status(400).json({ success: false, message: 'Cart is empty' });
+    // Require items in the request body
+    if (!items || !items.length) {
+      res.status(400).json({ success: false, message: 'No items provided' });
       return;
     }
-      orderItems = cart.items.map(item => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity
-      }));
-    }
+    let orderItems = items;
     // Calculate totals
     let subtotal = 0;
     const orderItemData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] = [];
@@ -31,7 +24,10 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
       if (!product) { res.status(400).json({ success: false, message: 'Product not found' });
       return;
     }
-      const variant = item.variantId ? await prisma.productVariant.findUnique({ where: { id: item.variantId } }) : null;
+      let variant = null;
+      if (item.variantId) {
+        variant = await prisma.productVariant.findUnique({ where: { id: item.variantId } });
+      }
       const price = variant ? (product.salePrice ?? product.price) + variant.priceDifference : (product.salePrice ?? product.price);
       subtotal += price * item.quantity;
       orderItemData.push({
@@ -101,15 +97,15 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
           data: {
             orderItemId: item.id,
             vendorId: item.vendorId,
-            amount: item.price * item.quantity * 0.1,
-            rate: 0.1
+            amount: item.price * item.quantity * 0.1
           }
         });
       }
     }
-    // Optionally, clear cart
-    const cart = await prisma.cart.findUnique({ where: { userId } });
-    await prisma.cartItem.deleteMany({ where: { cartId: cart?.id } });
+    // Remove cart/cartItem logic
+    // Optionally, clear cart (removed)
+    // const cart = await prisma.cart.findUnique({ where: { userId } });
+    // await prisma.cartItem.deleteMany({ where: { cartId: cart?.id } });
     // Return order
     res.json({ success: true, message: 'Order created successfully', data: { order } });
   } catch (err) {
@@ -289,9 +285,9 @@ export const updateVendorOrderStatus = async (req: Request, res: Response, next:
     if (!order) { res.status(404).json({ success: false, message: 'Order not found' }); return; }
     const vendorItems = order.items.filter(item => item.vendorId === vendorId);
     if (!vendorItems.length) { res.status(403).json({ success: false, message: 'No items for this vendor in order' }); return; }
-    // Remove per-item status update since OrderItem has no status field
-    // await prisma.orderItem.updateMany({ where: { orderId: order.id, vendorId }, data: { status } });
-    res.json({ success: true, message: 'Order item status update skipped (no per-item status field)' });
+    // Actually update the order status if vendor is associated
+    await prisma.order.update({ where: { id: order.id }, data: { status } });
+    res.json({ success: true, message: 'Order status updated' });
   } catch (err) {
     next(err);
   }
@@ -398,7 +394,7 @@ export const getAdminOrders = async (req: Request, res: Response, next: NextFunc
           },
           items: {
             include: {
-              vendor: {
+              Vendor: {
                 select: {
                   businessName: true,
                 },

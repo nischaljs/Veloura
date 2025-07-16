@@ -25,18 +25,8 @@ router.get('/:slug', vendorController.getPublicVendorProfile);
 router.get('/:slug/products', vendorController.getVendorProducts);
 router.get('/:slug/reviews', vendorController.getVendorReviews);
 
-// Bank details
-router.get('/bank-details', (req, res, next) => { console.log('DEBUG: Reached /bank-details GET route'); next(); }, authenticateVendor, vendorController.getBankDetails);
-router.post('/bank-details', (req, res, next) => { console.log('DEBUG: Reached /bank-details POST route'); next(); }, authenticateVendor, vendorController.addBankDetail);
-router.put('/bank-details/:id', authenticateVendor, vendorController.updateBankDetail);
-router.delete('/bank-details/:id', authenticateVendor, vendorController.deleteBankDetail);
-
 // Payout Requests
 router.post('/payout-requests', authenticateVendor, createPayoutRequest);
 router.get('/payout-requests', authenticateVendor, getPayoutRequests);
-
-// Coupons
-router.post('/coupons', authenticateVendor, vendorController.createCoupon);
-router.delete('/coupons/:id', authenticateVendor, vendorController.deleteCoupon);
 
 export default router; 

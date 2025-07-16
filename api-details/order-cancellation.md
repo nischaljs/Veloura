@@ -16,7 +16,7 @@ Cancel an order as a customer. Only allowed if the order is in `PENDING` or `PRO
 - **Body:**
 ```json
 {
-  "reason": "string (required)"
+  "reason": "string (required, ignored by backend)"
 }
 ```
 
@@ -36,15 +36,38 @@ Cancel an order as a customer. Only allowed if the order is in `PENDING` or `PRO
 }
 ```
 
-## Example
+## Example (Success)
+```bash
+curl -X PUT http://localhost:5000/api/orders/20/cancel \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <customer_token>" \
+  -d '{"reason": "Changed my mind"}'
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Order cancelled successfully"
+}
+```
+
+## Example (Failure)
 ```bash
 curl -X PUT http://localhost:5000/api/orders/21/cancel \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <customer_token>" \
-  -d '{"reason": "Changed my mind"}'
+  -d '{"reason": "Too late"}'
+```
+**Response:**
+```json
+{
+  "success": false,
+  "message": "Order cannot be cancelled"
+}
 ```
 
 ## Notes
 - Cancelling an order updates its status to `CANCELLED`.
 - The vendor and customer will both see the updated status in their dashboards.
-- Stock restoration is not automatic unless implemented in backend logic. 
+- Stock restoration is not automatic unless implemented in backend logic.
+- The `reason` field is accepted but not saved or used by the backend. 

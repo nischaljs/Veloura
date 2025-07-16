@@ -16,7 +16,7 @@ Request a return for a delivered order as a customer. Only allowed if the order 
 - **Body:**
 ```json
 {
-  "reason": "string (required)"
+  "reason": "string (required, ignored by backend)"
 }
 ```
 
@@ -36,15 +36,38 @@ Request a return for a delivered order as a customer. Only allowed if the order 
 }
 ```
 
-## Example
+## Example (Success)
 ```bash
-curl -X POST http://localhost:5000/api/orders/20/return \
+curl -X POST http://localhost:5000/api/orders/10/return \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <customer_token>" \
   -d '{"reason": "Defective item"}'
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Return request submitted successfully"
+}
+```
+
+## Example (Failure)
+```bash
+curl -X POST http://localhost:5000/api/orders/11/return \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <customer_token>" \
+  -d '{"reason": "Not delivered yet"}'
+```
+**Response:**
+```json
+{
+  "success": false,
+  "message": "Order cannot be returned"
+}
 ```
 
 ## Notes
 - Only orders with status `DELIVERED` can be returned.
 - The order status will be updated to `RETURNED`.
-- The vendor and customer will both see the updated status in their dashboards. 
+- The vendor and customer will both see the updated status in their dashboards.
+- The `reason` field is accepted but not saved or used by the backend. 

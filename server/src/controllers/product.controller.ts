@@ -159,7 +159,7 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
     const {
       name, description, shortDescription, price, salePrice, costPrice, sku,
       stockQuantity, categoryId, weight, length, width, height,
-      hasVariants, attributes, tags
+      attributes, tags
     } = req.body;
 
     if (!name || !price || !sku || !categoryId) {
@@ -194,7 +194,6 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
         length: length ? parseFloat(length) : null,
         width: width ? parseFloat(width) : null,
         height: height ? parseFloat(height) : null,
-        hasVariants: !!hasVariants,
         attributes: attributes ? { create: attributes } : undefined,
         tags: tags ? { connectOrCreate: tags.map((t: string) => ({
           where: { name: t }, create: { name: t }

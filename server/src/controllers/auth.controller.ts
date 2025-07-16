@@ -106,8 +106,9 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
       res.status(404).json({ message: 'User not found' });
       return;
     }
-    // Use addImageUrls to ensure avatar and any other image fields are full URLs
-    const userWithImageUrls = addImageUrls(user);
+    // Remove passwordHash before sending to frontend
+    const { passwordHash, ...userSafe } = user;
+    const userWithImageUrls = addImageUrls(userSafe);
     res.json({ user: userWithImageUrls });
     return;
   } catch (err) {

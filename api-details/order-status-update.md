@@ -19,7 +19,7 @@ Update the status of an order as an admin or vendor. Used for marking orders as 
 - **Body:**
 ```json
 {
-  "status": "PROCESSING" | "SHIPPED" | "DELIVERED" | ...
+  "status": "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "RETURNED" | ...
 }
 ```
 
@@ -41,21 +41,36 @@ Update the status of an order as an admin or vendor. Used for marking orders as 
 
 ## Example (Admin)
 ```bash
-curl -X PUT http://localhost:5000/api/orders/admin/orders/20/status \
+curl -X PUT http://localhost:5000/api/orders/admin/orders/10/status \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <admin_token>" \
   -d '{"status": "DELIVERED"}'
 ```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Order status updated"
+}
+```
 
 ## Example (Vendor)
 ```bash
-curl -X PUT http://localhost:5000/api/orders/vendors/orders/20/status \
+curl -X PUT http://localhost:5000/api/orders/vendors/orders/10/status \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <vendor_token>" \
   -d '{"status": "SHIPPED"}'
 ```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Order status updated"
+}
+```
 
 ## Notes
 - Only admins or vendors associated with the order can update its status.
-- The allowed statuses depend on business logic.
+- Vendors can only update the status for orders that contain their products.
+- The allowed statuses are: `DRAFT`, `PENDING`, `RESERVED`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`, `RETURNED`.
 - Customers see the updated status in their dashboard. 

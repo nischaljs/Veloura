@@ -102,7 +102,7 @@ export const getVendorProducts = async (req: Request, res: Response) => {
     const skip = (pageNum - 1) * limitNum;
     const vendor = await prisma.vendor.findFirst({ where: { slug, isApproved: true } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const where: any = { vendorId: vendor.id, verified: true };
+    const where: any = { vendorId: vendor.id };
     if (category) where.category = { slug: category };
     if (minPrice) where.price = { ...(where.price || {}), gte: parseFloat(minPrice as string) };
     if (maxPrice) where.price = { ...(where.price || {}), lte: parseFloat(maxPrice as string) };
@@ -111,7 +111,7 @@ export const getVendorProducts = async (req: Request, res: Response) => {
     if (sort === 'rating') orderBy = { rating: 'desc' };
     if (sort === 'newest') orderBy = { createdAt: 'desc' };
     const [products, total] = await Promise.all([
-      prisma.product.findMany({ where, skip, take: limitNum, orderBy, include: { images: true, category: true, brand: true } }),
+      prisma.product.findMany({ where, skip, take: limitNum, orderBy, include: { images: true, category: true } }),
       prisma.product.count({ where })
     ]);
     // Add full URLs to all images in each product
@@ -177,58 +177,6 @@ export const getVendorReviews = async (req: Request, res: Response) => {
   }
 };
 
-// Bank details
-export const getBankDetails = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    console.log(`DEBUG: getBankDetails hit for userId: ${userId}`);
-    res.json({ success: true, message: 'DEBUG: Bank details endpoint hit' });
-  } catch (err) {
-    console.error('❌ getBankDetails error:', err);
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-export const addBankDetail = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    console.log(`Attempting to add bank detail for userId: ${userId}`);
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { 
-      console.log(`Vendor not found for userId: ${userId}`);
-      res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const data = { ...req.body, vendorId: vendor.id };
-    const bankDetail = await prisma.bankDetail.create({ data });
-    res.json({ success: true, message: 'Bank details added successfully', data: { bankDetail } });
-  } catch (err) {
-    console.error('❌ addBankDetail error:', err);
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-export const updateBankDetail = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const bankDetail = await prisma.bankDetail.update({ where: { id }, data: req.body });
-    res.json({ success: true, message: 'Bank details updated successfully', data: { bankDetail } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-export const deleteBankDetail = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    await prisma.bankDetail.delete({ where: { id } });
-    res.json({ success: true, message: 'Bank details deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
 // Product Management (for logged-in vendor)
 export const getMyProducts = async (req: Request, res: Response) => {
   try {
@@ -241,7 +189,6 @@ export const getMyProducts = async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
       include: {
         category: { select: { name: true } },
-        brand: { select: { name: true } },
         images: { select: { url: true, altText: true, isPrimary: true, order: true } },
         tags: { select: { name: true } },
         attributes: { select: { name: true, value: true } },
@@ -267,8 +214,8 @@ export const addProduct = async (req: Request, res: Response) => {
     
     const { 
       name, description, shortDescription, price, salePrice, costPrice, sku, 
-      stockQuantity, status = 'ACTIVE', isFeatured = false, hasVariants = false, 
-      categoryId, brandId, weight, length, width, height,
+      stockQuantity, status = 'ACTIVE', isFeatured = false, 
+      categoryId,
       images = [], // Default to empty array
       tags = [],   // Default to empty array
       attributes = [] // Default to empty array
@@ -287,15 +234,9 @@ export const addProduct = async (req: Request, res: Response) => {
         stockQuantity: parseInt(stockQuantity),
         status,
         isFeatured,
-        hasVariants,
-        weight: weight !== '' ? parseFloat(weight) : undefined,
-        length: length !== '' ? parseFloat(length) : undefined,
-        width: width !== '' ? parseFloat(width) : undefined,
-        height: height !== '' ? parseFloat(height) : undefined,
         slug,
         vendorId: vendor.id,
         categoryId: parseInt(categoryId),
-        brandId: brandId !== '' ? parseInt(brandId) : undefined,
         images: {
           create: images.map((image: { url: string; altText?: string; isPrimary?: boolean; order?: number; }) => ({
             url: image.url.replace(/^(http|https):\/\/[^\/]+\/images\//, '/images/'), // Strip base URL
@@ -434,71 +375,6 @@ export const getPayoutRequests = async (req: Request, res: Response) => {
     }
     const payouts = await prisma.payoutRequest.findMany({ where: { vendorId: vendor.id }, orderBy: { requestedAt: 'desc' } });
     res.json({ success: true, data: { payouts } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
-export const createCoupon = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) {
-      return res.status(404).json({ success: false, message: 'Vendor not found' });
-    }
-    const {
-      code,
-      description,
-      discountType = 'percentage',
-      discountValue,
-      startDate,
-      endDate,
-      minOrderAmount,
-      maxUses
-    } = req.body;
-    if (!code || !discountValue || !startDate) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
-    }
-    const coupon = await prisma.coupon.create({
-      data: {
-        code,
-        description,
-        discountType,
-        discountValue: parseFloat(discountValue),
-        startDate: new Date(startDate),
-        endDate: endDate ? new Date(endDate) : null,
-        minOrderAmount: minOrderAmount ? parseFloat(minOrderAmount) : null,
-        maxUses: maxUses ? parseInt(maxUses) : null,
-        isActive: true,
-        vendors: {
-          create: [{ vendorId: vendor.id }]
-        }
-      }
-    });
-    res.status(201).json({ success: true, message: 'Coupon created successfully', data: { coupon } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
-export const deleteCoupon = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const couponId = Number(req.params.id);
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) {
-      return res.status(404).json({ success: false, message: 'Vendor not found' });
-    }
-    // Check if coupon belongs to this vendor
-    const couponVendor = await prisma.couponVendor.findFirst({ where: { couponId, vendorId: vendor.id } });
-    if (!couponVendor) {
-      return res.status(403).json({ success: false, message: 'You do not have permission to delete this coupon' });
-    }
-    // Delete CouponVendor relation first
-    await prisma.couponVendor.deleteMany({ where: { couponId } });
-    // Then delete the coupon
-    await prisma.coupon.delete({ where: { id: couponId } });
-    res.json({ success: true, message: 'Coupon deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }

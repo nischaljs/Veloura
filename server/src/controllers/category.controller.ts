@@ -177,8 +177,7 @@ export const getCategoryProducts = async (req: Request, res: Response): Promise<
         orderBy,
         include: {
           images: true,
-          category: { select: { name: true, slug: true } },
-          brand: { select: { name: true, slug: true } }
+          category: { select: { name: true, slug: true } }
         }
       }),
       prisma.product.count({ where })
