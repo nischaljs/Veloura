@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/order';
+import { verifyKhaltiPayment } from '../services/payment';
 import { Card, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 
@@ -19,18 +20,30 @@ const OrderSuccessPage = () => {
   const status = query.get('status');
   const txnId = query.get('transaction_id') || query.get('txnId') || query.get('tidx');
   const amount = query.get('amount') || query.get('total_amount');
+  const pidx = query.get('pidx');
 
   useEffect(() => {
-    if (!orderId) {
-      setError('No order ID found.');
-      setLoading(false);
-      return;
-    }
-    getOrder(orderId)
-      .then(res => setOrder(res.data.data.order))
-      .catch(() => setError('Failed to fetch order details.'))
-      .finally(() => setLoading(false));
-  }, [orderId]);
+    const doVerify = async () => {
+      if (pidx && orderId && status !== 'COMPLETED') {
+        setLoading(true);
+        try {
+          await verifyKhaltiPayment({ pidx, orderId });
+        } catch (e) {
+          // Optionally handle error
+        }
+      }
+      if (!orderId) {
+        setError('No order ID found.');
+        setLoading(false);
+        return;
+      }
+      getOrder(orderId)
+        .then(res => setOrder(res.data.data.order))
+        .catch(() => setError('Failed to fetch order details.'))
+        .finally(() => setLoading(false));
+    };
+    doVerify();
+  }, [orderId, pidx, status]);
 
   const handlePrint = () => {
     window.print();

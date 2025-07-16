@@ -79,7 +79,7 @@ const PublicVendorProfilePage: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Products by {vendor?.businessName || 'Vendor'}</h2>
           {products.length > 0 && (
-            <Button variant="outline" onClick={() => navigate(`/search?vendor=${slug}`)}>View All</Button>
+            <Button variant="outline" onClick={() => navigate(`/products?vendor=${slug}`)}>View All</Button>
           )}
         </div>
         {productsLoading ? (
@@ -115,7 +115,6 @@ const PublicVendorProfilePage: React.FC = () => {
                       <Link to={`/category/${product.category.slug}`} className="text-indigo-600 hover:underline">{product.category.name}</Link>
                     ) : 'N/A'}
                   </div>
-                  <div className="text-xs text-gray-500">Brand: {product.brand?.name || 'N/A'}</div>
                 </CardContent>
               </Card>
             ))}
@@ -157,4 +156,4 @@ const PublicVendorProfilePage: React.FC = () => {
   );
 };
 
-export default PublicVendorProfilePage; 
+export default PublicVendorProfilePage;

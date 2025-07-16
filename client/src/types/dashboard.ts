@@ -2,11 +2,6 @@
 export interface DashboardStats {
   totalSales?: number;
   totalOrders?: number;
-  averageOrderValue?: number;
-  totalProducts?: number;
-  activeProducts?: number;
-  totalReviews?: number;
-  averageRating?: number;
   totalUsers?: number;
   totalVendors?: number;
   pendingVendors?: number;
@@ -51,7 +46,6 @@ export interface Vendor {
   };
   products?: Product[];
   bankDetails?: BankDetail[];
-  policies?: VendorPolicy[];
 }
 
 export interface Product {
@@ -76,14 +70,6 @@ export interface BankDetail {
   accountNumber: string;
   accountName: string;
   branch?: string;
-}
-
-export interface VendorPolicy {
-  id: number;
-  vendorId: number;
-  type: 'RETURN' | 'SHIPPING' | 'WARRANTY' | 'CUSTOM';
-  title: string;
-  description: string;
 }
 
 export interface Order {
@@ -161,4 +147,4 @@ export interface DashboardTableProps {
   loading?: boolean;
   emptyMessage?: string;
   className?: string;
-} 
+}

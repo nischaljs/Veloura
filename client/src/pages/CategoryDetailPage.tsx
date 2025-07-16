@@ -92,11 +92,6 @@ const CategoryDetailPage: React.FC = () => {
                     <span className="text-lg font-bold">Rs.{product.price}</span>
                     <span className="text-xs text-gray-500">Stock: {product.stockQuantity}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Brand: {product.brand ? (
-                      <Link to={`/brands/${product.brand.slug}`} className="text-indigo-600 hover:underline">{product.brand.name}</Link>
-                    ) : 'N/A'}
-                  </div>
                   <div className="flex items-center justify-end mt-2">
                     <Button 
                       size="icon" 
@@ -132,4 +127,4 @@ const CategoryDetailPage: React.FC = () => {
   );
 };
 
-export default CategoryDetailPage; 
+export default CategoryDetailPage;

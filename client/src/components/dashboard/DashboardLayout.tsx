@@ -17,10 +17,8 @@ const IconMap: Record<string, string> = {
   profile: '👤',
   addresses: '📍',
   bankDetails: '🏦',
-  policies: '📋',
   reviews: '⭐',
   categories: '🏷️',
-  brands: '🏢',
   coupons: '🎫',
   notifications: '🔔',
   backup: '💾',
@@ -48,7 +46,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { label: 'Products', href: '/admin/products', icon: 'products' },
           { label: 'Orders', href: '/admin/orders', icon: 'orders' },
           { label: 'Categories', href: '/admin/categories', icon: 'categories' },
-          { label: 'Brands', href: '/admin/brands', icon: 'brands' },
           { label: 'Coupons', href: '/admin/coupons', icon: 'coupons' },
           { label: 'Analytics', href: '/admin/analytics', icon: 'analytics' },
           { label: 'Settings', href: '/admin/settings', icon: 'settings' },
@@ -63,7 +60,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           { label: 'Reviews', href: '/vendor/reviews', icon: 'reviews' },
           { label: 'Profile', href: '/vendor/profile', icon: 'profile' },
           { label: 'Bank Details', href: '/vendor/bank-details', icon: 'bankDetails' },
-          { label: 'Policies', href: '/vendor/policies', icon: 'policies' }
         ];
       case 'USER':
       default:
@@ -175,4 +171,4 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   );
 };
 
-export default DashboardLayout; 
+export default DashboardLayout;

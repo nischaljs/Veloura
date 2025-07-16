@@ -2,8 +2,8 @@ import api from './api';
 
 export const initiateKhaltiPayment = (orderId: number, returnUrl: string, cancelUrl: string) =>
   api.post('/payments/khalti/initiate', { orderId, returnUrl, cancelUrl });
-export const verifyKhaltiPayment = (pidx: string) =>
-  api.post('/payments/khalti/verify', { pidx });
+export const verifyKhaltiPayment = ({ pidx, orderId }: { pidx: string, orderId: string | number }) =>
+  api.post('/payments/khalti/verify', { pidx, orderId });
 
 export const initiateEsewaPayment = (orderId: number, returnUrl: string, cancelUrl: string) =>
   api.post('/payments/esewa/initiate', { orderId, returnUrl, cancelUrl });

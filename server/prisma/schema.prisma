@@ -16,6 +16,7 @@ enum UserRole {
 enum OrderStatus {
   DRAFT
   PENDING
+  RESERVED
   PROCESSING
   SHIPPED
   DELIVERED
@@ -67,11 +68,11 @@ model User {
   reviews               Review[]
   vendorProfile         Vendor?
   adminActivities       AdminActivity[]
-  notifications         Notification[]
+  carts                 Cart[]
+  Wishlist              Wishlist?
   UserCoupon            UserCoupon[]
   CouponUserRestriction CouponUserRestriction[]
-  carts                 Cart[]
-  wishlists             Wishlist[]
+  Notification          Notification[]
 }
 
 model Vendor {
@@ -100,21 +101,11 @@ model Vendor {
   user         User           @relation(fields: [userId], references: [id])
   products     Product[]
   bankDetails  BankDetail[]
-  policies     VendorPolicy[]
   orderItems   OrderItem[]
+  VendorPolicy VendorPolicy[]
   CouponVendor CouponVendor[]
-}
-
-model VendorPolicy {
-  id          Int      @id @default(autoincrement())
-  vendorId    Int
-  policyType  String // 'shipping', 'return', 'privacy', etc.
-  title       String
-  description String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  commissions  Commission[]
+  payoutRequests PayoutRequest[]
 }
 
 model Address {
@@ -194,17 +185,17 @@ model Product {
   updatedAt        DateTime      @updatedAt
 
   // Relationships
-  vendor     Vendor             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  category   Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  brand      Brand?             @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  images     ProductImage[]
-  variants   ProductVariant[]
-  attributes ProductAttribute[]
-  reviews    Review[]
-  tags       ProductTag[]
-  orderItems OrderItem[]
-  cartItems  CartItem[]
-  wishlistItems WishlistItem[]
+  vendor       Vendor             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  category     Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  brand        Brand?             @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  images       ProductImage[]
+  variants     ProductVariant[]
+  attributes   ProductAttribute[]
+  reviews      Review[]
+  tags         ProductTag[]
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  WishlistItem WishlistItem[]
 }
 
 model Brand {
@@ -271,32 +262,27 @@ model ProductAttribute {
 }
 
 model Order {
-  id                Int           @id @default(autoincrement())
-  orderNumber       String        @unique
-  userId            Int
-  status            OrderStatus   @default(PENDING)
-  paymentMethod     PaymentMethod
-  paymentStatus     PaymentStatus @default(PENDING)
-  subtotal          Float
-  shippingFee       Float         @default(0)
-  taxAmount         Float         @default(0)
-  discountAmount    Float         @default(0)
-  total             Float
-  shippingAddress   Json // Snapshot of address at time of order
-  customerNote      String?
-  trackingNumber    String?
-  trackingCompany   String?
-  estimatedDelivery DateTime?
-  completedAt       DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id              Int           @id @default(autoincrement())
+  orderNumber     String        @unique
+  userId          Int
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(PENDING)
+  subtotal        Float
+  shippingFee     Float         @default(0)
+  total           Float
+  shippingAddress Json // Snapshot of address at time of order
+  customerNote    String?
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relationships
   user       User         @relation(fields: [userId], references: [id])
   items      OrderItem[]
   payments   Payment[]
-  refunds    Refund[]
-  shipments  Shipment[]
+  Shipment   Shipment[]
+  Refund     Refund[]
   UserCoupon UserCoupon[]
 }
 
@@ -318,20 +304,7 @@ model OrderItem {
   vendor  Vendor          @relation(fields: [vendorId], references: [id])
   variant ProductVariant? @relation(fields: [variantId], references: [id])
   reviews Review[]
-}
-
-model Shipment {
-  id             Int       @id @default(autoincrement())
-  orderId        Int
-  trackingNumber String
-  carrier        String
-  status         String    @default("pending")
-  shippedAt      DateTime?
-  deliveredAt    DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  commission Commission?
 }
 
 model Payment {
@@ -348,7 +321,20 @@ model Payment {
 
   order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   khaltiDetails KhaltiPayment?
-  esewaDetails  EsewaPayment?
+}
+
+model Shipment {
+  id             Int       @id @default(autoincrement())
+  orderId        Int
+  trackingNumber String
+  carrier        String
+  status         String    @default("pending")
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
 }
 
 model Refund {
@@ -356,7 +342,7 @@ model Refund {
   orderId     Int
   amount      Float
   reason      String?
-  processedBy Int // User ID who processed the refund
+  processedBy Int
   status      PaymentStatus @default(PENDING)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -418,6 +404,18 @@ model SystemSetting {
   updatedAt   DateTime @updatedAt
 }
 
+model VendorPolicy {
+  id          Int      @id @default(autoincrement())
+  vendorId    Int
+  policyType  String // e.g., "shipping", "return", "privacy"
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+}
+
 // Payment Gateway Specific Models
 model KhaltiPayment {
   id         Int      @id @default(autoincrement())
@@ -430,91 +428,6 @@ model KhaltiPayment {
   payment Payment @relation(fields: [paymentId], references: [id])
 }
 
-model EsewaPayment {
-  id              Int      @id @default(autoincrement())
-  paymentId       Int      @unique
-  refId           String?
-  token           String?
-  verificationUrl String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  payment Payment @relation(fields: [paymentId], references: [id])
-}
-
-// Discount/Coupon System
-model Coupon {
-  id             Int       @id @default(autoincrement())
-  code           String    @unique
-  description    String?
-  discountType   String    @default("percentage") // or "fixed"
-  discountValue  Float
-  minOrderAmount Float?
-  maxUses        Int?
-  uses           Int       @default(0)
-  startDate      DateTime
-  endDate        DateTime?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relations
-  applicableCategories  CouponCategory[]
-  applicableVendors     CouponVendor[]
-  userCoupons           UserCoupon[]
-  CouponUserRestriction CouponUserRestriction[]
-}
-
-model CouponCategory {
-  id         Int      @id @default(autoincrement())
-  couponId   Int
-  categoryId Int
-  coupon     Coupon   @relation(fields: [couponId], references: [id])
-  category   Category @relation(fields: [categoryId], references: [id])
-}
-
-model CouponVendor {
-  id       Int    @id @default(autoincrement())
-  couponId Int
-  vendorId Int
-  coupon   Coupon @relation(fields: [couponId], references: [id])
-  vendor   Vendor @relation(fields: [vendorId], references: [id])
-}
-
-model UserCoupon {
-  id       Int       @id @default(autoincrement())
-  userId   Int
-  couponId Int
-  usedAt   DateTime?
-  orderId  Int?
-  user     User      @relation(fields: [userId], references: [id])
-  coupon   Coupon    @relation(fields: [couponId], references: [id])
-  order    Order?    @relation(fields: [orderId], references: [id])
-}
-
-// User restrictions for coupons (optional, for extensibility)
-model CouponUserRestriction {
-  id       Int    @id @default(autoincrement())
-  couponId Int
-  userId   Int
-  coupon   Coupon @relation(fields: [couponId], references: [id])
-  user     User   @relation(fields: [userId], references: [id])
-}
-
-// Notification System
-model Notification {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  title     String
-  message   String
-  isRead    Boolean  @default(false)
-  link      String?
-  type      String // 'order', 'promotion', 'system', etc.
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
 model Cart {
   id        Int        @id @default(autoincrement())
   userId    Int        @unique
@@ -522,7 +435,7 @@ model Cart {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  user      User       @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model CartItem {
@@ -534,19 +447,19 @@ model CartItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 model Wishlist {
-  id        Int        @id @default(autoincrement())
-  userId    Int        @unique
+  id        Int            @id @default(autoincrement())
+  userId    Int            @unique
   items     WishlistItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
 }
 
 model WishlistItem {
@@ -555,6 +468,98 @@ model WishlistItem {
   productId  Int
   addedAt    DateTime @default(now())
 
-  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique
+  description    String?
+  discountType   String    @default("percentage") // "percentage" or "fixed"
+  discountValue  Float
+  minOrderAmount Float?
+  maxUses        Int?
+  uses           Int       @default(0)
+  startDate      DateTime
+  endDate        DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  categories       CouponCategory[]
+  vendors          CouponVendor[]
+  userCoupons      UserCoupon[]
+  userRestrictions CouponUserRestriction[]
+}
+
+model CouponCategory {
+  id         Int @id @default(autoincrement())
+  couponId   Int
+  categoryId Int
+
+  coupon   Coupon   @relation(fields: [couponId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+}
+
+model CouponVendor {
+  id       Int @id @default(autoincrement())
+  couponId Int
+  vendorId Int
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+}
+
+model UserCoupon {
+  id       Int       @id @default(autoincrement())
+  userId   Int
+  couponId Int
+  usedAt   DateTime?
+  orderId  Int?
+
+  user   User   @relation(fields: [userId], references: [id])
+  coupon Coupon @relation(fields: [couponId], references: [id])
+  order  Order? @relation(fields: [orderId], references: [id])
+}
+
+model CouponUserRestriction {
+  id       Int @id @default(autoincrement())
+  couponId Int
+  userId   Int
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+  type      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Commission {
+  id        Int      @id @default(autoincrement())
+  vendorId  Int
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+}
+
+model PayoutRequest {
+  id        Int      @id @default(autoincrement())
+  vendorId  Int
+  amount    Float
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 }

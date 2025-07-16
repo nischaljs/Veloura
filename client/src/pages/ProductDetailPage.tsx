@@ -1,52 +1,44 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Card, CardTitle, CardDescription } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getProductBySlug } from '../services/product';
-import { addToWishlist } from '../services/wishlist';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Star, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
-import { User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { addToCart } from '../services/cart';
+import { Skeleton } from '../components/ui/skeleton';
 
 const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [wishlistLoading, setWishlistLoading] = useState(false);
-  const [wishlistMessage, setWishlistMessage] = useState<string | null>(null);
   const [cartLoading, setCartLoading] = useState(false);
-  const [cartMessage, setCartMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    getProductBySlug(slug)
-      .then((res) => setProduct(res.data.data.product))
-      .catch((err) => setError(err.response?.data?.message || err.message))
-      .finally(() => setLoading(false));
+    const fetchProduct = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getProductBySlug(slug as string);
+        setProduct(res.data.data.product);
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to fetch product');
+        toast.error(err.response?.data?.message || 'Failed to fetch product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slug) {
+      fetchProduct();
+    }
   }, [slug]);
 
-  const handleAddToWishlist = async () => {
-    if (!product) return;
-    setWishlistLoading(true);
-    setWishlistMessage(null);
-    try {
-      await addToWishlist(product.id);
-      setWishlistMessage('Added to wishlist!');
-    } catch (err: any) {
-      setWishlistMessage(err.response?.data?.message || 'Failed to add to wishlist');
-    } finally {
-      setWishlistLoading(false);
-    }
-  };
-
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { addToCart } = useCart();
   const handleAddToCart = async () => {
     if (!product) return;
     if (!user) {
@@ -55,161 +47,181 @@ const ProductDetailPage: React.FC = () => {
       return;
     }
     setCartLoading(true);
-    setCartMessage(null);
     try {
       await addToCart({ productId: product.id, quantity: 1 });
-      setCartMessage('Added to cart!');
+      toast.success('Added to cart!');
     } catch (err: any) {
-      setCartMessage(err.response?.data?.message || 'Failed to add to cart');
+      toast.error(err.response?.data?.message || 'Failed to add to cart');
     } finally {
       setCartLoading(false);
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-96">Loading...</div>;
-  if (error) return <div className="flex justify-center items-center h-96 text-red-500">{error}</div>;
-  if (!product) return null;
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Skeleton className="w-full h-96 rounded-lg" />
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="container mx-auto py-8 text-red-500 text-center">{error}</div>;
+  }
+
+  if (!product) {
+    return <div className="container mx-auto py-8 text-gray-500 text-center">Product not found.</div>;
+  }
+
+  const renderRating = (rating: number, reviewCount: number) => {
+    if (rating === 0 && reviewCount === 0) return null;
+    return (
+      <div className="flex items-center gap-1 text-sm">
+        <div className="flex items-center">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+            />
+          ))}
+        </div>
+        <span className="text-gray-600">{rating > 0 ? rating.toFixed(1) : 'No rating'}</span>
+        {reviewCount > 0 && <span className="text-gray-500">({reviewCount})</span>}
+      </div>
+    );
+  };
+
+  // Use all images for gallery
+  const images: { url: string; altText?: string }[] = product.images && product.images.length > 0 ? product.images : [{ url: 'https://via.placeholder.com/400', altText: product.name }];
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-4">
-      <Card className="flex flex-col md:flex-row gap-8 p-6">
-        {/* Image Gallery */}
-        <div className="flex flex-col gap-2 md:w-1/2">
-          {product.images && product.images.length > 0 ? (
-            <>
-              <img
-                src={product.images[0].url}
-                alt={product.images[0].altText || product.name}
-                className="w-full h-96 object-cover rounded-2xl bg-gray-100 mb-2"
-              />
-              <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((img: any, idx: number) => (
-                  <img
-                    key={img.id || idx}
-                    src={img.url}
-                    alt={img.altText || product.name}
-                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <img
-              src={product.image?.url}
-              alt={product.image?.altText || product.name}
-              className="w-full h-96 object-cover rounded-2xl bg-gray-100"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50 py-10 px-2">
+      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-0 overflow-hidden flex flex-col lg:flex-row">
+        {/* Product Image Gallery */}
+        <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-white p-8 lg:p-12">
+          <img 
+            src={images[0].url}
+            alt={images[0].altText || product.name}
+            className="w-full max-w-md h-96 object-contain rounded-2xl shadow-lg border mb-2"
+          />
+          {images.length > 1 && (
+            <div className="flex gap-2 mt-2">
+              {images.map((img, idx) => (
+                <img
+                  key={img.url}
+                  src={img.url}
+                  alt={img.altText || product.name}
+                  className="w-16 h-16 object-cover rounded border cursor-pointer hover:ring-2 hover:ring-indigo-400"
+                  onClick={() => {/* Optionally implement image switching */}}
+                />
+              ))}
+            </div>
           )}
         </div>
-        {/* Product Info */}
-        <div className="flex-1 flex flex-col gap-4">
-          {/* Vendor Info */}
-          {product.vendor && (
-            <div
-              className="flex items-center gap-3 cursor-pointer hover:bg-indigo-50 p-2 rounded-lg w-fit transition"
-              onClick={() => product.vendor.slug && navigate(`/vendors/${product.vendor.slug}`)}
-            >
-              {product.vendor.logo ? (
-                <img
-                  src={product.vendor.logo}
-                  alt={product.vendor.businessName}
-                  className="w-10 h-10 rounded-full object-cover border"
-                  onError={e => { e.currentTarget.style.display = 'none'; }}
-                />
-              ) : (
-                <User className="w-10 h-10 text-gray-400 bg-gray-100 rounded-full p-2" />
-              )}
-              <div className="flex flex-col">
-                <span className="font-semibold text-indigo-700 text-base">{product.vendor.businessName}</span>
-                <span className="text-xs text-gray-500">View Vendor Profile</span>
-              </div>
-            </div>
-          )}
-          <CardTitle className="text-3xl font-bold">{product.name}</CardTitle>
-          <CardDescription className="text-lg text-gray-600">{product.description}</CardDescription>
-          <div className="flex gap-2 items-center flex-wrap">
-            {product.brand && <Badge variant="outline">Brand: {product.brand.name}</Badge>}
-            {product.category && <Badge variant="outline">Category: {product.category.name}</Badge>}
-            {product.status && <Badge>Status: {product.status}</Badge>}
-            {product.isFeatured && <Badge variant="destructive">Featured</Badge>}
-            {product.stockQuantity === 0 && <Badge variant="destructive">Out of Stock</Badge>}
+        {/* Product Details */}
+        <div className="flex-1 flex flex-col gap-4 p-6 lg:p-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
+          <div className="flex items-center gap-3 mb-2">
+            {product.category && (
+              <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                <Link to={`/category/${product.category.slug}`}>{product.category.name}</Link>
+              </Badge>
+            )}
+            {renderRating(product.rating || 0, product.reviewCount || 0)}
+            <Badge className="ml-2 px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 rounded">{product.status}</Badge>
           </div>
-          <div className="text-2xl font-bold text-indigo-600">
-            Rs.{product.salePrice && product.salePrice < product.price ? product.salePrice : product.price}
+          <div className="text-gray-700 text-base md:text-lg leading-relaxed mb-2">
+            {product.shortDescription || product.description}
+          </div>
+          <div className="flex items-baseline gap-3 mb-2">
+            <span className="text-3xl md:text-4xl font-extrabold text-indigo-600">Rs.{product.salePrice || product.price}</span>
             {product.salePrice && product.salePrice < product.price && (
-              <span className="ml-2 text-gray-400 line-through text-lg">Rs.{product.price}</span>
+              <span className="text-lg md:text-xl text-gray-500 line-through">Rs.{product.price}</span>
+            )}
+            {product.salePrice && product.salePrice < product.price && (
+              <Badge variant="destructive" className="text-base md:text-lg">
+                {Math.round(((product.price - product.salePrice) / product.price) * 100)}% OFF
+              </Badge>
             )}
           </div>
-          <div className="text-gray-500">SKU: {product.sku}</div>
-          <div className="text-gray-500">Vendor: {product.vendor?.businessName}</div>
-          <div className="text-gray-500">Created: {new Date(product.createdAt).toLocaleString()}</div>
-          <div className="text-gray-500">Updated: {new Date(product.updatedAt).toLocaleString()}</div>
-          <div className="flex gap-4 mt-4">
-            <Button disabled={product.stockQuantity === 0 || cartLoading} onClick={handleAddToCart}>
-              {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading ? 'Adding...' : 'Add to Cart')}
-            </Button>
-            <Button variant="outline" onClick={handleAddToWishlist} disabled={wishlistLoading}>
-              {wishlistLoading ? 'Adding...' : 'Add to Wishlist'}
-            </Button>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-sm text-gray-600">Stock: {product.stockQuantity}</span>
+            {product.vendor && (
+              <span className="text-sm text-gray-600">Vendor: <Link to={`/vendors/${product.vendor.slug}`} className="text-indigo-600 hover:underline font-semibold">{product.vendor.businessName}</Link></span>
+            )}
           </div>
-          {wishlistMessage && (
-            <div className="text-green-600 text-sm mt-1">{wishlistMessage}</div>
-          )}
-          {cartMessage && (
-            <div className={`text-sm mt-1 ${cartMessage === 'Added to cart!' ? 'text-green-600' : 'text-red-500'}`}>{cartMessage}</div>
-          )}
-          {/* Short Description */}
-          {product.shortDescription && (
-            <div className="text-gray-700 mt-2">{product.shortDescription}</div>
-          )}
-          {/* Attributes */}
+          <Button 
+            size="lg" 
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-lg py-3 rounded-xl shadow-md flex items-center gap-2 mt-2"
+            onClick={handleAddToCart}
+            disabled={product.stockQuantity === 0 || cartLoading}
+          >
+            {cartLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            ) : (
+              <ShoppingCart className="w-5 h-5" />
+            )}
+            {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading ? 'Adding to Cart...' : 'Add to Cart')}
+          </Button>
+          {/* Attributes, Tags */}
           {product.attributes && product.attributes.length > 0 && (
             <div className="mt-4">
-              <div className="font-semibold mb-1">Attributes:</div>
-              <ul className="list-disc list-inside text-gray-700">
+              <h2 className="text-base font-semibold mb-1 text-gray-800">Attributes</h2>
+              <ul className="flex flex-wrap gap-2">
                 {product.attributes.map((attr: any) => (
-                  <li key={attr.id || attr.name}><b>{attr.name}:</b> {attr.value}</li>
+                  <li key={attr.name} className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-700 border border-gray-200">{attr.name}: {attr.value}</li>
                 ))}
               </ul>
             </div>
           )}
-          {/* Variants */}
-          {product.variants && product.variants.length > 0 && (
-            <div className="mt-4">
-              <div className="font-semibold mb-1">Variants:</div>
-              <ul className="list-disc list-inside text-gray-700">
-                {product.variants.map((variant: any) => (
-                  <li key={variant.id || variant.name}>{variant.name}: {variant.value} (Stock: {variant.stockQuantity}, SKU: {variant.sku})</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {/* Tags */}
           {product.tags && product.tags.length > 0 && (
-            <div className="mt-4">
-              <div className="font-semibold mb-1">Tags:</div>
-              <div className="flex gap-2 flex-wrap">
+            <div className="mt-2">
+              <h2 className="text-base font-semibold mb-1 text-gray-800">Tags</h2>
+              <ul className="flex flex-wrap gap-2">
                 {product.tags.map((tag: any) => (
-                  <Badge key={tag.id || tag.name} variant="secondary">{tag.name}</Badge>
+                  <li key={tag.name} className="bg-indigo-50 px-2 py-1 rounded text-xs text-indigo-700 border border-indigo-100">{tag.name}</li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
           {/* Reviews */}
           {product.reviews && product.reviews.length > 0 && (
-            <div className="mt-4">
-              <div className="font-semibold mb-1">Reviews:</div>
-              <ul className="list-disc list-inside text-gray-700">
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold mb-2 text-gray-800">Reviews</h2>
+              <div className="space-y-4">
                 {product.reviews.map((review: any) => (
-                  <li key={review.id}>{review.content} <span className="text-xs text-gray-500">({review.rating}★)</span></li>
+                  <div key={review.id} className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-indigo-700 text-sm">{review.title}</span>
+                      <span className="text-xs text-gray-500">Rating: {review.rating}</span>
+                    </div>
+                    <div className="text-gray-700 text-sm mb-1">{review.comment}</div>
+                    {/* Review images */}
+                    {review.images && Array.isArray(JSON.parse(review.images)) && JSON.parse(review.images).length > 0 && (
+                      <div className="flex gap-2 mt-1">
+                        {JSON.parse(review.images).map((img: string, idx: number) => (
+                          <img key={img} src={img.startsWith('http') ? img : `http://localhost:5000${img}`} alt="Review" className="w-12 h-12 object-cover rounded border" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
 
-export default ProductDetailPage; 
+export default ProductDetailPage;

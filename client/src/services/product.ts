@@ -5,7 +5,6 @@ export const getAllProducts = (params?: {
   page?: number;
   limit?: number;
   category?: string;
-  brand?: string;
   minPrice?: number;
   maxPrice?: number;
   sort?: string;
@@ -36,12 +35,3 @@ export const getProductsByCategory = (categorySlug: string, params?: {
   minPrice?: number;
   maxPrice?: number;
 }) => api.get(`/categories/${categorySlug}/products`, { params });
-
-// Get products by brand
-export const getProductsByBrand = (brandSlug: string, params?: {
-  page?: number;
-  limit?: number;
-  sort?: string;
-  minPrice?: number;
-  maxPrice?: number;
-}) => api.get(`/brands/${brandSlug}/products`, { params }); 

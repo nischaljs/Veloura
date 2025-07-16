@@ -24,22 +24,16 @@ router.get('/products', authenticateAdmin, adminController.getProducts);
 router.put('/products/:id/status', authenticateAdmin, adminController.updateProductStatus);
 router.delete('/products/:id', authenticateAdmin, adminController.deleteProduct);
 
-// System Settings
-router.get('/settings', authenticateAdmin, adminController.getSettings);
-router.put('/settings', authenticateAdmin, adminController.updateSettings);
+
 
 // Analytics
 router.get('/analytics/dashboard', authenticateAdmin, adminController.getDashboardAnalytics);
-router.get('/analytics/users', authenticateAdmin, adminController.getUserAnalytics);
 router.get('/analytics/vendors', authenticateAdmin, adminController.getVendorAnalytics);
-router.get('/analytics/sales', authenticateAdmin, adminController.getSalesAnalytics);
+router.get('/analytics/basic', authenticateAdmin, adminController.getBasicAnalytics);
+router.get('/analytics/commissions', authenticateAdmin, adminController.getCommissionAnalytics);
+router.get('/analytics/vendor/:vendorId', authenticateAdmin, adminController.getVendorAnalytics);
 
-// Activity Logs
-router.get('/activities', authenticateAdmin, adminController.getActivities);
 
-// Backup & Export
-router.post('/backup/create', authenticateAdmin, adminController.createBackup);
-router.get('/backup/list', authenticateAdmin, adminController.getBackupList);
-router.post('/export/users', authenticateAdmin, adminController.exportUsers);
+
 
 export default router; 

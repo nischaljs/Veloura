@@ -91,7 +91,6 @@ const CategoryPage: React.FC = () => {
                     <span className="text-lg font-bold">Rs.{product.price}</span>
                     <span className="text-xs text-gray-500">Stock: {product.stockQuantity}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">Brand: {product.brand?.name || 'N/A'}</div>
                   <Button 
                     size="icon" 
                     className="bg-indigo-600 hover:bg-indigo-700 w-8 h-8 mt-2" 
@@ -125,4 +124,4 @@ const CategoryPage: React.FC = () => {
   );
 };
 
-export default CategoryPage; 
+export default CategoryPage;

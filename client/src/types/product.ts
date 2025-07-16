@@ -7,10 +7,6 @@ export interface ProductCategory {
   name: string;
 }
 
-export interface ProductBrand {
-  name: string;
-}
-
 export interface ProductVendor {
   businessName: string;
 }
@@ -26,9 +22,9 @@ export interface AllProduct {
   category?: ProductCategory;
   status?: 'ACTIVE' | 'DRAFT' | 'INACTIVE' | string;
   stockQuantity?: number;
-  brand?: ProductBrand;
   vendor?: ProductVendor;
   sku?: string;
   rating?: number;
   reviewCount?: number;
-} 
+  slug?: string; // Added for compatibility with backend and usage in LandingPage
+}

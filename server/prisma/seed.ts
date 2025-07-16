@@ -27,10 +27,6 @@ async function main() {
     await prisma.wishlist.deleteMany();
     await prisma.notification.deleteMany();
     await prisma.order.deleteMany();
-    await prisma.userCoupon.deleteMany();
-    await prisma.couponVendor.deleteMany();
-    await prisma.couponCategory.deleteMany();
-    await prisma.coupon.deleteMany();
     await prisma.productImage.deleteMany();
     await prisma.productTag.deleteMany();
     await prisma.productVariant.deleteMany();
@@ -38,7 +34,6 @@ async function main() {
     await prisma.address.deleteMany();
     await prisma.adminActivity.deleteMany();
     await prisma.bankDetail.deleteMany();
-    await prisma.vendorPolicy.deleteMany();
     
     // Delete products and related data
     await prisma.product.deleteMany();
@@ -47,7 +42,7 @@ async function main() {
     await prisma.category.deleteMany();
     
     // Delete brands
-    await prisma.brand.deleteMany();
+    // await prisma.brand.deleteMany(); // REMOVE this line
     
     // Delete vendors
     await prisma.vendor.deleteMany();
@@ -137,6 +132,23 @@ async function main() {
       },
     });
 
+    // --- INHOUSE/ADMIN VENDOR ---
+    const adminVendor = await prisma.vendor.upsert({
+      where: { userId: admin.id },
+      update: {},
+      create: {
+        userId: admin.id,
+        businessName: 'Inhouse',
+        businessEmail: 'admin@inhouse.com',
+        businessPhone: '+977-9800009999',
+        slug: 'inhouse',
+        description: 'Our inhouse products and exclusive items',
+        isApproved: true,
+        website: 'https://yourstore.com/inhouse',
+        logo: '/images/brands/inhouse-logo.jpg',
+      },
+    });
+
     // After user upserts
     // Fetch users for later use
     const customer1Db = await prisma.user.findUnique({ where: { email: 'customer1@example.com' } });
@@ -184,30 +196,11 @@ async function main() {
     const vendor1Db = await prisma.vendor.findUnique({ where: { slug: 'fashion-boutique' } });
     const vendor2Db = await prisma.vendor.findUnique({ where: { slug: 'fashion-hub' } });
 
-    console.log('Creating brands...');
+    // REMOVE: Creating brands and all brand upserts
+    // REMOVE: All code that creates or upserts brands
+    // REMOVE: All code that fetches brands for product seeding
 
-    // Brands - Using upsert for each brand
-    const brands = [
-      { name: 'Nike', slug: 'nike', description: 'Nike Sportswear', isFeatured: true, featuredOrder: 1, logo: '/images/brands/nike-logo.jpg' },
-      { name: 'Adidas', slug: 'adidas', description: 'Adidas Sportswear', isFeatured: true, featuredOrder: 2, logo: '/images/brands/adidas-logo.jpg' },
-      { name: `L'Oreal`, slug: 'loreal', description: `L'Oreal Cosmetics`, isFeatured: true, featuredOrder: 3, logo: '/images/brands/loreal-logo.jpg' },
-      { name: 'Sephora', slug: 'sephora', description: 'Sephora Beauty', isFeatured: true, featuredOrder: 4, logo: '/images/brands/sephora-logo.jpg' },
-      { name: 'Zara', slug: 'zara', description: 'Zara Fashion', isFeatured: false, logo: '/images/brands/zara-logo.jpg' },
-      { name: 'H&M', slug: 'hm', description: 'H&M Fashion', isFeatured: false, logo: '/images/brands/hm-logo.jpg' },
-    ];
-
-    for (const brandData of brands) {
-      await prisma.brand.upsert({
-        where: { slug: brandData.slug },
-        update: { 
-          featuredOrder: brandData.featuredOrder,
-          isFeatured: brandData.isFeatured,
-          logo: brandData.logo
-        },
-        create: brandData,
-      });
-    }
-
+    // --- SEED CATEGORIES ---
     console.log('Creating categories...');
 
     // Categories - Using upsert for each category
@@ -286,121 +279,41 @@ async function main() {
     // --- SEED PRODUCTS ---
     console.log('Creating products...');
 
-    // Get required foreign keys
-    const nikeBrand = await prisma.brand.findUnique({ where: { slug: 'nike' } });
-    const adidasBrand = await prisma.brand.findUnique({ where: { slug: 'adidas' } });
-    const lorealBrand = await prisma.brand.findUnique({ where: { slug: 'loreal' } });
-    const sephoraBrand = await prisma.brand.findUnique({ where: { slug: 'sephora' } });
-    const zaraBrand = await prisma.brand.findUnique({ where: { slug: 'zara' } });
-    const hmBrand = await prisma.brand.findUnique({ where: { slug: 'hm' } });
-
-    const fashionCategoryForProducts = await prisma.category.findUnique({ where: { slug: 'fashion' } });
-    const beautyCategoryForProducts = await prisma.category.findUnique({ where: { slug: 'beauty' } });
+    // Fetch mensFashion and womensFashion categories for product seeding
     const mensFashion = await prisma.category.findUnique({ where: { slug: 'mens-fashion' } });
     const womensFashion = await prisma.category.findUnique({ where: { slug: 'womens-fashion' } });
-    const skincare = await prisma.category.findUnique({ where: { slug: 'skincare' } });
-    const makeup = await prisma.category.findUnique({ where: { slug: 'makeup' } });
 
-    // Use available images
-    const productImages = [
-      '/images/products/nike-shoes.jpg',
-      '/images/products/adidas-tshirt.jpg',
-      '/images/products/loreal-cream.jpg',
-      '/images/products/sephora-lipstick.jpg',
-      '/images/products/zara-dress.jpg',
-      '/images/products/hm-jeans.jpg',
-    ];
-
-    // Seed 6 products
-    const products = [
+    // --- INHOUSE PRODUCTS ---
+    const inhouseProducts = [
       {
-        name: 'Nike Running Shoes',
-        slug: 'nike-running-shoes',
-        description: 'High-performance running shoes from Nike.',
-        shortDescription: 'Lightweight and comfortable.',
-        price: 120,
-        sku: 'NRS-001',
+        name: 'Inhouse Exclusive 1',
+        slug: 'inhouse-exclusive-1',
+        description: 'Exclusive product from our inhouse brand.',
+        shortDescription: 'Inhouse product 1.',
+        price: 150,
+        sku: 'IH1-001',
         stockQuantity: 100,
         categoryId: mensFashion?.id!,
-        brandId: nikeBrand?.id!,
-        vendorId: vendor1Db!.id,
-        image: productImages[0],
+        vendorId: adminVendor.id,
+        image: '/images/products/inhouse1.jpg',
         isFeatured: true,
       },
       {
-        name: 'Adidas Training T-Shirt',
-        slug: 'adidas-training-tshirt',
-        description: 'Breathable training t-shirt from Adidas.',
-        shortDescription: 'Perfect for workouts.',
-        price: 45,
-        sku: 'ATT-001',
-        stockQuantity: 150,
+        name: 'Inhouse Exclusive 2',
+        slug: 'inhouse-exclusive-2',
+        description: 'Another exclusive inhouse product.',
+        shortDescription: 'Inhouse product 2.',
+        price: 200,
+        sku: 'IH2-001',
+        stockQuantity: 80,
         categoryId: womensFashion?.id!,
-        brandId: adidasBrand?.id!,
-        vendorId: vendor2Db!.id,
-        image: productImages[1],
-        isFeatured: true,
-      },
-      {
-        name: `L'Oreal Revitalift Cream`,
-        slug: 'loreal-revitalift-cream',
-        description: `Anti-aging cream from L'Oreal.`,
-        shortDescription: 'Reduces wrinkles and fine lines.',
-        price: 30,
-        sku: 'LRC-001',
-        stockQuantity: 200,
-        categoryId: skincare?.id!,
-        brandId: lorealBrand?.id!,
-        vendorId: vendor2Db!.id,
-        image: productImages[2],
-        isFeatured: true,
-      },
-      {
-        name: 'Sephora Cream Lipstick',
-        slug: 'sephora-cream-lipstick',
-        description: 'Long-lasting cream lipstick from Sephora.',
-        shortDescription: 'Vibrant color and smooth finish.',
-        price: 20,
-        sku: 'SCL-001',
-        stockQuantity: 180,
-        categoryId: makeup?.id!,
-        brandId: sephoraBrand?.id!,
-        vendorId: vendor2Db!.id,
-        image: productImages[3],
-        isFeatured: true,
-      },
-      {
-        name: `Zara Men's Slim Fit Jeans`,
-        slug: 'zara-mens-jeans',
-        description: `Stylish slim fit jeans for men from Zara.`,
-        shortDescription: 'Comfortable and modern.',
-        price: 70,
-        sku: 'ZMJ-001',
-        stockQuantity: 90,
-        categoryId: mensFashion?.id!,
-        brandId: zaraBrand?.id!,
-        vendorId: vendor1Db!.id,
-        image: productImages[4],
-        isFeatured: false,
-      },
-      {
-        name: `H&M Women's Summer Dress`,
-        slug: 'hm-womens-dress',
-        description: `Light and airy summer dress from H&M.`,
-        shortDescription: 'Perfect for warm weather.',
-        price: 50,
-        sku: 'HMWD-001',
-        stockQuantity: 120,
-        categoryId: womensFashion?.id!,
-        brandId: hmBrand?.id!,
-        vendorId: vendor2Db!.id,
-        image: productImages[5],
+        vendorId: adminVendor.id,
+        image: '/images/products/inhouse2.jpg',
         isFeatured: false,
       },
     ];
-
-    for (const p of products) {
-      if (p.categoryId && p.brandId && p.vendorId) { // Ensure all required IDs are present
+    for (const p of inhouseProducts) {
+      if (p.categoryId && p.vendorId) {
         await prisma.product.upsert({
           where: { slug: p.slug },
           update: {},
@@ -413,7 +326,6 @@ async function main() {
             sku: p.sku,
             stockQuantity: p.stockQuantity,
             categoryId: p.categoryId,
-            brandId: p.brandId,
             vendorId: p.vendorId,
             isFeatured: p.isFeatured,
             images: {
@@ -427,104 +339,12 @@ async function main() {
 
     // After product upserts
     // Fetch products for later use
-    const nikeShoes = await prisma.product.findUnique({ where: { slug: 'nike-running-shoes' } });
-    const adidasTshirt = await prisma.product.findUnique({ where: { slug: 'adidas-training-tshirt' } });
-    const lorealCream = await prisma.product.findUnique({ where: { slug: 'loreal-revitalift-cream' } });
-    const sephoraLipstick = await prisma.product.findUnique({ where: { slug: 'sephora-cream-lipstick' } });
-
-    // --- SEED COUPONS ---
-    console.log('Creating coupons...');
-
-    // Get required foreign keys for categories and vendors
-    const fashionCat = await prisma.category.findUnique({ where: { slug: 'fashion' } });
-    const beautyCat = await prisma.category.findUnique({ where: { slug: 'beauty' } });
-    const fashionBoutiqueVendor = await prisma.vendor.findUnique({ where: { slug: 'fashion-boutique' } });
-    const fashionHubVendor = await prisma.vendor.findUnique({ where: { slug: 'fashion-hub' } });
-
-    // Create coupons
-    const coupon1 = await prisma.coupon.upsert({
-      where: { code: 'SAVE10' },
-      update: {},
-      create: {
-        code: 'SAVE10',
-        description: 'Save 10% on your first fashion order',
-        discountType: 'percentage',
-        discountValue: 10,
-        minOrderAmount: 1000,
-        maxUses: 100,
-        startDate: new Date('2024-01-01T00:00:00Z'),
-        endDate: new Date('2024-12-31T23:59:59Z'),
-        isActive: true,
-      },
-    });
-    const coupon2 = await prisma.coupon.upsert({
-      where: { code: 'BEAUTY20' },
-      update: {},
-      create: {
-        code: 'BEAUTY20',
-        description: '20% off on beauty products',
-        discountType: 'percentage',
-        discountValue: 20,
-        minOrderAmount: 500,
-        maxUses: 50,
-        startDate: new Date('2024-01-01T00:00:00Z'),
-        endDate: new Date('2024-12-31T23:59:59Z'),
-        isActive: true,
-      },
-    });
-    const coupon3 = await prisma.coupon.upsert({
-      where: { code: 'FLAT100' },
-      update: {},
-      create: {
-        code: 'FLAT100',
-        description: 'Flat 100 off on any order',
-        discountType: 'fixed',
-        discountValue: 100,
-        minOrderAmount: 0,
-        maxUses: 200,
-        startDate: new Date('2024-01-01T00:00:00Z'),
-        endDate: new Date('2024-12-31T23:59:59Z'),
-        isActive: true,
-      },
-    });
-
-    // Link coupons to categories/vendors
-    if (fashionCat) {
-      await prisma.couponCategory.create({
-        data: { couponId: coupon1.id, categoryId: fashionCat.id }
-      });
-    }
-    if (beautyCat) {
-      await prisma.couponCategory.create({
-        data: { couponId: coupon2.id, categoryId: beautyCat.id }
-      });
-    }
-    if (fashionBoutiqueVendor) {
-      await prisma.couponVendor.create({
-        data: { couponId: coupon1.id, vendorId: fashionBoutiqueVendor.id }
-      });
-    }
-    if (fashionHubVendor) {
-      await prisma.couponVendor.create({
-        data: { couponId: coupon2.id, vendorId: fashionHubVendor.id }
-      });
-    }
-
-    // Seed a user-coupon claim for demo
-    await prisma.userCoupon.create({
-      data: {
-        userId: customer1.id,
-        couponId: coupon1.id,
-        usedAt: null,
-        orderId: null,
-      },
-    });
-    console.log('Coupons created!');
+    const sampleProduct1 = await prisma.product.findUnique({ where: { slug: 'sample-product-1' } });
+    const sampleProduct2 = await prisma.product.findUnique({ where: { slug: 'sample-product-2' } });
 
     // --- SEED CARTS & WISHLISTS ---
     console.log('Creating carts and wishlists...');
 
-    // Use these variables (customer1Db, customer2Db, vendorUser1Db, vendorUser2Db, vendor1Db, vendor2Db) instead of customer1, customer2, vendorUser1, vendorUser2, vendor1, vendor2 in later code.
     // Cart for customer1
     const cart1 = await prisma.cart.upsert({
       where: { userId: customer1.id },
@@ -533,8 +353,8 @@ async function main() {
         userId: customer1.id,
         items: {
           create: [
-            { productId: nikeShoes?.id!, quantity: 1 },
-            { productId: lorealCream?.id!, quantity: 1 },
+            { productId: sampleProduct1?.id!, quantity: 1 },
+            { productId: sampleProduct2?.id!, quantity: 1 },
           ]
         }
       }
@@ -547,7 +367,7 @@ async function main() {
         userId: customer2.id,
         items: {
           create: [
-            { productId: sephoraLipstick?.id!, quantity: 2 },
+            { productId: sampleProduct2?.id!, quantity: 2 },
           ]
         }
       }
@@ -558,8 +378,8 @@ async function main() {
         userId: customer1.id,
         items: {
           create: [
-            { productId: nikeShoes?.id! },
-            { productId: sephoraLipstick?.id! },
+            { productId: sampleProduct1?.id! },
+            { productId: sampleProduct2?.id! },
           ]
         }
       }
@@ -570,7 +390,7 @@ async function main() {
         userId: customer2.id,
         items: {
           create: [
-            { productId: lorealCream?.id! },
+            { productId: sampleProduct2?.id! },
           ]
         }
       }
@@ -607,8 +427,6 @@ async function main() {
         paymentStatus: 'PENDING',
         subtotal: 120,
         shippingFee: 50,
-        taxAmount: 0,
-        discountAmount: 0,
         total: 170,
         shippingAddress: {
           label: 'Home',
@@ -623,12 +441,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: nikeShoes?.id!,
+              productId: sampleProduct1?.id!,
               vendorId: vendor1Db!.id,
               quantity: 1,
               price: 120,
               salePrice: null,
-              productSnapshot: productSnapshot(nikeShoes),
+              productSnapshot: productSnapshot(sampleProduct1),
               variantSnapshot: undefined,
             },
           ],
@@ -646,8 +464,6 @@ async function main() {
         paymentStatus: 'COMPLETED',
         subtotal: 30,
         shippingFee: 50,
-        taxAmount: 0,
-        discountAmount: 0,
         total: 80,
         shippingAddress: {
           label: 'Office',
@@ -662,12 +478,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: lorealCream?.id!,
+              productId: sampleProduct2?.id!,
               vendorId: vendor2Db!.id,
               quantity: 1,
               price: 30,
               salePrice: null,
-              productSnapshot: productSnapshot(lorealCream),
+              productSnapshot: productSnapshot(sampleProduct2),
               variantSnapshot: undefined,
             },
           ],
@@ -685,8 +501,6 @@ async function main() {
         paymentStatus: 'PENDING',
         subtotal: 40,
         shippingFee: 50,
-        taxAmount: 0,
-        discountAmount: 0,
         total: 90,
         shippingAddress: {
           label: 'Home',
@@ -701,12 +515,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: sephoraLipstick?.id!,
+              productId: sampleProduct2?.id!,
               vendorId: vendor2Db!.id,
               quantity: 2,
               price: 20,
               salePrice: null,
-              productSnapshot: productSnapshot(sephoraLipstick),
+              productSnapshot: productSnapshot(sampleProduct2),
               variantSnapshot: undefined,
             },
           ],
@@ -735,8 +549,6 @@ async function main() {
         paymentStatus: 'COMPLETED',
         subtotal: 120,
         shippingFee: 40,
-        taxAmount: 0,
-        discountAmount: 0,
         total: 160,
         shippingAddress: {
           label: 'Work',
@@ -751,12 +563,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: nikeShoes?.id!,
+              productId: sampleProduct1?.id!,
               vendorId: vendor1Db!.id,
               quantity: 1,
               price: 120,
               salePrice: null,
-              productSnapshot: productSnapshot(nikeShoes),
+              productSnapshot: productSnapshot(sampleProduct1),
               variantSnapshot: undefined,
             },
           ],
@@ -785,8 +597,6 @@ async function main() {
         paymentStatus: 'FAILED',
         subtotal: 45,
         shippingFee: 60,
-        taxAmount: 0,
-        discountAmount: 0,
         total: 105,
         shippingAddress: {
           label: 'Other',
@@ -801,12 +611,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: adidasTshirt?.id!,
+              productId: sampleProduct2?.id!,
               vendorId: vendor2Db!.id,
               quantity: 1,
               price: 45,
               salePrice: null,
-              productSnapshot: productSnapshot(adidasTshirt),
+              productSnapshot: productSnapshot(sampleProduct2),
               variantSnapshot: undefined,
             },
           ],
@@ -824,8 +634,6 @@ async function main() {
         paymentStatus: 'REFUNDED',
         subtotal: 20,
         shippingFee: 30,
-        taxAmount: 0,
-        discountAmount: 0,
         total: 50,
         shippingAddress: {
           label: 'Return',
@@ -840,12 +648,12 @@ async function main() {
         items: {
           create: [
             {
-              productId: sephoraLipstick?.id!,
+              productId: sampleProduct2?.id!,
               vendorId: vendor2Db!.id,
               quantity: 1,
               price: 20,
               salePrice: null,
-              productSnapshot: productSnapshot(sephoraLipstick),
+              productSnapshot: productSnapshot(sampleProduct2),
               variantSnapshot: undefined,
             },
           ],
@@ -881,8 +689,8 @@ async function main() {
     const demoReviews = [
       {
         user: customer1Db,
-        product: nikeShoes,
-        orderItem: findOrderItem(customer1Db!.id, nikeShoes?.id!),
+        product: sampleProduct1,
+        orderItem: findOrderItem(customer1Db!.id, sampleProduct1?.id!),
         rating: 5,
         title: 'Great running shoes!',
         comment: 'Comfortable and stylish, perfect for my daily runs.',
@@ -890,8 +698,8 @@ async function main() {
       },
       {
         user: customer1Db,
-        product: lorealCream,
-        orderItem: findOrderItem(customer1Db!.id, lorealCream?.id!),
+        product: sampleProduct2,
+        orderItem: findOrderItem(customer1Db!.id, sampleProduct2?.id!),
         rating: 4,
         title: 'Good moisturizer',
         comment: 'Leaves my skin feeling soft, but a bit pricey.',
@@ -899,8 +707,8 @@ async function main() {
       },
       {
         user: customer2Db,
-        product: sephoraLipstick,
-        orderItem: findOrderItem(customer2Db!.id, sephoraLipstick?.id!),
+        product: sampleProduct2,
+        orderItem: findOrderItem(customer2Db!.id, sampleProduct2?.id!),
         rating: 5,
         title: 'Amazing color!',
         comment: 'Love the shade and how long it lasts.',
@@ -908,8 +716,8 @@ async function main() {
       },
       {
         user: customer2Db,
-        product: adidasTshirt,
-        orderItem: findOrderItem(customer2Db!.id, adidasTshirt?.id!),
+        product: sampleProduct1,
+        orderItem: findOrderItem(customer2Db!.id, sampleProduct1?.id!),
         rating: 3,
         title: 'Decent t-shirt',
         comment: 'Comfortable, but the fit is a bit loose.',
@@ -1030,7 +838,7 @@ async function main() {
     console.log('Payment options and shipping methods seeded!');
 
     console.log('Seed data created successfully!');
-    console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.brand.count()} brands, ${await prisma.category.count()} categories`);
+    console.log(`Created: ${await prisma.user.count()} users, ${await prisma.vendor.count()} vendors, ${await prisma.category.count()} categories`);
 
   } catch (error) {
     console.error('Error during seeding:', error);

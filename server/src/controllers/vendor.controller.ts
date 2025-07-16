@@ -22,7 +22,7 @@ export const registerVendor = async (req: Request, res: Response) => {
         facebook,
         instagram,
         twitter,
-        isApproved: false
+        verified: false
       }
     });
     res.json({ success: true, message: 'Vendor registration submitted for approval', data: { vendor } });
@@ -35,7 +35,7 @@ export const getVendorProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) }, include: { products: true } });
-    if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const vendorWithUrls = addImageUrls(vendor, ['logo', 'banner']);
     res.json({ success: true, data: { vendor: vendorWithUrls } });
   } catch (err) {
@@ -84,8 +84,8 @@ export const uploadBanner = async (req: Request, res: Response) => {
 export const getPublicVendorProfile = async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    const vendor = await prisma.vendor.findUnique({ where: { slug } });
-    if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+    const vendor = await prisma.vendor.findUnique({ where: { slug, verified: true } });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     const vendorWithUrls = addImageUrls(vendor, ['logo', 'banner']);
     res.json({ success: true, data: { vendor: vendorWithUrls } });
   } catch (err) {
@@ -100,9 +100,9 @@ export const getVendorProducts = async (req: Request, res: Response) => {
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
-    const vendor = await prisma.vendor.findFirst({ where: { slug } });
+    const vendor = await prisma.vendor.findFirst({ where: { slug, verified: true } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const where: any = { vendorId: vendor.id };
+    const where: any = { vendorId: vendor.id, verified: true };
     if (category) where.category = { slug: category };
     if (minPrice) where.price = { ...(where.price || {}), gte: parseFloat(minPrice as string) };
     if (maxPrice) where.price = { ...(where.price || {}), lte: parseFloat(maxPrice as string) };
@@ -225,95 +225,6 @@ export const deleteBankDetail = async (req: Request, res: Response) => {
     await prisma.bankDetail.delete({ where: { id } });
     res.json({ success: true, message: 'Bank details deleted successfully' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
-// Policies
-export const getPolicies = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const policies = await prisma.vendorPolicy.findMany({ where: { vendorId: vendor.id } });
-    res.json({ success: true, data: { policies } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-export const addPolicy = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const data = { ...req.body, vendorId: vendor.id };
-    const policy = await prisma.vendorPolicy.create({ data });
-    res.json({ success: true, message: 'Policy added successfully', data: { policy } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-export const updatePolicy = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    const policy = await prisma.vendorPolicy.update({ where: { id }, data: req.body });
-    res.json({ success: true, message: 'Policy updated successfully', data: { policy } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-export const deletePolicy = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const id = Number(req.params.id);
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    await prisma.vendorPolicy.delete({ where: { id } });
-    res.json({ success: true, message: 'Policy deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
-// Analytics
-export const getVendorAnalytics = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).userId;
-    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
-    if (!vendor) { 
-      res.status(404).json({ success: false, message: 'Vendor not found' }); 
-      return; 
-    }
-    // Example analytics: total sales, orders, products, reviews, etc.
-    const [totalSales, totalOrders, averageOrderValue, totalProducts, activeProducts, totalReviews, averageRating] = await Promise.all([
-      prisma.order.aggregate({ _sum: { total: true }, where: { items: { some: { vendorId: vendor.id } } } }),
-      prisma.order.count({ where: { items: { some: { vendorId: vendor.id } } } }),
-      prisma.order.aggregate({ _avg: { total: true }, where: { items: { some: { vendorId: vendor.id } } } }),
-      prisma.product.count({ where: { vendorId: vendor.id } }),
-      prisma.product.count({ where: { vendorId: vendor.id, status: 'ACTIVE' } }),
-      prisma.review.count({ where: { product: { vendorId: vendor.id } } }),
-      prisma.review.aggregate({ _avg: { rating: true }, where: { product: { vendorId: vendor.id } } })
-    ]);
-    res.json({
-      success: true,
-      data: {
-        analytics: {
-          totalSales: totalSales._sum.total || 0,
-          totalOrders,
-          averageOrderValue: averageOrderValue._avg.total || 0,
-          totalProducts,
-          activeProducts,
-          totalReviews,
-          averageRating: averageRating._avg.rating || 0,
-          salesChart: [] // You can add sales chart data here
-        }
-      }
-    });
-  } catch (err) {
-    console.error('❌ getVendorAnalytics error:', err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };
@@ -476,6 +387,54 @@ export const deleteProduct = async (req: Request, res: Response) => {
     res.json({ success: true, message: 'Product deleted successfully' });
   } catch (err: any) {
     console.error('❌ deleteProduct error:', err);
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+// POST /vendors/payout-requests - Vendor requests payout
+export const createPayoutRequest = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
+    if (!vendor) {
+      res.status(404).json({ success: false, message: 'Vendor not found' });
+      return;
+    }
+    const { amount } = req.body;
+    if (!amount || amount <= 0) {
+      res.status(400).json({ success: false, message: 'Invalid amount' });
+      return;
+    }
+    // Optionally, check available balance for vendor
+    const totalSales = await prisma.orderItem.aggregate({ where: { vendorId: vendor.id }, _sum: { price: true } });
+    const totalCommission = await prisma.commission.aggregate({ where: { vendorId: vendor.id }, _sum: { amount: true } });
+    const totalPayouts = await prisma.payoutRequest.aggregate({ where: { vendorId: vendor.id, status: 'PAID' }, _sum: { amount: true } });
+    const available = (totalSales._sum.price || 0) - (totalCommission._sum.amount || 0) - (totalPayouts._sum.amount || 0);
+    if (amount > available) {
+      res.status(400).json({ success: false, message: 'Amount exceeds available balance' });
+      return;
+    }
+    const payout = await prisma.payoutRequest.create({
+      data: { vendorId: vendor.id, amount }
+    });
+    res.json({ success: true, message: 'Payout request submitted', data: { payout } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+// GET /vendors/payout-requests - Vendor views payout requests
+export const getPayoutRequests = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
+    if (!vendor) {
+      res.status(404).json({ success: false, message: 'Vendor not found' });
+      return;
+    }
+    const payouts = await prisma.payoutRequest.findMany({ where: { vendorId: vendor.id }, orderBy: { requestedAt: 'desc' } });
+    res.json({ success: true, data: { payouts } });
+  } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };

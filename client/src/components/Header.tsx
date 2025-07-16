@@ -1,10 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, Github, Twitter, Instagram, Globe, Heart } from 'lucide-react';
+import { ShoppingCart, Search, Github, Twitter, Instagram, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { fetchCategories } from '@/services/category';
-import { fetchBrands } from '@/services/brand';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { useCart } from '../context/CartContext';
@@ -16,25 +15,17 @@ const navLinks = [
   { name: 'FAQ', to: '/faq' },
 ];
 
-// Add interfaces for Category and Brand
+// Add interfaces for Category
 interface Category {
   slug: string;
   name: string;
   image?: string;
 }
 
-interface Brand {
-  slug: string;
-  name: string;
-}
-
 export default function Header() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
   const [catLoading, setCatLoading] = useState(true);
-  const [brandLoading, setBrandLoading] = useState(true);
   const [catError, setCatError] = useState('');
-  const [brandError, setBrandError] = useState('');
   const [search, setSearch] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -45,10 +36,6 @@ export default function Header() {
       .then(data => setCategories(data.data?.categories || []))
       .catch(() => setCatError('Failed to load categories'))
       .finally(() => setCatLoading(false));
-    fetchBrands(100)
-      .then(data => setBrands(data.data?.brands || []))
-      .catch(() => setBrandError('Failed to load brands'))
-      .finally(() => setBrandLoading(false));
   }, []);
 
   return (
@@ -78,7 +65,7 @@ export default function Header() {
         </div>
         {/* Become a seller (right) */}
         <div className="z-10">
-          <Link to="/register-business" className="text-white underline hover:text-indigo-100 text-xs font-normal ml-4">become a seller</Link>
+          <Link to="/register" className="text-white underline hover:text-indigo-100 text-xs font-normal ml-4">Register</Link>
         </div>
       </div>
       {/* Main header */}
@@ -98,13 +85,13 @@ export default function Header() {
             ))}
           </nav>
           {/* Search bar */}
-          <form className="flex-1 max-w-md mx-6 hidden md:flex" onSubmit={e => { e.preventDefault(); if (search.trim()) navigate(`/search?q=${encodeURIComponent(search)}`); }}>
+          <form className="flex-1 max-w-md mx-6 hidden md:flex" onSubmit={e => { e.preventDefault(); if (search.trim()) navigate(`/products?q=${encodeURIComponent(search)}`); }}>
             <div className="relative w-full">
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search products, brands, categories..."
+                placeholder="Search products, categories..."
                 className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               <Search className="absolute left-2 top-2.5 w-4 h-4 text-zinc-400" />
@@ -112,9 +99,6 @@ export default function Header() {
           </form>
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <Link to="/wishlist" className="relative p-2 rounded-full hover:bg-indigo-50 transition-colors">
-              <Heart className="w-6 h-6 text-gray-700" />
-            </Link>
             <Link to="/cart" className="relative p-2 rounded-full hover:bg-indigo-50 transition-colors">
               <ShoppingCart className="w-6 h-6 text-gray-700" />
               {/* Cart badge dynamic */}
@@ -140,7 +124,7 @@ export default function Header() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Account</DropdownMenuLabel>
                   <DropdownMenuItem asChild>
-                    <Link to={user?.role === 'ADMIN' ? '/admin/dashboard' : user?.role === 'VENDOR' ? '/vendor/dashboard' : '/dashboard'}>
+                    <Link to={user?.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard'}>
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
@@ -163,50 +147,7 @@ export default function Header() {
             )}
           </div>
         </div>
-        {/* Category and Brands bar below header */}
-        <div className="w-full bg-zinc-50 border-t border-zinc-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 py-2">
-            {/* Categories (left) */}
-            <div className="flex gap-4">
-              {catLoading ? (
-                <span className="text-xs text-gray-400">Loading categories...</span>
-              ) : catError ? (
-                <span className="text-xs text-red-500">{catError}</span>
-              ) : (
-                categories.slice(0, 4).map((cat) => (
-                  <Link
-                    key={cat.slug}
-                    to={`/category/${cat.slug}`}
-                    className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white shadow hover:bg-indigo-50 text-gray-700 font-medium text-sm whitespace-nowrap border border-zinc-100 transition-colors"
-                  >
-                    {cat.image && <img src={cat.image} alt={cat.name} className="w-6 h-6 rounded-full object-cover" />}
-                    <span>{cat.name}</span>
-                  </Link>
-                ))
-              )}
-            </div>
-            {/* Brands (right) */}
-            <div className="flex gap-4">
-              {brandLoading ? (
-                <span className="text-xs text-gray-400">Loading brands...</span>
-              ) : brandError ? (
-                <span className="text-xs text-red-500">{brandError}</span>
-              ) : (
-                brands.slice(0, 4).map((brand) => (
-                  <Link
-                    key={brand.slug}
-                    to={`/brand/${brand.slug}`}
-                    className="flex items-center gap-1 px-2 py-1 rounded hover:bg-indigo-50 text-gray-700 font-medium text-sm transition-colors border border-zinc-100"
-                  >
-                    <span className="w-6 h-6 bg-zinc-200 rounded-full flex items-center justify-center text-xs font-bold uppercase">{brand.name?.[0]}</span>
-                    <span>{brand.name}</span>
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
       </header>
     </>
   );
-} 
+}

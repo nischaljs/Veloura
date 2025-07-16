@@ -81,28 +81,32 @@ const upload = multer({
 const handleUploadError = (err: any, req: any, res: any, next: any) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'File too large. Maximum size is 5MB.'
       });
+      return;
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Too many files. Only one file allowed per request.'
       });
+      return;
     }
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: 'File upload error: ' + err.message
     });
+    return;
   }
   
   if (err.message) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: err.message
     });
+    return;
   }
   
   next(err);

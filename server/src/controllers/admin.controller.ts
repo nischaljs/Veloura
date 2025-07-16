@@ -80,7 +80,7 @@ export const getUserById = async (req: Request, res: Response) => {
         reviews: true
       }
     });
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return; }
     res.json({
       success: true,
       data: {
@@ -194,7 +194,6 @@ export const getVendors = async (req: Request, res: Response) => {
           user: { select: { firstName: true, lastName: true, email: true } },
           products: true,
           bankDetails: true,
-          policies: true
         }
       }),
       prisma.vendor.count({ where })
@@ -240,10 +239,10 @@ export const getVendorById = async (req: Request, res: Response) => {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
         products: { select: { id: true, name: true, status: true, price: true } },
         bankDetails: true,
-        policies: true
+        
       }
     });
-    if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+    if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
     res.json({
       success: true,
       data: {
@@ -269,7 +268,7 @@ export const getVendorById = async (req: Request, res: Response) => {
           user: vendor.user,
           products: vendor.products,
           bankDetails: vendor.bankDetails,
-          policies: vendor.policies
+
         }
       }
     });
@@ -378,7 +377,7 @@ export const updateProductStatus = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const { status, reason } = req.body;
-    if (!status) return res.status(400).json({ success: false, message: 'Status is required' });
+    if (!status) { res.status(400).json({ success: false, message: 'Status is required' }); return; }
     const product = await prisma.product.update({ where: { id }, data: { status } });
     // Optionally: log reason in an audit table
     res.json({ success: true, message: 'Product status updated successfully', data: { product } });
@@ -437,8 +436,75 @@ export const getDashboardAnalytics = async (req: Request, res: Response) => {
   }
 };
 export const getUserAnalytics = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });
-export const getVendorAnalytics = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });
-export const getSalesAnalytics = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });
+// Only keep the following implementations:
+
+// GET /admin/analytics/vendor/:vendorId - Vendor analytics
+export const getVendorAnalytics = async (req: Request, res: Response) => {
+  try {
+    const { vendorId } = req.params;
+    const [totalSales, totalOrders, totalCommission, totalPayouts] = await Promise.all([
+      prisma.orderItem.aggregate({ where: { vendorId: parseInt(vendorId) }, _sum: { price: true } }),
+      prisma.orderItem.count({ where: { vendorId: parseInt(vendorId) } }),
+      prisma.commission.aggregate({ where: { vendorId: parseInt(vendorId) }, _sum: { amount: true } }),
+      prisma.payoutRequest.aggregate({ where: { vendorId: parseInt(vendorId), status: 'PAID' }, _sum: { amount: true } })
+    ]);
+    res.json({
+      success: true,
+      data: {
+        totalSales: totalSales._sum.price || 0,
+        totalOrders,
+        totalCommission: totalCommission._sum.amount || 0,
+        totalPayouts: totalPayouts._sum.amount || 0
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+// GET /admin/analytics/basic - Basic platform analytics
+export const getBasicAnalytics = async (req: Request, res: Response) => {
+  try {
+    const [totalSales, totalOrders, totalProducts, totalUsers, totalVendors] = await Promise.all([
+      prisma.order.aggregate({ where: { status: 'DELIVERED' }, _sum: { total: true } }),
+      prisma.order.count(),
+      prisma.product.count(),
+      prisma.user.count(),
+      prisma.vendor.count()
+    ]);
+    res.json({
+      success: true,
+      data: {
+        totalSales: totalSales._sum.total || 0,
+        totalOrders,
+        totalProducts,
+        totalUsers,
+        totalVendors
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
+
+// GET /admin/analytics/commissions - Platform commission analytics
+export const getCommissionAnalytics = async (req: Request, res: Response) => {
+  try {
+    const [totalCommission, totalPayouts] = await Promise.all([
+      prisma.commission.aggregate({ _sum: { amount: true } }),
+      prisma.payoutRequest.aggregate({ where: { status: 'PAID' }, _sum: { amount: true } })
+    ]);
+    res.json({
+      success: true,
+      data: {
+        totalCommission: totalCommission._sum.amount || 0,
+        totalPayouts: totalPayouts._sum.amount || 0
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error', error: err });
+  }
+};
 
 // Activity Logs
 export const getActivities = async (req: Request, res: Response) => res.json({ success: true, message: 'Not implemented yet' });

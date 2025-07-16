@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getCart } from '../services/cart';
-import { getShippingOptions, calculateShipping } from '../services/shipping';
 import { createOrder } from '../services/order';
 import { initiateKhaltiPayment, initiateEsewaPayment, confirmCODPayment, getPaymentOptions } from '../services/payment';
 import { Card, CardTitle, CardContent } from '../components/ui/card';
@@ -11,8 +10,6 @@ import { useAuth } from '../context/AuthContext';
 
 const OrderPage: React.FC = () => {
   const [cart, setCart] = useState<any>(null);
-  const [shippingOptions, setShippingOptions] = useState<any[]>([]);
-  const [selectedShipping, setSelectedShipping] = useState<number | null>(null);
   const [address, setAddress] = useState<any>({});
   const [paymentMethod, setPaymentMethod] = useState<string>('KHALTI');
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -23,29 +20,6 @@ const OrderPage: React.FC = () => {
 
   useEffect(() => {
     getCart().then(res => setCart(res.data.data.cart));
-    getShippingOptions()
-      .then(res => {
-        const options = res.data.data.shippingOptions || [];
-        const fallback = [
-          { id: 1, name: 'Standard Delivery', description: '3-5 business days', fee: 100, estimatedDays: '3-5' },
-          { id: 2, name: 'Express Delivery', description: '1-2 business days', fee: 200, estimatedDays: '1-2' }
-        ];
-        if (options.length > 0) {
-          setShippingOptions(options);
-          console.log('Shipping options from backend:', options);
-        } else {
-          setShippingOptions(fallback);
-          console.log('Shipping fallback used:', fallback);
-        }
-      })
-      .catch(() => {
-        const fallback = [
-          { id: 1, name: 'Standard Delivery', description: '3-5 business days', fee: 100, estimatedDays: '3-5' },
-          { id: 2, name: 'Express Delivery', description: '1-2 business days', fee: 200, estimatedDays: '1-2' }
-        ];
-        setShippingOptions(fallback);
-        console.log('Shipping fallback used (error):', fallback);
-      });
     getPaymentOptions()
       .then(res => {
         const opts = res.data.data.paymentOptions || res.data.data.options || [];
@@ -123,7 +97,6 @@ const OrderPage: React.FC = () => {
     );
   }
 
-  console.log('Render: shippingOptions', shippingOptions);
   console.log('Render: paymentOptions', paymentOptions);
 
   return (
@@ -148,23 +121,7 @@ const OrderPage: React.FC = () => {
                 </div>
               </div>
               {/* Shipping & Payment options side by side on desktop */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                {/* Shipping options */}
-                <div>
-                  <h2 className="font-semibold mb-2">Shipping Method</h2>
-                  <RadioGroup value={selectedShipping?.toString() || ''} onValueChange={v => setSelectedShipping(Number(v))}>
-                    {shippingOptions.map(option => (
-                      <div key={option.id} className="flex items-center gap-2 mb-2">
-                        <RadioGroupItem value={option.id.toString()} />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{option.name}</span>
-                          <span className="text-xs text-gray-500">{option.description}{option.estimatedDays ? ` • ${option.estimatedDays} days` : ''}</span>
-                          <span className="text-sm text-indigo-600 font-semibold">Rs.{option.fee}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
+              <div className="grid grid-cols-1 gap-6 mb-4">
                 {/* Payment options */}
                 <div>
                   <h2 className="font-semibold mb-2">Payment Method</h2>
@@ -225,4 +182,4 @@ const OrderPage: React.FC = () => {
   );
 };
 
-export default OrderPage; 
+export default OrderPage;

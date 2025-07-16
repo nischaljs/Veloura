@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
-import { addImageUrls, addImageUrlsToArray } from '../utils/imageUtils';
+import { addImageUrls, addImageUrlsToArray, getImageUrl } from '../utils/imageUtils';
 
 // Helper to create slug from name
 const createSlug = (name: string): string =>
@@ -10,7 +10,7 @@ const createSlug = (name: string): string =>
 export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      page = 1, limit = 12, category, brand, vendor,
+      page = 1, limit = 12, category, vendor,
       minPrice, maxPrice, rating, sort, order, status, featured, inStock
     } = req.query;
 
@@ -21,7 +21,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
     const where: any = {};
 
     if (category) where.category = { slug: category };
-    if (brand) where.brand = { slug: brand };
+    
     if (vendor) where.vendor = { slug: vendor };
     if (status) where.status = status;
     if (featured === 'true') where.isFeatured = true;
@@ -48,7 +48,6 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
         include: {
           vendor: { select: { id: true, businessName: true, slug: true } },
           category: { select: { id: true, name: true, slug: true } },
-          brand: { select: { id: true, name: true, slug: true } },
           images: true,
         }
       }),
@@ -67,11 +66,8 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
     });
 
     // Filters for sidebar
-    const [categories, brands, priceRange] = await Promise.all([
+    const [categories, priceRange] = await Promise.all([
       prisma.category.findMany({
-        select: { id: true, name: true, _count: { select: { products: true } } }
-      }),
-      prisma.brand.findMany({
         select: { id: true, name: true, _count: { select: { products: true } } }
       }),
       prisma.product.aggregate({
@@ -94,9 +90,6 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
           categories: categories.map(c => ({
             id: c.id, name: c.name, count: (c as any)._count.products
           })),
-          brands: brands.map(b => ({
-            id: b.id, name: b.name, count: (b as any)._count.products
-          })),
           priceRange: {
             min: priceRange._min.price || 0,
             max: priceRange._max.price || 0
@@ -105,6 +98,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
       }
     });
   } catch (err) {
+    console.error("Error in getAllProducts:", err);
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
 };
@@ -118,7 +112,6 @@ export const getProductBySlug = async (req: Request, res: Response): Promise<voi
       include: {
         vendor: { select: { id: true, businessName: true, slug: true, rating: true } },
         category: { select: { id: true, name: true, slug: true } },
-        brand: { select: { id: true, name: true, slug: true } },
         images: true,
         variants: true,
         attributes: true,
@@ -135,6 +128,20 @@ export const getProductBySlug = async (req: Request, res: Response): Promise<voi
       ...product,
       images: addImageUrlsToArray(product.images, ['url'])
     };
+    // Ensure all review images are absolute URLs
+    if (productWithImageUrls.reviews && Array.isArray(productWithImageUrls.reviews)) {
+      productWithImageUrls.reviews = productWithImageUrls.reviews.map((review: any) => {
+        if (review.images) {
+          try {
+            const imgs = JSON.parse(review.images);
+            if (Array.isArray(imgs)) {
+              review.images = JSON.stringify(imgs.map((img: string) => getImageUrl(img)));
+            }
+          } catch {}
+        }
+        return review;
+      });
+    }
     res.json({
       success: true,
       data: {
@@ -151,11 +158,11 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
   try {
     const {
       name, description, shortDescription, price, salePrice, costPrice, sku,
-      stockQuantity, categoryId, brandId, weight, length, width, height,
+      stockQuantity, categoryId, weight, length, width, height,
       hasVariants, attributes, tags
     } = req.body;
 
-    if (!name || !price || !sku || !categoryId || !brandId) {
+    if (!name || !price || !sku || !categoryId) {
       res.status(400).json({ success: false, message: 'Missing required fields' });
       return;
     }
@@ -181,7 +188,8 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
         salePrice: salePrice ? parseFloat(salePrice) : null,
         costPrice: costPrice ? parseFloat(costPrice) : null,
         sku, stockQuantity: parseInt(stockQuantity),
-        categoryId: parseInt(categoryId), brandId: parseInt(brandId),
+        categoryId: parseInt(categoryId),
+        status: 'ACTIVE', // Default status for new products
         weight: weight ? parseFloat(weight) : null,
         length: length ? parseFloat(length) : null,
         width: width ? parseFloat(width) : null,
@@ -211,6 +219,20 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     const { id } = req.params;
     const updateData = { ...req.body };
     if (updateData.name) updateData.slug = createSlug(updateData.name);
+
+    // Fetch current product
+    const currentProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
+    if (!currentProduct) {
+      res.status(404).json({ success: false, message: 'Product not found' });
+      return;
+    }
+
+    // If stockQuantity is being updated, enforce auto-disable logic
+    if (updateData.stockQuantity !== undefined) {
+      const newStock = parseInt(updateData.stockQuantity);
+      if (newStock <= 0) updateData.status = 'OUT_OF_STOCK';
+      else if (currentProduct.status === 'OUT_OF_STOCK' && newStock > 0) updateData.status = 'ACTIVE';
+    }
 
     const product = await prisma.product.update({
       where: { id: parseInt(id) },
@@ -458,11 +480,22 @@ export const updateProductStock = async (req: Request, res: Response): Promise<v
       res.status(400).json({ success: false, message: 'stockQuantity must be a number' });
       return;
     }
-    await prisma.product.update({
+    const product = await prisma.product.findUnique({ where: { id: parseInt(id) } });
+    if (!product) {
+      res.status(404).json({ success: false, message: 'Product not found' });
+      return;
+    }
+    let newStatus = product.status;
+    if (stockQuantity <= 0) newStatus = 'OUT_OF_STOCK';
+    else if (product.status === 'OUT_OF_STOCK' && stockQuantity > 0) newStatus = 'ACTIVE';
+    const updatedProduct = await prisma.product.update({
       where: { id: parseInt(id) },
-      data: { stockQuantity }
+      data: {
+        stockQuantity: parseInt(stockQuantity),
+        status: newStatus
+      }
     });
-    res.json({ success: true, message: 'Stock updated successfully' });
+    res.json({ success: true, message: 'Stock updated successfully', data: { product: updatedProduct } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }

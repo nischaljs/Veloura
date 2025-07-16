@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { getMyProducts, addProduct, updateProduct, deleteProduct } from '../services/vendor';
 import { Product } from '../types/product';
 import { getAllCategories } from '../services/category';
-import { getAllBrands } from '../services/brand';
 import { Link } from 'react-router-dom';
 
 const emptyForm = {
@@ -26,7 +25,6 @@ const emptyForm = {
   isFeatured: false,
   hasVariants: false,
   categoryId: '',
-  brandId: '',
   weight: '',
   length: '',
   width: '',
@@ -44,7 +42,6 @@ const VendorProductsPage: React.FC = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -67,9 +64,8 @@ const VendorProductsPage: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
-    // Fetch categories and brands
+    // Fetch categories
     getAllCategories({ limit: 100 }).then(res => setCategories(res.data.data.categories || []));
-    getAllBrands({ limit: 100 }).then(res => setBrands(res.data.data.brands || []));
   }, []);
 
   const handleOpenAdd = () => {
@@ -92,7 +88,6 @@ const VendorProductsPage: React.FC = () => {
       isFeatured: product.isFeatured,
       hasVariants: product.hasVariants,
       categoryId: product.categoryId,
-      brandId: product.brandId,
       weight: product.weight,
       length: product.length,
       width: product.width,
@@ -259,9 +254,6 @@ const VendorProductsPage: React.FC = () => {
                           <Link to={`/category/${product.category.slug}`} className="text-indigo-600 hover:underline">{product.category.name}</Link>
                         ) : 'N/A'}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        Brand: {product.brand?.name || 'N/A'}
-                      </div>
                       <div className="flex gap-2 pt-4">
                         <Button size="sm" variant="outline" onClick={() => handleOpenEdit(product)} className="flex-1">
                           Edit
@@ -296,22 +288,13 @@ const VendorProductsPage: React.FC = () => {
                 <label className="block mb-1 font-medium">Short Description</label>
                 <Textarea name="shortDescription" value={form.shortDescription} onChange={handleChange} rows={2} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block mb-1 font-medium">Category</label>
                   <select name="categoryId" value={form.categoryId} onChange={handleChange} className="w-full border rounded px-3 py-2" required>
                     <option value="">Select category</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium">Brand</label>
-                  <select name="brandId" value={form.brandId} onChange={handleChange} className="w-full border rounded px-3 py-2">
-                    <option value="">Select brand</option>
-                    {brands.map((brand) => (
-                      <option key={brand.id} value={brand.id}>{brand.name}</option>
                     ))}
                   </select>
                 </div>
@@ -442,4 +425,4 @@ const VendorProductsPage: React.FC = () => {
   );
 };
 
-export default VendorProductsPage; 
+export default VendorProductsPage;
