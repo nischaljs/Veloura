@@ -1,11 +1,12 @@
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 import { useAuth } from '../../context/AuthContext';
+import { useEffect } from 'react';
 
 interface LoginFormValues {
   identifier: string;
@@ -20,26 +21,37 @@ const LoginForm: React.FC = () => {
     },
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loading, error, user } = useAuth();
+
+  // Refactored: useEffect for redirect after login
+  useEffect(() => {
+    if (!loading && user) {
+      const params = new URLSearchParams(location.search);
+      const redirect = params.get('redirect');
+      if (redirect) {
+        navigate(redirect, { replace: true });
+        return;
+      }
+      switch (user.role) {
+        case 'CUSTOMER':
+          navigate('/dashboard', { replace: true });
+          break;
+        case 'VENDOR':
+          navigate('/vendor/dashboard', { replace: true });
+          break;
+        case 'ADMIN':
+          navigate('/admin/dashboard', { replace: true });
+          break;
+        default:
+          navigate('/', { replace: true });
+      }
+    }
+  }, [user, loading, location, navigate]);
 
   const onSubmit = async (values: LoginFormValues) => {
     await login(values.identifier, values.password);
-    // Redirect after successful login based on role
-    if (!error && user) {
-      switch (user.role) {
-        case 'CUSTOMER':
-          navigate('/dashboard');
-          break;
-        case 'VENDOR':
-          navigate('/vendor/dashboard');
-          break;
-        case 'ADMIN':
-          navigate('/admin/dashboard');
-          break;
-        default:
-          navigate('/');
-      }
-    }
+    // No redirect here; handled in useEffect
   };
 
   return (

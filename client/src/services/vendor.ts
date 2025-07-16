@@ -37,7 +37,6 @@ export const getVendorProducts = (slug: string, params?: {
 export const getVendorReviews = (slug: string, params?: {
   page?: number;
   limit?: number;
-  rating?: number;
 }) => api.get(`/vendors/${slug}/reviews`, { params });
 
 // Analytics
@@ -50,4 +49,8 @@ export const addProduct = (data: any) => api.post('/vendors/products', data);
 
 export const updateProduct = (id: number, data: any) => api.put(`/vendors/products/${id}`, data);
 
-export const deleteProduct = (id: number) => api.delete(`/vendors/products/${id}`); 
+export const deleteProduct = (id: number) => api.delete(`/vendors/products/${id}`);
+
+// Payouts
+export const getPayoutRequests = () => api.get('/vendors/payout-requests');
+export const createPayoutRequest = (amount: number) => api.post('/vendors/payout-requests', { amount }); 

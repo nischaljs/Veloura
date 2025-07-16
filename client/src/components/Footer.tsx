@@ -11,13 +11,13 @@ const navLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-zinc-800 text-zinc-100 pt-10 pb-4">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 border-b border-zinc-700 pb-8">
+    <footer className="bg-zinc-900 text-zinc-100 pt-14 pb-6">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10 border-b border-zinc-800 pb-10">
           {/* Popular Categories */}
           <div>
-            <h3 className="font-bold text-lg mb-2 border-b-2 border-pink-400 inline-block pb-1">POPULAR CATEGORIES</h3>
-            <ul className="mt-2 space-y-1 text-sm">
+            <h3 className="font-extrabold text-xl mb-3 border-b-2 border-pink-400 inline-block pb-1 tracking-wide">POPULAR CATEGORIES</h3>
+            <ul className="mt-3 space-y-2 text-base">
               <li>Fashion</li>
               <li>Electronic</li>
               <li>Cosmetic</li>
@@ -27,8 +27,8 @@ export default function Footer() {
           </div>
           {/* Products */}
           <div>
-            <h3 className="font-bold text-lg mb-2 border-b-2 border-pink-400 inline-block pb-1">PRODUCTS</h3>
-            <ul className="mt-2 space-y-1 text-sm">
+            <h3 className="font-extrabold text-xl mb-3 border-b-2 border-pink-400 inline-block pb-1 tracking-wide">PRODUCTS</h3>
+            <ul className="mt-3 space-y-2 text-base">
               <li>Prices Dr</li>
               <li>New Produc</li>
               <li>Best Sal</li>
@@ -38,8 +38,8 @@ export default function Footer() {
           </div>
           {/* Our Company */}
           <div>
-            <h3 className="font-bold text-lg mb-2 border-b-2 border-pink-400 inline-block pb-1">OUR COMPANY</h3>
-            <ul className="mt-2 space-y-1 text-sm">
+            <h3 className="font-extrabold text-xl mb-3 border-b-2 border-pink-400 inline-block pb-1 tracking-wide">OUR COMPANY</h3>
+            <ul className="mt-3 space-y-2 text-base">
               <li>Delivery</li>
               <li>Legal Notice</li>
               <li>Terms And Conditions</li>
@@ -49,8 +49,8 @@ export default function Footer() {
           </div>
           {/* Services */}
           <div>
-            <h3 className="font-bold text-lg mb-2 border-b-2 border-pink-400 inline-block pb-1">SERVICES</h3>
-            <ul className="mt-2 space-y-1 text-sm">
+            <h3 className="font-extrabold text-xl mb-3 border-b-2 border-pink-400 inline-block pb-1 tracking-wide">SERVICES</h3>
+            <ul className="mt-3 space-y-2 text-base">
               <li>Prices Drop</li>
               <li>New Products</li>
               <li>Best Sales</li>
@@ -60,25 +60,31 @@ export default function Footer() {
           </div>
           {/* Contact */}
           <div>
-            <h3 className="font-bold text-lg mb-2 border-b-2 border-pink-400 inline-block pb-1">CONTACT</h3>
-            <ul className="mt-2 space-y-2 text-sm">
-              <li className="flex items-center gap-2"><MapPin className="w-4 h-4 text-pink-400" /> Ramdhuni Municipality, Sunsari, Nepal</li>
-              <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-pink-400" /> 9806348932</li>
-              <li className="flex items-center gap-2"><Mail className="w-4 h-4 text-pink-400" /> nishchalb21@gmail.com</li>
+            <h3 className="font-extrabold text-xl mb-3 border-b-2 border-pink-400 inline-block pb-1 tracking-wide">CONTACT</h3>
+            <ul className="mt-3 space-y-3 text-base">
+              <li className="flex items-center gap-3"><MapPin className="w-5 h-5 text-pink-400" aria-label="Location" /> Ramdhuni Municipality, Sunsari, Nepal</li>
+              <li className="flex items-center gap-3"><Phone className="w-5 h-5 text-pink-400" aria-label="Phone" /> 9806348932</li>
+              <li className="flex items-center gap-3"><Mail className="w-5 h-5 text-pink-400" aria-label="Email" /> nishchalb21@gmail.com</li>
             </ul>
           </div>
         </div>
         {/* Payment icons row */}
-        <div className="flex justify-center gap-3 mt-6 mb-2">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="h-8 bg-white rounded p-1" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8 bg-white rounded p-1" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-8 bg-white rounded p-1" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Skrill_logo.svg" alt="Skrill" className="h-8 bg-white rounded p-1" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/Maestro_2016.svg" alt="Maestro" className="h-8 bg-white rounded p-1" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Visa_Electron.png" alt="Visa Electron" className="h-8 bg-white rounded p-1" />
+        <div className="flex flex-wrap justify-center gap-4 mt-8 mb-4">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="h-10 bg-white rounded-lg p-2 shadow transition-transform hover:scale-105" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-10 bg-white rounded-lg p-2 shadow transition-transform hover:scale-105" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-10 bg-white rounded-lg p-2 shadow transition-transform hover:scale-105" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Skrill_logo.svg" alt="Skrill" className="h-10 bg-white rounded-lg p-2 shadow transition-transform hover:scale-105" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/Maestro_2016.svg" alt="Maestro" className="h-10 bg-white rounded-lg p-2 shadow transition-transform hover:scale-105" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Visa_Electron.png" alt="Visa Electron" className="h-10 bg-white rounded-lg p-2 shadow transition-transform hover:scale-105" />
+        </div>
+        {/* Social icons row */}
+        <div className="flex justify-center gap-6 mb-2">
+          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="hover:text-pink-400 focus-visible:ring-2 focus-visible:ring-pink-400 transition-colors text-2xl"><Twitter /></a>
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:text-pink-400 focus-visible:ring-2 focus-visible:ring-pink-400 transition-colors text-2xl"><Facebook /></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-pink-400 focus-visible:ring-2 focus-visible:ring-pink-400 transition-colors text-2xl"><Instagram /></a>
         </div>
         {/* Copyright */}
-        <div className="text-center text-sm text-zinc-300 mt-2">
+        <div className="text-center text-base text-zinc-400 mt-2 tracking-wide">
           Copyright © <span className="font-bold text-white">NISCHAL</span>  All Rights Reserved.
         </div>
       </div>

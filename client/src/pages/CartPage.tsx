@@ -157,12 +157,12 @@ const CartPage: React.FC = () => {
             <div className={`mb-2 text-sm ${couponStatus.toLowerCase().includes('applied') ? 'text-green-600' : 'text-red-500'}`}>{couponStatus}</div>
           )}
           <div className="flex flex-col gap-2 text-base">
-            <div className="flex justify-between"><span>Subtotal</span><span>Rs.{cart.summary.subtotal}</span></div>
-            <div className="flex justify-between"><span>Shipping Fee</span><span>Rs.{cart.summary.shippingFee}</span></div>
-            <div className="flex justify-between"><span>Tax</span><span>Rs.{cart.summary.taxAmount}</span></div>
-            <div className="flex justify-between"><span>Discount</span><span>- Rs.{cart.summary.discountAmount}</span></div>
-            <div className="flex justify-between font-bold text-lg"><span>Total</span><span>Rs.{cart.summary.total}</span></div>
-            <div className="flex justify-between"><span>Items</span><span>{cart.summary.itemCount}</span></div>
+            <div className="flex justify-between"><span>Subtotal</span><span>Rs.{cart.summary?.subtotal ?? 0}</span></div>
+            <div className="flex justify-between"><span>Shipping Fee</span><span>Rs.{cart.summary?.shippingFee ?? 0}</span></div>
+            <div className="flex justify-between"><span>Tax</span><span>Rs.{cart.summary?.taxAmount ?? 0}</span></div>
+            <div className="flex justify-between"><span>Discount</span><span>- Rs.{cart.summary?.discountAmount ?? 0}</span></div>
+            <div className="flex justify-between font-bold text-lg"><span>Total</span><span>Rs.{cart.summary?.total ?? 0}</span></div>
+            <div className="flex justify-between"><span>Items</span><span>{cart.summary?.itemCount ?? 0}</span></div>
           </div>
           <Button className="w-full mt-6 bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-semibold shadow-md hover:scale-105 hover:shadow-lg transition-transform text-base" onClick={() => navigate('/checkout')}>Proceed to Checkout</Button>
           <Button className="w-full mt-2" variant="outline" onClick={handleClearCart} disabled={clearing}>Clear Cart</Button>

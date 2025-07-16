@@ -26,4 +26,10 @@ export const updateAddress = (id: number, data: {
 
 export const deleteAddress = (id: number) => api.delete(`/users/addresses/${id}`);
 
-export const setDefaultAddress = (id: number) => api.put(`/users/addresses/${id}/default`); 
+export const setDefaultAddress = (id: number) => api.put(`/users/addresses/${id}/default`);
+
+export const getUserDashboardAnalytics = () => api.get('/users/analytics/dashboard');
+
+export const getUserProfile = () => api.get('/users/profile');
+
+export const updateUserProfile = (data: any) => api.put('/users/profile', data); 

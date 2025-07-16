@@ -346,21 +346,35 @@ export const createPayoutRequest = async (req: Request, res: Response) => {
       res.status(400).json({ success: false, message: 'Invalid amount' });
       return;
     }
-    // Optionally, check available balance for vendor
-    const totalSales = await prisma.orderItem.aggregate({ where: { vendorId: vendor.id }, _sum: { price: true } });
-    const totalCommission = await prisma.commission.aggregate({ where: { vendorId: vendor.id }, _sum: { amount: true } });
-    const totalPayouts = await prisma.payoutRequest.aggregate({ where: { vendorId: vendor.id, status: 'PAID' }, _sum: { amount: true } });
-    const available = (totalSales._sum.price || 0) - (totalCommission._sum.amount || 0) - (totalPayouts._sum.amount || 0);
-    if (amount > available) {
-      res.status(400).json({ success: false, message: 'Amount exceeds available balance' });
+
+    // Calculate total earnings from delivered orders
+    const totalEarned = await prisma.commission.aggregate({ where: { vendorId: vendor.id }, _sum: { amount: true } });
+
+    // Sum of all completed payouts
+    const totalPayouts = await prisma.payoutRequest.aggregate({
+      where: {
+        vendorId: vendor.id,
+        status: 'COMPLETED'
+      },
+      _sum: {
+        amount: true
+      }
+    });
+
+    const availableBalance = totalEarned - (totalPayouts._sum.amount?.toNumber() || 0);
+
+    if (amount > availableBalance) {
+      res.status(400).json({ success: false, message: `Amount exceeds available balance. Available: ${availableBalance.toFixed(2)}` });
       return;
     }
+
     const payout = await prisma.payoutRequest.create({
-      data: { vendorId: vendor.id, amount }
+      data: { vendorId: vendor.id, amount, status: 'PENDING' } // Payout request starts as PENDING
     });
     res.json({ success: true, message: 'Payout request submitted', data: { payout } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
+  } catch (err: any) {
+    console.error('❌ createPayoutRequest error:', err);
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };
 
@@ -373,9 +387,20 @@ export const getPayoutRequests = async (req: Request, res: Response) => {
       res.status(404).json({ success: false, message: 'Vendor not found' });
       return;
     }
-    const payouts = await prisma.payoutRequest.findMany({ where: { vendorId: vendor.id }, orderBy: { requestedAt: 'desc' } });
+    const payouts = await prisma.payoutRequest.findMany({
+      where: { vendorId: vendor.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        vendor: {
+          select: {
+            businessName: true
+          }
+        }
+      }
+    });
     res.json({ success: true, data: { payouts } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
+  } catch (err: any) {
+    console.error('❌ getPayoutRequests error:', err);
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };

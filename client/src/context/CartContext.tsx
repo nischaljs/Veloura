@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getCart, addToCart, updateCartItem, removeCartItem, clearCart } from '../services/cart';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface CartItem {
   id: number;
@@ -39,6 +40,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const fetchCart = async () => {
     setLoading(true);
@@ -64,13 +66,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       await addToCart(args);
       await fetchCart();
       toast.success('Added to cart!', {
-        icon: '��',
+        icon: '🛒',
         duration: 2000,
         style: { fontWeight: 'bold', fontSize: '1.1em' }
       });
-    } catch (err) {
-      toast.error('Failed to add to cart');
-      // Optionally handle error
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        toast.info('Please login to add items to your cart.');
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to add to cart');
+      }
     } finally {
       setLoading(false);
     }

@@ -113,7 +113,6 @@ export const getProductBySlug = async (req: Request, res: Response): Promise<voi
         vendor: { select: { id: true, businessName: true, slug: true, rating: true } },
         category: { select: { id: true, name: true, slug: true } },
         images: true,
-        variants: true,
         attributes: true,
         tags: true,
         reviews: true

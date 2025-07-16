@@ -1,14 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getOrders } from "@/services/admin";
+import { getVendorOrders } from "@/services/order"; // Corrected import
 import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const AdminOrdersPage = () => {
+const VendorOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +19,7 @@ const AdminOrdersPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getOrders({ page, limit: pagination.limit });
+      const res = await getVendorOrders({ page, limit: pagination.limit });
       setOrders(res.data.data.orders);
       setPagination(res.data.data.pagination);
     } catch (err: any) {
@@ -36,7 +36,7 @@ const AdminOrdersPage = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Admin Orders</h1>
+      <h1 className="text-3xl font-bold mb-6">Vendor Orders</h1>
       <Table>
         <TableHeader>
           <TableRow>
@@ -65,7 +65,7 @@ const AdminOrdersPage = () => {
               </TableCell>
               <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
               <TableCell>
-                <Button size="sm" variant="outline" onClick={() => navigate(`/admin/orders/${order.id}`)}>
+                <Button size="sm" variant="outline" onClick={() => navigate(`/vendor/orders/${order.id}`)}>
                   <Eye className="w-4 h-4 mr-1" />
                   View
                 </Button>
@@ -98,4 +98,4 @@ const AdminOrdersPage = () => {
   );
 };
 
-export default AdminOrdersPage;
+export default VendorOrdersPage;

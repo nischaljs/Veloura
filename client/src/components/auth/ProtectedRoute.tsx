@@ -8,6 +8,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
   const { user, loading } = useAuth();
+  console.log('[ProtectedRoute] user:', user, 'loading:', loading, 'allowedRoles:', allowedRoles);
 
   if (loading) {
     // Optionally, render a loading spinner or skeleton

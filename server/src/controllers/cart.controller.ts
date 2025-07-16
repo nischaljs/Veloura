@@ -1,5 +1,33 @@
 import prisma from '../utils/prisma';
 import { Request, Response, NextFunction } from 'express';
+import { calculateCartSummary } from '../utils/cartUtils';
+
+// Helper function to get cart with populated items and calculated summary
+const getCartWithSummary = async (userId: number) => {
+  const cart = await prisma.cart.findUnique({
+    where: { userId },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: {
+              images: true,
+              vendor: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!cart) {
+    return null;
+  }
+
+  const summary = calculateCartSummary(cart.items);
+
+  return { ...cart, summary };
+};
 
 /**
  * Get the authenticated user's cart
@@ -7,18 +35,9 @@ import { Request, Response, NextFunction } from 'express';
 export const getCart = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).userId;
-    const cart = await prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
-      }
-    });
+    const cart = await getCartWithSummary(userId);
     if (!cart) {
-      res.json({ success: true, data: { cart: { items: [] } } });
+      res.json({ success: true, data: { cart: { items: [], summary: { itemCount: 0, subtotal: 0, total: 0, shippingFee: 0, taxAmount: 0, discountAmount: 0 } } } });
       return;
     }
     res.json({ success: true, data: { cart } });
@@ -70,7 +89,8 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
         },
       });
     }
-    res.json({ success: true, message: 'Item added to cart successfully', data: { cartItem } });
+    const updatedCart = await getCartWithSummary(userId);
+    res.json({ success: true, message: 'Item added to cart successfully', data: { cart: updatedCart } });
   } catch (err) {
     next(err);
   }
@@ -86,11 +106,12 @@ export const updateCartItem = async (req: Request, res: Response, next: NextFunc
     const { quantity } = req.body;
     const cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) { res.status(404).json({ success: false, message: 'Cart not found' }); return; }
-    const cartItem = await prisma.cartItem.update({
+    await prisma.cartItem.update({
       where: { id: Number(itemId) },
       data: { quantity },
     });
-    res.json({ success: true, message: 'Cart item updated successfully', data: { cartItem } });
+    const updatedCart = await getCartWithSummary(userId);
+    res.json({ success: true, message: 'Cart item updated successfully', data: { cart: updatedCart } });
   } catch (err) {
     next(err);
   }
@@ -106,7 +127,8 @@ export const removeCartItem = async (req: Request, res: Response, next: NextFunc
     const cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) { res.status(404).json({ success: false, message: 'Cart not found' }); return; }
     await prisma.cartItem.delete({ where: { id: Number(itemId) } });
-    res.json({ success: true, message: 'Item removed from cart successfully' });
+    const updatedCart = await getCartWithSummary(userId);
+    res.json({ success: true, message: 'Item removed from cart successfully', data: { cart: updatedCart } });
   } catch (err) {
     next(err);
   }
@@ -121,7 +143,8 @@ export const clearCart = async (req: Request, res: Response, next: NextFunction)
     const cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) { res.status(404).json({ success: false, message: 'Cart not found' }); return; }
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-    res.json({ success: true, message: 'Cart cleared successfully' });
+    const updatedCart = await getCartWithSummary(userId);
+    res.json({ success: true, message: 'Cart cleared successfully', data: { cart: updatedCart } });
   } catch (err) {
     next(err);
   }

@@ -135,4 +135,9 @@ export const getSettings = () => api.get('/admin/settings');
 
 export const updateSettings = (data: any) => api.put('/admin/settings', data);
 
+// Payout Management
+export const getPayoutRequests = () => api.get('/admin/payout-requests');
+export const approvePayoutRequest = (id: number) => api.put(`/admin/payout-requests/${id}/approve`);
+export const rejectPayoutRequest = (id: number) => api.put(`/admin/payout-requests/${id}/reject`);
+
  

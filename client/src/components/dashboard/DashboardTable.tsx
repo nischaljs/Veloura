@@ -1,96 +1,54 @@
- 
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Skeleton } from '../ui/skeleton';
-import { DashboardTableProps } from '../../types';
 
-const DashboardTable: React.FC<DashboardTableProps> = ({
-  title,
-  data,
-  columns,
-  loading = false,
-  emptyMessage = 'No data available',
-  className = ''
-}) => {
+import React from 'react';
+
+interface DashboardTableProps<T> {
+  title: string;
+  data: T[];
+  columns: { key: string; label: string; render?: (value: any, row: T) => React.ReactNode }[];
+  loading: boolean;
+  emptyMessage: string;
+}
+
+const DashboardTable = <T extends { id: number }>({ title, data, columns, loading, emptyMessage }: DashboardTableProps<T>) => {
   if (loading) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                {[...Array(columns.length)].map((_, j) => (
-                  <Skeleton key={j} className="h-4 w-[100px]" />
-                ))}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <div>Loading...</div>;
   }
 
-  if (data.length === 0) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="text-4xl mb-4">📭</div>
-            <p className="text-muted-foreground">{emptyMessage}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  if (!data.length) {
+    return <div>{emptyMessage}</div>;
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                {columns.map((column) => (
-                  <th
-                    key={column.key}
-                    className="text-left py-3 px-4 font-medium text-sm text-muted-foreground"
-                  >
-                    {column.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
-                >
-                  {columns.map((column) => (
-                    <td key={column.key} className="py-3 px-4">
-                      {column.render
-                        ? column.render(row[column.key], row)
-                        : row[column.key]}
-                    </td>
-                  ))}
-                </tr>
+    <div className="bg-white shadow-md rounded-lg p-4">
+      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            {columns.map((column) => (
+              <th
+                key={column.key}
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                {column.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {data.map((row) => (
+            <tr key={row.id}>
+              {columns.map((column) => (
+                <td key={`${row.id}-${column.key}`} className="px-6 py-4 whitespace-nowrap">
+                  {column.render ? column.render((row as any)[column.key], row) : (row as any)[column.key]}
+                </td>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 
-export default DashboardTable; 
+export default DashboardTable;
