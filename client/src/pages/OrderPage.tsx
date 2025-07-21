@@ -25,8 +25,6 @@ const OrderPage: React.FC = () => {
         const opts = res.data.data.paymentOptions || res.data.data.options || [];
         const fallback = [
           { method: 'KHALTI', label: 'Khalti', description: 'Pay with Khalti wallet', enabled: true },
-          { method: 'ESEWA', label: 'eSewa', description: 'Pay with eSewa wallet', enabled: true },
-          { method: 'CARD', label: 'Card', description: 'Pay with debit/credit card', enabled: true },
           { method: 'COD', label: 'Cash on Delivery', description: 'Pay with cash on delivery', enabled: true }
         ];
         if (opts.length > 0) {
@@ -40,8 +38,6 @@ const OrderPage: React.FC = () => {
       .catch(() => {
         const fallback = [
           { method: 'KHALTI', label: 'Khalti', description: 'Pay with Khalti wallet', enabled: true },
-          { method: 'ESEWA', label: 'eSewa', description: 'Pay with eSewa wallet', enabled: true },
-          { method: 'CARD', label: 'Card', description: 'Pay with debit/credit card', enabled: true },
           { method: 'COD', label: 'Cash on Delivery', description: 'Pay with cash on delivery', enabled: true }
         ];
         setPaymentOptions(fallback);
@@ -80,6 +76,7 @@ const OrderPage: React.FC = () => {
       } else if (paymentMethod === 'COD') {
         await confirmCODPayment(res.data.data.order.id);
         setOrderSuccess('Order placed with Cash on Delivery!');
+        clearCart(); // Clear cart after successful COD order
       }
     } catch (err: any) {
       setOrderError(err.response?.data?.message || 'Failed to place order');
@@ -156,7 +153,7 @@ const OrderPage: React.FC = () => {
                   <div className="rounded-xl bg-zinc-50 border border-zinc-200 shadow-sm p-4 mb-4 max-h-48 overflow-y-auto">
                     {cart.items.map((item: any) => (
                       <div key={item.id} className="flex items-center gap-3 py-2 border-b last:border-b-0 border-zinc-100">
-                        <img src={item.product.productImage || ''} alt={item.product.name} className="w-12 h-12 object-cover rounded-lg border bg-gray-100" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                        <img src={item.product.productImage || '/placeholder.svg'} alt={item.product.name} className="w-12 h-12 object-cover rounded-lg border bg-gray-100" onError={e => { e.currentTarget.style.display = 'none'; }} />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm truncate">{item.product.name}</div>
                           <div className="text-xs text-gray-500">x{item.quantity}</div>

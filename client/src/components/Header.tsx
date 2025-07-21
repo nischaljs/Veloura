@@ -121,7 +121,7 @@ export default function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="p-0 border-0 bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300">
                   <Avatar className="w-10 h-10 shadow-md">
-                    <AvatarImage src="https://via.placeholder.com/40x40.png?text=User" alt="User" />
+                    <AvatarImage src="/placeholder.svg" alt="User" />
                     <AvatarFallback>U</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>

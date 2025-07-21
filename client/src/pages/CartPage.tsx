@@ -101,7 +101,7 @@ const CartPage: React.FC = () => {
               const vendorLogo = product.vendorLogo || '';
               return (
                 <div key={item.id} className="flex flex-col md:flex-row items-center gap-4 py-4">
-                  <img src={imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-lg border bg-gray-100" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  <img src={imageUrl || '/placeholder.svg'} alt={product.name} className="w-20 h-20 object-cover rounded-lg border bg-gray-100" onError={e => { e.currentTarget.style.display = 'none'; }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold text-lg truncate">{product.name}</span>

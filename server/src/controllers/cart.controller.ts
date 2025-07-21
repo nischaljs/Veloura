@@ -89,8 +89,7 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
         },
       });
     }
-    const updatedCart = await getCartWithSummary(userId);
-    res.json({ success: true, message: 'Item added to cart successfully', data: { cart: updatedCart } });
+    res.json({ success: true, message: 'Item added to cart successfully', data: { cart: await getCartWithSummary(userId) } });
   } catch (err) {
     next(err);
   }
