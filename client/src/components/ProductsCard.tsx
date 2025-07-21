@@ -1,20 +1,19 @@
-import { Eye, ShoppingCart, Star } from 'lucide-react';
+import { Eye, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
 import { addToCart } from '../services/cart';
 import type { AllProduct } from '../types';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { useAuth } from '../context/AuthContext';
 
 interface ProductsCardProps {
   product: AllProduct;
   cardClassName?: string;
   imageClassName?: string;
   showPrice?: boolean;
-  showRating?: boolean;
   showVendor?: boolean;
   showStatus?: boolean;
   buttonText?: string;
@@ -27,7 +26,6 @@ const ProductsCard = ({
   cardClassName = '', 
   imageClassName = '', 
   showPrice = true,
-  showRating = true,
   showVendor = false,
   showStatus = false,
   buttonText = 'Add to Cart',
@@ -35,6 +33,7 @@ const ProductsCard = ({
   onAddToCart,
 }: ProductsCardProps) => {
   const [cartLoading, setCartLoading] = useState(false);
+  const { user } = useAuth();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -60,25 +59,6 @@ const ProductsCard = ({
     return <span className="font-bold text-lg">Rs.{price}</span>;
   };
 
-  const renderRating = (rating: number, reviewCount: number) => {
-    if (rating === 0 && reviewCount === 0) return null;
-    return (
-      <div className="flex items-center gap-1 text-sm">
-        <div className="flex items-center">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-            />
-          ))}
-        </div>
-        <span className="text-gray-600 font-medium text-xs">{rating > 0 ? rating.toFixed(1) : 'No rating'}</span>
-        {reviewCount > 0 && <span className="text-gray-500 text-xs">({reviewCount})</span>}
-      </div>
-    );
-  };
-
-  const { user } = useAuth();
   const navigate = useNavigate();
   const handleAddToCart = async (product: AllProduct) => {
     if (onAddToCart) return onAddToCart(product);
@@ -175,20 +155,22 @@ const ProductsCard = ({
         )}
       </CardContent>
       <div className="w-full border-t border-gray-100 mt-0 pt-2 bg-gradient-to-t from-gray-50 to-transparent flex flex-col items-stretch">
-        <Button 
-          className="w-full h-9 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg shadow-sm hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 text-sm"
-          onClick={() => handleAddToCart(product)}
-          disabled={product.stockQuantity === 0 || cartLoading}
-        >
-          {cartLoading ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          ) : (
-            <ShoppingCart className="w-4 h-4" />
-          )}
-          <span>
-            {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading ? 'Adding...' : buttonText)}
-          </span>
-        </Button>
+        {(user?.role === 'CUSTOMER' || !user) && (
+          <Button 
+            className="w-full h-9 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg shadow-sm hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 text-sm"
+            onClick={() => handleAddToCart(product)}
+            disabled={product.stockQuantity === 0 || cartLoading}
+          >
+            {cartLoading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <ShoppingCart className="w-4 h-4" />
+            )}
+            <span>
+              {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading ? 'Adding...' : buttonText)}
+            </span>
+          </Button>
+        )}
       </div>
     </Card>
   );

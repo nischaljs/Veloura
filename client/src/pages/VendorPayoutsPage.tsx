@@ -1,25 +1,33 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getPayoutRequests, createPayoutRequest } from "@/services/vendor";
-import { PayoutRequest } from "@/types";
+import type { PayoutRequest } from "@/types";
 
 const VendorPayoutsPage = () => {
   const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPayouts = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const response = await getPayoutRequests();
-        setPayouts(response.data.payouts);
-      } catch (error) {
-        setError("Failed to fetch payout requests.");
+        setPayouts(response.data.payouts || []);
+      } catch (error: any) {
+        if (error.response && error.response.status === 401) {
+          setError("You are not authorized. Please login as a vendor.");
+        } else {
+          setError("Failed to fetch payout requests. Please try again later.");
+        }
+      } finally {
+        setLoading(false);
       }
     };
     fetchPayouts();
@@ -35,6 +43,8 @@ const VendorPayoutsPage = () => {
       setError("Failed to submit payout request.");
     }
   };
+
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
 
   return (
     <div className="container mx-auto py-8">
@@ -63,24 +73,28 @@ const VendorPayoutsPage = () => {
           <CardTitle>Payout History</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payouts.map((payout) => (
-                <TableRow key={payout.id}>
-                  <TableCell>{payout.amount}</TableCell>
-                  <TableCell>{payout.status}</TableCell>
-                  <TableCell>{new Date(payout.createdAt).toLocaleDateString()}</TableCell>
+          {payouts.length === 0 ? (
+            <div className="text-gray-500 text-center py-8">No payout requests found.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {payouts.map((payout) => (
+                  <TableRow key={payout.id}>
+                    <TableCell>{payout.amount}</TableCell>
+                    <TableCell>{payout.status}</TableCell>
+                    <TableCell>{new Date(payout.createdAt).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -88,3 +102,4 @@ const VendorPayoutsPage = () => {
 };
 
 export default VendorPayoutsPage;
+

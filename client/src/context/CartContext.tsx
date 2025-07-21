@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { getCart, addToCart, updateCartItem, removeCartItem, clearCart } from '../services/cart';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -135,4 +136,4 @@ export const useCart = () => {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
-}; 
+};

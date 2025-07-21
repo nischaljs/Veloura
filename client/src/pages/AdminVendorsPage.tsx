@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { getVendors, approveVendor } from "@/services/admin";
-import { Vendor } from "@/types";
+import type { Vendor } from "@/types";
 
 const AdminVendorsPage = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -57,3 +56,4 @@ const AdminVendorsPage = () => {
 };
 
 export default AdminVendorsPage;
+

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getProductBySlug } from '../services/product';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Star, ShoppingCart } from 'lucide-react';
@@ -115,7 +114,7 @@ const ProductDetailPage: React.FC = () => {
           />
           {images.length > 1 && (
             <div className="flex gap-2 mt-2">
-              {images.map((img, idx) => (
+              {images.map((img) => (
                 <img
                   key={img.url}
                   src={img.url}
@@ -159,19 +158,21 @@ const ProductDetailPage: React.FC = () => {
               <span className="text-sm text-gray-600">Vendor: <Link to={`/vendors/${product.vendor.slug}`} className="text-indigo-600 hover:underline font-semibold">{product.vendor.businessName}</Link></span>
             )}
           </div>
-          <Button 
-            size="lg" 
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-lg py-3 rounded-xl shadow-md flex items-center gap-2 mt-2"
-            onClick={handleAddToCart}
-            disabled={product.stockQuantity === 0 || cartLoading}
-          >
-            {cartLoading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-            ) : (
-              <ShoppingCart className="w-5 h-5" />
-            )}
-            {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading ? 'Adding to Cart...' : 'Add to Cart')}
-          </Button>
+          {(user?.role === 'CUSTOMER' || !user) && (
+            <Button 
+              size="lg" 
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-lg py-3 rounded-xl shadow-md flex items-center gap-2 mt-2"
+              onClick={handleAddToCart}
+              disabled={product.stockQuantity === 0 || cartLoading}
+            >
+              {cartLoading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <ShoppingCart className="w-5 h-5" />
+              )}
+              {product.stockQuantity === 0 ? 'Out of Stock' : (cartLoading ? 'Adding to Cart...' : 'Add to Cart')}
+            </Button>
+          )}
           {/* Attributes, Tags */}
           {product.attributes && product.attributes.length > 0 && (
             <div className="mt-4">
@@ -208,7 +209,7 @@ const ProductDetailPage: React.FC = () => {
                     {/* Review images */}
                     {review.images && Array.isArray(JSON.parse(review.images)) && JSON.parse(review.images).length > 0 && (
                       <div className="flex gap-2 mt-1">
-                        {JSON.parse(review.images).map((img: string, idx: number) => (
+                        {JSON.parse(review.images).map((img: string) => (
                           <img key={img} src={img.startsWith('http') ? img : `http://localhost:5000${img}`} alt="Review" className="w-12 h-12 object-cover rounded border" />
                         ))}
                       </div>

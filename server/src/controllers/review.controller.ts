@@ -46,7 +46,7 @@ export const getProductReviews = async (req: Request, res: Response, next: NextF
         skip: Number(skip),
         take: Number(limit),
         orderBy,
-        include: { user: true, orderItem: { include: { variant: true } } }
+        include: { user: true, orderItem: true }
       }),
       prisma.review.count({ where }),
       prisma.review.aggregate({
@@ -72,7 +72,7 @@ export const getProductReviews = async (req: Request, res: Response, next: NextF
           images: r.images,
           createdAt: r.createdAt,
           user: r.user ? { firstName: r.user.firstName, lastName: r.user.lastName } : undefined,
-          variant: r.orderItem && r.orderItem.variant ? `${r.orderItem.variant.name}, ${r.orderItem.variant.value}` : undefined
+          
         })),
         pagination: {
           page: Number(page),
@@ -103,7 +103,7 @@ export const getUserReviews = async (req: Request, res: Response, next: NextFunc
         skip: Number(skip),
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
-        include: { product: { include: { images: true } }, orderItem: { include: { variant: true } } }
+        include: { product: { include: { images: true } }, orderItem: true }
       }),
       prisma.review.count({ where: { userId } })
     ]);
@@ -124,9 +124,7 @@ export const getUserReviews = async (req: Request, res: Response, next: NextFunc
             slug: r.product.slug,
             image: r.product.images && r.product.images.length > 0 ? r.product.images[0].url : null
           },
-          orderItem: {
-            variant: r.orderItem && r.orderItem.variant ? `${r.orderItem.variant.name}, ${r.orderItem.variant.value}` : undefined
-          }
+          
         })),
         pagination: {
           page: Number(page),
@@ -354,7 +352,7 @@ export const getAdminReviews = async (req: Request, res: Response, next: NextFun
           createdAt: r.createdAt,
           user: { firstName: r.user.firstName, lastName: r.user.lastName, email: r.user.email },
           product: { name: r.product.name, slug: r.product.slug },
-          vendor: { businessName: r.product.vendor.businessName }
+          vendor: { businessName: r.product.vendor ? r.product.vendor.businessName : '' }
         })),
         pagination: {
           page: Number(page),

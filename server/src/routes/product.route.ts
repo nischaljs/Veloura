@@ -8,9 +8,6 @@ import {
   uploadProductImages,
   updateProductImage,
   deleteProductImage,
-  addProductVariant,
-  updateProductVariant,
-  deleteProductVariant,
   getFeaturedProducts,
   getTrendingProducts,
   getSimilarProducts,
@@ -39,10 +36,6 @@ router.post('/:id/images', authenticateVendor, upload.array('images'), handleUpl
 router.put('/:id/images/:imageId', authenticateVendor, updateProductImage);
 router.delete('/:id/images/:imageId', authenticateVendor, deleteProductImage);
 
-router.post('/:id/variants', authenticateVendor, addProductVariant);
-router.put('/:id/variants/:variantId', authenticateVendor, updateProductVariant);
-router.delete('/:id/variants/:variantId', authenticateVendor, deleteProductVariant);
-
 router.post('/:id/stock', authenticateVendor, updateProductStock);
 
-export default router; 
+export default router;

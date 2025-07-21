@@ -1,4 +1,3 @@
-
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 
@@ -10,9 +9,10 @@ const DashboardLayout = () => {
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <Outlet />
         </div>
-        </main>
+      </main>
     </div>
   );
 };
 
 export default DashboardLayout;
+

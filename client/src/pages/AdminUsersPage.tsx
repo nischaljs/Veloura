@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getUsers } from "@/services/admin";
-import { User } from "@/types";
+import type { User } from "@/types";
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -45,3 +44,4 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
+

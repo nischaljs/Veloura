@@ -1,11 +1,12 @@
-import React, { Component, ReactNode } from 'react';
+import { Component } from 'react';
+import type { ReactNode } from 'react';
 import { useRoutes } from "react-router-dom";
-import Header from "./components/Header";
+import { Toaster } from 'sonner';
 import Footer from "./components/Footer";
+import Header from "./components/Header";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import routes from "./routes";
-import { Toaster } from 'sonner';
 
 // ErrorBoundary component
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: any }> {

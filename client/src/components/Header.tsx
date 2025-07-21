@@ -3,7 +3,6 @@ import { ShoppingCart, Search, Github, Twitter, Instagram, Globe } from 'lucide-
 import { useEffect, useState } from 'react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { fetchCategories } from '@/services/category';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { useCart } from '../context/CartContext';
@@ -15,28 +14,11 @@ const navLinks = [
   { name: 'FAQ', to: '/faq' },
 ];
 
-// Add interfaces for Category
-interface Category {
-  slug: string;
-  name: string;
-  image?: string;
-}
-
 export default function Header() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [catLoading, setCatLoading] = useState(true);
-  const [catError, setCatError] = useState('');
   const [search, setSearch] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { cartCount } = useCart();
-
-  useEffect(() => {
-    fetchCategories(100)
-      .then(data => setCategories(data.data?.categories || []))
-      .catch(() => setCatError('Failed to load categories'))
-      .finally(() => setCatLoading(false));
-  }, []);
 
   return (
     <>
@@ -101,13 +83,15 @@ export default function Header() {
           </form>
           {/* Actions */}
           <div className="flex items-center gap-5">
-            <Link to="/cart" className="relative p-2 rounded-full hover:bg-indigo-50 focus-visible:ring-2 focus-visible:ring-indigo-300 transition-colors">
-              <ShoppingCart className="w-7 h-7 text-gray-700" />
-              {/* Cart badge dynamic */}
-              <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full px-2 py-0.5 shadow-lg animate-bounce font-bold border-2 border-white">
-                {cartCount}
-              </span>
-            </Link>
+            {(!user || user.role === 'CUSTOMER') && (
+              <Link to="/cart" className="relative p-2 rounded-full hover:bg-indigo-50 focus-visible:ring-2 focus-visible:ring-indigo-300 transition-colors">
+                <ShoppingCart className="w-7 h-7 text-gray-700" />
+                {/* Cart badge dynamic */}
+                <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full px-2 py-0.5 shadow-lg animate-bounce font-bold border-2 border-white">
+                  {cartCount}
+                </span>
+              </Link>
+            )}
             {!user ? (
               <>
                 <Link to="/login">
@@ -128,7 +112,7 @@ export default function Header() {
                 <DropdownMenuContent align="end" className="rounded-xl shadow-xl border border-zinc-100">
                   <DropdownMenuLabel className="font-bold text-indigo-600">Account</DropdownMenuLabel>
                   <DropdownMenuItem asChild>
-                    <Link to={user?.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard'} className="hover:bg-indigo-50 rounded-lg px-2 py-1">Dashboard</Link>
+                    <Link to={user?.role === 'ADMIN' ? '/admin/dashboard' : user?.role === 'VENDOR' ? '/vendor/dashboard' : '/dashboard'} className="hover:bg-indigo-50 rounded-lg px-2 py-1">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/account" className="hover:bg-indigo-50 rounded-lg px-2 py-1">Profile</Link>

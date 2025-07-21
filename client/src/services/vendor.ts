@@ -1,5 +1,5 @@
+import type { Vendor } from '../types';
 import api from './api';
-import { Vendor, Product, DashboardStats } from '../types';
 
 // Vendor Profile
 export const getVendorProfile = () => api.get('/vendors/profile');
@@ -53,4 +53,4 @@ export const deleteProduct = (id: number) => api.delete(`/vendors/products/${id}
 
 // Payouts
 export const getPayoutRequests = () => api.get('/vendors/payout-requests');
-export const createPayoutRequest = (amount: number) => api.post('/vendors/payout-requests', { amount }); 
+export const createPayoutRequest = (amount: number) => api.post('/vendors/payout-requests', { amount });

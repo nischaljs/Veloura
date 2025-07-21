@@ -1,4 +1,3 @@
-
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Button } from '../ui/button';
@@ -107,4 +106,4 @@ const LoginForm: React.FC = () => {
   );
 };
 
-export default LoginForm; 
+export default LoginForm;

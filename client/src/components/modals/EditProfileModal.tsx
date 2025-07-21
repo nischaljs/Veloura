@@ -1,14 +1,13 @@
+import { Upload, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { toast } from 'sonner';
+import { deleteAvatar, updateProfile, uploadAvatar } from '../../services/auth';
+import type { User } from '../../types';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Upload, X } from 'lucide-react';
-import { updateProfile, uploadAvatar, deleteAvatar } from '../../services/auth';
-import { User } from '../../types';
-import { toast } from 'sonner';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -212,4 +211,4 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   );
 };
 
-export default EditProfileModal; 
+export default EditProfileModal;

@@ -1,7 +1,6 @@
-
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Package, Users, ShoppingBag, BarChart2, DollarSign, Home, User, ListOrdered, Settings } from 'lucide-react';
+import { Package, Users, ShoppingBag, DollarSign, Home, User, ListOrdered, Settings } from 'lucide-react';
 
 const Sidebar = () => {
   const { user } = useAuth();

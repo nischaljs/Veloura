@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getOrders } from "@/services/admin";
-import { Order } from "@/types";
+import type { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
@@ -10,22 +9,16 @@ import { useNavigate } from "react-router-dom";
 
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
   const navigate = useNavigate();
 
   const fetchOrders = async (page = 1) => {
-    setLoading(true);
-    setError(null);
     try {
       const res = await getOrders({ page, limit: pagination.limit });
       setOrders(res.data.data.orders);
       setPagination(res.data.data.pagination);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch orders');
-    } finally {
-      setLoading(false);
+      console.error(err.response?.data?.message || 'Failed to fetch orders');
     }
   };
 
@@ -97,5 +90,6 @@ const AdminOrdersPage = () => {
     </div>
   );
 };
+
 
 export default AdminOrdersPage;

@@ -56,7 +56,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
 
     // Map to add a single image field (primary or first) and complete URL, remove images array
     const productsWithImage = products.map(p => {
-      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find(img => img.isPrimary) || p.images[0]) : null;
+      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find((img: any) => img.isPrimary) || p.images[0]) : null;
       const image = primaryImageObj ? addImageUrls(primaryImageObj, ['url']) : null;
       const { images, ...rest } = p; // Remove images array
       return {
@@ -310,52 +310,6 @@ export const deleteProductImage = async (req: Request, res: Response): Promise<v
   }
 };
 
-// POST /products/:id/variants - Add product variant (vendor auth required)
-export const addProductVariant = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { name, value, priceDifference, stockQuantity, sku, image } = req.body;
-    const variant = await prisma.productVariant.create({
-      data: {
-        productId: parseInt(id),
-        name, value,
-        priceDifference: priceDifference ? parseFloat(priceDifference) : 0,
-        stockQuantity: stockQuantity ? parseInt(stockQuantity) : 0,
-        sku, image
-      }
-    });
-    res.json({ success: true, message: 'Variant added successfully', data: { variant } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
-// PUT /products/:id/variants/:variantId - Update product variant (vendor auth required)
-export const updateProductVariant = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { variantId } = req.params;
-    const updateData = { ...req.body };
-    const variant = await prisma.productVariant.update({
-      where: { id: parseInt(variantId) },
-      data: updateData
-    });
-    res.json({ success: true, message: 'Variant updated successfully', data: { variant } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
-// DELETE /products/:id/variants/:variantId - Delete product variant (vendor auth required)
-export const deleteProductVariant = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { variantId } = req.params;
-    await prisma.productVariant.delete({ where: { id: parseInt(variantId) } });
-    res.json({ success: true, message: 'Variant deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error', error: err });
-  }
-};
-
 // GET /products/featured - Get featured products
 export const getFeaturedProducts = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -369,7 +323,7 @@ export const getFeaturedProducts = async (req: Request, res: Response): Promise<
 
     // Map to add a single image field (primary or first) and complete URL
     const productsWithImage = products.map(p => {
-      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find(img => img.isPrimary) || p.images[0]) : null;
+      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find((img: any) => img.isPrimary) || p.images[0]) : null;
       const image = primaryImageObj ? addImageUrls(primaryImageObj, ['url']) : null;
       const { images, ...rest } = p; // Remove images array
       return {
@@ -425,7 +379,7 @@ export const getTrendingProducts = async (req: Request, res: Response): Promise<
 
     // Map to add a single image field (primary or first) and complete URL
     const productsWithImage = trendingProducts.map(p => {
-      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find(img => img.isPrimary) || p.images[0]) : null;
+      const primaryImageObj = p.images && p.images.length > 0 ? (p.images.find((img: any) => img.isPrimary) || p.images[0]) : null;
       const image = primaryImageObj ? addImageUrls(primaryImageObj, ['url']) : null;
       const { images, ...rest } = p; // Remove images array
       return {
@@ -489,7 +443,7 @@ export const updateProductStock = async (req: Request, res: Response): Promise<v
     const updatedProduct = await prisma.product.update({
       where: { id: parseInt(id) },
       data: {
-        stockQuantity: parseInt(stockQuantity),
+        stockQuantity: typeof stockQuantity === 'string' ? parseInt(stockQuantity) : stockQuantity,
         status: newStatus
       }
     });
@@ -508,7 +462,7 @@ export const getProductAnalytics = async (req: Request, res: Response): Promise<
       where: { productId: parseInt(id) },
       select: { orderId: true, price: true, salePrice: true, quantity: true }
     });
-    const totalSales = orderItems.reduce((sum, item) => sum + ((item.salePrice ?? item.price) * item.quantity), 0);
+    const totalSales = orderItems.reduce((sum, item) => sum + ((item.salePrice ?? item.price).toNumber() * item.quantity), 0);
     const uniqueOrderCount = new Set(orderItems.map(o => o.orderId)).size;
     const averageOrderValue = uniqueOrderCount ? totalSales / uniqueOrderCount : 0;
     // Average rating
@@ -531,4 +485,4 @@ export const getProductAnalytics = async (req: Request, res: Response): Promise<
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
-}; 
+};

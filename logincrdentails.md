@@ -7,17 +7,16 @@ http://localhost:5000/api
 
 ## 👥 User Accounts
 
-### 🛒 Customers
+### 🛒 Customer
 | Email | Password | Name | Role |
 |-------|----------|------|------|
-| `customer1@example.com` | `customer123` | Alice Smith | CUSTOMER |
-| `customer2@example.com` | `customer456` | Bob Johnson | CUSTOMER |
+| `customer1@example.com` | `customer123` | Anita Sharma | CUSTOMER |
 
 ### 🏪 Vendors
 | Email | Password | Name | Business | Role |
 |-------|----------|------|----------|------|
-| `vendor1@example.com` | `vendor123` | Charlie Vendor | Tech Store | VENDOR |
-| `vendor2@example.com` | `vendor456` | Diana Vendor | Fashion Hub | VENDOR |
+| `vendor1@example.com` | `vendor123` | Ravi Gurung | Beauty Bliss | VENDOR |
+| `vendor2@example.com` | `vendor456` | Priya Tamang | Tech Trends | VENDOR |
 
 ### 👨‍💼 Admin
 | Email | Password | Name | Role |
@@ -45,20 +44,20 @@ Authorization: Bearer <token>
 
 ## 📊 Seeded Data Summary
 
-- **Users**: 5 (2 customers, 2 vendors, 1 admin)
-- **Vendors**: 2 (Tech Store, Fashion Hub)
-- **Brands**: 3 (Apple, Samsung, Nike)
-- **Categories**: 3 (Electronics, Fashion, Mobiles)
+- **Users**: 4 (1 customer, 2 vendors, 1 admin)
+- **Vendors**: 2 (Beauty Bliss, Tech Trends)
+- **Categories**: Skincare, Home Appliances, Computers and Tech, Male Skincare, Women’s Fashion, Men’s Fashion (all with PNG images)
+- **Products**: 8 (4 per vendor, all related to seeded categories)
+- **Orders**: Multiple, all for the single customer, covering all statuses
+- **Reviews**: Only for the single customer, referencing seeded products
 
-## 🏷️ Available Brands
-- Apple (Featured)
-- Samsung (Featured)
-- Nike
-
-## 📂 Available Categories
-- Electronics (Featured)
-- Fashion (Featured)
-- Mobiles (Subcategory of Electronics)
+## 📂 Available Categories (PNG images only)
+- Skincare
+- Home Appliances
+- Computers and Tech
+- Male Skincare
+- Women’s Fashion
+- Men’s Fashion
 
 ## 🧪 Testing Commands
 
@@ -75,11 +74,6 @@ curl -X GET http://localhost:5000/api/auth/me \
   -H "Authorization: Bearer <your_token_here>"
 ```
 
-### Test Brands API
-```bash
-curl -X GET http://localhost:5000/api/brands
-```
-
 ### Test Categories API
 ```bash
 curl -X GET http://localhost:5000/api/categories
@@ -93,6 +87,6 @@ pnpm db:seed
 ```
 
 ---
-*Generated on: $(date)*
-*Database: MySQL (XAMPP)*
+*Database: SQLite or MySQL (Prisma)*
 *Server: Node.js + Express + TypeScript + Prisma* 
+

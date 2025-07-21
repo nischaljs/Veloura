@@ -361,7 +361,7 @@ export const createPayoutRequest = async (req: Request, res: Response) => {
       }
     });
 
-    const availableBalance = totalEarned - (totalPayouts._sum.amount?.toNumber() || 0);
+    const availableBalance = (totalEarned._sum.amount?.toNumber() || 0) - (totalPayouts._sum.amount?.toNumber() || 0);
 
     if (amount > availableBalance) {
       res.status(400).json({ success: false, message: `Amount exceeds available balance. Available: ${availableBalance.toFixed(2)}` });

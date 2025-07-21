@@ -1,5 +1,5 @@
 import api from './api';
-import { User, Vendor, Product, DashboardStats } from '../types';
+import type { User, Vendor, DashboardStats } from '../types';
 
 // User Management
 export const getUsers = (params?: {
@@ -140,4 +140,3 @@ export const getPayoutRequests = () => api.get('/admin/payout-requests');
 export const approvePayoutRequest = (id: number) => api.put(`/admin/payout-requests/${id}/approve`);
 export const rejectPayoutRequest = (id: number) => api.put(`/admin/payout-requests/${id}/reject`);
 
- 

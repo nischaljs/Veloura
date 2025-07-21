@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 const OrderPage: React.FC = () => {
   const [cart, setCart] = useState<any>(null);
@@ -17,6 +18,7 @@ const OrderPage: React.FC = () => {
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [paymentOptions, setPaymentOptions] = useState<any[]>([]);
   const { user } = useAuth();
+  const { clearCart } = useCart();
 
   useEffect(() => {
     getCart().then(res => setCart(res.data.data.cart));
@@ -93,6 +95,8 @@ const OrderPage: React.FC = () => {
       </div>
     );
   }
+
+  if (user && user.role !== 'CUSTOMER') return <div className="flex justify-center items-center h-96 text-gray-500">Checkout is only available for customers.</div>;
 
   console.log('Render: paymentOptions', paymentOptions);
 

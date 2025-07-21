@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAllProducts } from "@/services/product";
-import { Product } from "@/types";
 
 const AdminProductsPage = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     const fetchProducts = async () => {

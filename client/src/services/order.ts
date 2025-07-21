@@ -8,4 +8,6 @@ export const returnOrder = (id: string | number, data: any) => api.post(`/orders
 export const getOrderTracking = (id: string | number) => api.get(`/orders/${id}/tracking`);
 export const getOrderInvoice = (id: string | number) => api.get(`/orders/invoice/${id}`);
 export const getVendorOrders = (params?: any) => api.get('/orders/vendors/orders', { params });
-export const getVendorOrderDetail = (id: string | number) => api.get(`/orders/vendors/orders/${id}`); 
+export const getVendorOrderDetail = (id: string | number) => api.get(`/orders/vendors/orders/${id}`);
+export const updateVendorOrderStatus = (orderId: number, status: string) =>
+  api.put(`/orders/vendors/orders/${orderId}/status`, { status }); 

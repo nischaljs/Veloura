@@ -1,4 +1,3 @@
-
 import LandingPage from '../pages/LandingPage';
 import RegisterForm from '../components/auth/RegisterForm';
 import LoginForm from '../components/auth/LoginForm';
@@ -12,6 +11,9 @@ import NotFoundPage from '../pages/NotFoundPage';
 import PublicVendorProfilePage from '../pages/PublicVendorProfilePage';
 import CategoryPage from '../pages/CategoryPage';
 import CategoryDetailPage from '../pages/CategoryDetailPage';
+import VendorAddProductPage from '../pages/VendorAddProductPage';
+import VendorRegisterPage from '../pages/VendorRegisterPage';
+import VendorReviewsPage from '../pages/VendorReviewsPage';
 
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
@@ -61,7 +63,7 @@ const routes = [
   },
   {
     path: '/orders',
-    element: <ProtectedRoute allowedRoles={['CUSTOMER', 'VENDOR', 'ADMIN']}><OrdersPage/></ProtectedRoute>,
+    element: <ProtectedRoute allowedRoles={['CUSTOMER', 'VENDOR', 'ADMIN']} children={<OrdersPage />} />,
   },
   {
     path: '/category/:slug',
@@ -76,8 +78,16 @@ const routes = [
     element: <PublicVendorProfilePage />,
   },
   {
+    path: '/vendor/register',
+    element: <VendorRegisterPage/>,
+  },
+  {
+    path: '/vendor/reviews',
+    element: <ProtectedRoute allowedRoles={['VENDOR']} children={<VendorReviewsPage />} />,
+  },
+  {
     path: '/dashboard',
-    element: <ProtectedRoute allowedRoles={['CUSTOMER']}><DashboardLayout /></ProtectedRoute>,
+    element: <ProtectedRoute allowedRoles={['CUSTOMER']} children={<DashboardLayout />} />,
     children: [
       {
         index: true,
@@ -94,63 +104,25 @@ const routes = [
     ]
   },
   {
-    path: '/vendor',
-    element: <ProtectedRoute allowedRoles={['VENDOR']}><DashboardLayout /></ProtectedRoute>,
+    path: '/vendor/*',
+    element: <ProtectedRoute allowedRoles={['VENDOR']} children={<DashboardLayout />} />,
     children: [
-      {
-        path: 'dashboard',
-        element: <VendorDashboardPage />
-      },
-      {
-        path: 'products',
-        element: <VendorProductsPage />
-      },
-      {
-        path: 'orders',
-        element: <VendorOrdersPage />
-      },
-      {
-        path: 'payouts',
-        element: <VendorPayoutsPage />
-      },
-      {
-        path: 'profile',
-        element: <VendorProfilePage />
-      }
+      { path: 'dashboard', element: <VendorDashboardPage /> },
+      { path: 'products', element: <VendorProductsPage /> },
+      { path: 'products/add', element: <VendorAddProductPage /> },
+      { path: 'orders', element: <VendorOrdersPage /> },
+      { path: 'payouts', element: <VendorPayoutsPage /> },
+      { path: 'profile', element: <VendorProfilePage /> },
+      { path: 'reviews', element: <VendorReviewsPage /> },
+      { path: '*', element: <VendorDashboardPage /> },
     ]
   },
   {
-    path: '/admin',
-    element: <ProtectedRoute allowedRoles={['ADMIN']}><DashboardLayout /></ProtectedRoute>,
+    path: '/admin/*',
+    element: <ProtectedRoute allowedRoles={['ADMIN']} children={<DashboardLayout />} />,
     children: [
-      {
-        path: 'dashboard',
-        element: <AdminDashboardPage />
-      },
-      {
-        path: 'users',
-        element: <AdminUsersPage />
-      },
-      {
-        path: 'vendors',
-        element: <AdminVendorsPage />
-      },
-      {
-        path: 'products',
-        element: <AdminProductsPage />
-      },
-      {
-        path: 'orders',
-        element: <AdminOrdersPage />
-      },
-      {
-        path: 'categories',
-        element: <AdminCategoriesPage />
-      },
-      {
-        path: 'payouts',
-        element: <AdminPayoutsPage />
-      }
+      { path: 'dashboard', element: <AdminDashboardPage /> },
+      { path: '*', element: <AdminDashboardPage /> },
     ]
   },
   {

@@ -1,13 +1,5 @@
-import { Link } from 'react-router-dom';
 import { Twitter, Facebook, Instagram } from 'lucide-react';
 import { MapPin, Phone, Mail } from 'lucide-react';
-
-const navLinks = [
-  { name: 'Home', to: '/' },
-  { name: 'Shop', to: '/shop' },
-  { name: 'About', to: '/about' },
-  { name: 'Contact', to: '/contact' },
-];
 
 export default function Footer() {
   return (
@@ -90,4 +82,4 @@ export default function Footer() {
       </div>
     </footer>
   );
-} 
+}

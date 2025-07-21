@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getPayoutRequests, approvePayoutRequest, rejectPayoutRequest } from "@/services/admin";
-import { PayoutRequest } from "@/types";
+import type { PayoutRequest } from "@/types";
 
 const AdminPayoutsPage = () => {
   const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
@@ -85,3 +84,4 @@ const AdminPayoutsPage = () => {
 };
 
 export default AdminPayoutsPage;
+

@@ -6,13 +6,12 @@ import { Label } from '../ui/label';
 import { Checkbox } from '../ui/checkbox';
 import { MapPin, Plus, Edit } from 'lucide-react';
 import { addAddress, updateAddress } from '../../services/user';
-import { Address } from '../../types';
 import { toast } from 'sonner';
 
 interface AddressModalProps {
   isOpen: boolean;
   onClose: () => void;
-  address?: Address | null;
+  address?: any | null;
   onSuccess: () => void;
 }
 
@@ -270,4 +269,4 @@ const AddressModal: React.FC<AddressModalProps> = ({
   );
 };
 
-export default AddressModal; 
+export default AddressModal;

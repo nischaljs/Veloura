@@ -50,7 +50,7 @@ export const getUsers = async (req: Request, res: Response) => {
       createdAt: u.createdAt,
       lastLogin: u.lastLogin,
       orderCount: u.orders.length,
-      totalSpent: u.orders.reduce((sum, o) => sum + (o.total || 0), 0)
+      totalSpent: u.orders.reduce((sum, o) => sum + (o.total ? o.total.toNumber() : 0), 0)
     }));
     res.json({
       success: true,
@@ -208,7 +208,7 @@ export const getVendors = async (req: Request, res: Response) => {
       rating: v.rating,
       totalReviews: v.totalReviews,
       totalProducts: v.products.length,
-      totalSales: v.products.reduce((sum, p) => sum + (p.price || 0), 0), // Placeholder, real sales should aggregate orders
+      totalSales: v.products.reduce((sum, p) => sum + (p.price ? p.price.toNumber() : 0), 0), // Placeholder, real sales should aggregate orders
       createdAt: v.createdAt,
       user: v.user,
     }));

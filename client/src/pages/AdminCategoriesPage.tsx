@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getAllCategories } from "@/services/category";
-import { Category } from "@/types";
+import type { Category } from "@/types";
 
 const AdminCategoriesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);

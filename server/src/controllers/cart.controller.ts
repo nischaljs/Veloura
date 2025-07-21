@@ -56,7 +56,7 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
     let cart = await prisma.cart.findUnique({ where: { userId }, include: { items: true } });
     if (!cart) {
       try {
-        cart = await prisma.cart.create({ data: { userId } });
+        cart = await prisma.cart.create({ data: { userId, items: { create: [] } }, include: { items: true } });
       } catch (err: any) {
         // If unique constraint error, fetch the existing cart
         if (err.code === 'P2002' || (err.message && err.message.includes('Unique constraint'))) {
@@ -147,4 +147,4 @@ export const clearCart = async (req: Request, res: Response, next: NextFunction)
   } catch (err) {
     next(err);
   }
-}; 
+};

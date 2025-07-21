@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { applyCoupon, removeCoupon } from '../services/cart';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { Card, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -8,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 const CartPage: React.FC = () => {
   const { cart, loading, error, fetchCart, updateCartItem, removeCartItem, clearCart } = useCart();
+  const { user } = useAuth();
   const [updating, setUpdating] = useState<{ [key: string]: boolean }>({});
   const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   const [clearing, setClearing] = useState(false);
@@ -86,6 +88,7 @@ const CartPage: React.FC = () => {
 
   if (loading) return <div className="flex justify-center items-center h-96">Loading...</div>;
   if (error) return <div className="flex justify-center items-center h-96 text-red-500">{error}</div>;
+  if (user && user.role !== 'CUSTOMER') return <div className="flex justify-center items-center h-96 text-gray-500">Cart is only available for customers.</div>;
   if (!cart || cart.items.length === 0) return <div className="flex flex-col items-center justify-center h-96 text-gray-500">Your cart is empty.</div>;
 
   return (

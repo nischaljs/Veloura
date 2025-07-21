@@ -13,3 +13,5 @@ A full-stack web application with a React frontend and Node.js/Express backend.
 7. In the `server` folder, run `pnpm run db:seed` to seed the database and download images.
 8. Start the backend: `pnpm dev` (in `server`).
 9. Start the frontend: `pnpm dev` (in `client`).
+
+

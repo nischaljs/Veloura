@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { login as loginApi, register as registerApi, getCurrentUser, logout as logoutApi } from '@/services/auth';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { login as loginApi, register as registerApi, getCurrentUser } from '@/services/auth';
 
 interface User {
   id: string;
@@ -105,4 +106,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

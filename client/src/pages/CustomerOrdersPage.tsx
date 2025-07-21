@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Eye } from 'lucide-react';
 import { getOrders } from '../services/order';
 import { useNavigate } from 'react-router-dom';
-import { Order } from '../types/common';
+import type { Order } from '../types/common';
 
 const CustomerOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -50,7 +50,7 @@ const CustomerOrdersPage: React.FC = () => {
         {value}
       </Badge>
     )},
-    { key: 'items', label: 'Items', render: (value: any, row: Order) => (
+    { key: 'items', label: 'Items', render: (_: any, row: Order) => (
       <span className="text-sm">{row.items?.length || 0}</span>
     )},
     { key: 'total', label: 'Total', render: (value: any) => (
@@ -100,4 +100,4 @@ const CustomerOrdersPage: React.FC = () => {
   );
 };
 
-export default CustomerOrdersPage; 
+export default CustomerOrdersPage;

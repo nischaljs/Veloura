@@ -53,7 +53,7 @@ export const changePassword = async (req: Request, res: Response) => {
     const { currentPassword, newPassword } = req.body;
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) { res.status(404).json({ success: false, message: 'User not found' }); return; }
-    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash || "");
     if (!valid) { res.status(400).json({ success: false, message: 'Current password is incorrect' }); return; }
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
@@ -172,4 +172,4 @@ export const getUserOrderDetails = async (req: Request, res: Response) => {
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err });
   }
-}; 
+};

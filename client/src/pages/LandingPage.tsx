@@ -1,27 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import {
+  ArrowRight,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import ProductsCard from '../components/ProductsCard';
 import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
+import { Skeleton } from '../components/ui/skeleton';
+import { useCart } from '../context/CartContext';
+import {
+  getAllCategories,
+  getFeaturedCategories
+} from '../services/category';
 import {
   getAllProducts,
   getFeaturedProducts,
   getTrendingProducts
 } from '../services/product';
-import {
-  getAllCategories,
-  getFeaturedCategories
-} from '../services/category';
-import ProductsCard from '../components/ProductsCard';
-import { useNavigate, Link } from 'react-router-dom';
-import {
-  ArrowRight,
-  TrendingUp,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
-import { Skeleton } from '../components/ui/skeleton';
-import { useCart } from '../context/CartContext';
 
 interface Product {
   id: number;
@@ -58,11 +55,10 @@ function LandingPage() {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [featuredCategories, setFeaturedCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Add loading state
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const [cartLoading, setCartLoading] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -86,7 +82,6 @@ function LandingPage() {
         setTrendingProducts(trendingRes.data?.data?.products || []);
         setNewArrivals(newArrivalsRes.data?.data?.products || []);
         setCategories(categoriesRes.data?.data?.categories || []);
-        setFeaturedCategories(featuredCategoriesRes.data?.data?.categories || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -222,7 +217,6 @@ function LandingPage() {
                   imageClassName="h-40 md:h-48"
                   buttonText="Add to Cart"
                   showPrice={true}
-                  showRating={true}
                   showVendor={true}
                   showStatus={true}
                   onProductClick={(product) => navigate(`/products/${product.slug}`)}
@@ -260,7 +254,6 @@ function LandingPage() {
                 imageClassName="h-40 md:h-48" 
                 buttonText="Add to Cart"
                 showPrice={true}
-                showRating={true}
                 showVendor={true}
                 showStatus={true}
                 onProductClick={(product) => navigate(`/products/${product.slug}`)}
@@ -290,7 +283,6 @@ function LandingPage() {
                 imageClassName="h-40 md:h-48" 
                 buttonText="Add to Cart"
                 showPrice={true}
-                showRating={true}
                 showVendor={true}
                 showStatus={true}
                 onProductClick={(product) => navigate(`/products/${product.slug}`)}
@@ -320,7 +312,6 @@ function LandingPage() {
                 imageClassName="h-40 md:h-48" 
                 buttonText="Add to Cart"
                 showPrice={true}
-                showRating={true}
                 showVendor={true}
                 showStatus={true}
                 onProductClick={(product) => navigate(`/products/${product.slug}`)}

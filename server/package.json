@@ -45,6 +45,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "neppayments": "^2.0.6",
-    "slugify": "^1.6.6"
+    "slugify": "^1.6.6",
+    "decimal.js": "^10.4.3"
   }
 }

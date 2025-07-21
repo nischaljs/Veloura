@@ -1,6 +1,3 @@
-
-import React from 'react';
-
 interface DashboardTableProps<T> {
   title: string;
   data: T[];
@@ -52,3 +49,4 @@ const DashboardTable = <T extends { id: number }>({ title, data, columns, loadin
 };
 
 export default DashboardTable;
+

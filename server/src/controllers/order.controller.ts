@@ -25,15 +25,11 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
       return;
     }
       let variant = null;
-      if (item.variantId) {
-        variant = await prisma.productVariant.findUnique({ where: { id: item.variantId } });
-      }
-      const price = variant ? (product.salePrice ?? product.price) + variant.priceDifference : (product.salePrice ?? product.price);
-      subtotal += price * item.quantity;
+      const price = (product.salePrice ?? product.price);
+      subtotal += (price ? price.toNumber() : 0) * item.quantity;
       orderItemData.push({
         productId: product.id,
-        vendorId: product.vendorId,
-        variantId: item.variantId,
+        vendorId: item.vendorId ?? undefined,
         quantity: item.quantity,
         price,
         salePrice: product.salePrice ?? null,
@@ -45,15 +41,6 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
           salePrice: product.salePrice,
           sku: product.sku,
         },
-        variantSnapshot: variant
-          ? {
-              id: variant.id,
-              name: variant.name,
-              value: variant.value,
-              priceDifference: variant.priceDifference,
-              sku: variant.sku,
-            }
-          : undefined,
       });
     }
     const shippingFee = calculateShippingFee();
@@ -92,14 +79,16 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
           where: { id: product.id },
           data: { stockQuantity: newStock, status: newStatus }
         });
-        // Create commission record (10% commission)
-        await prisma.commission.create({
-          data: {
-            orderItemId: item.id,
-            vendorId: item.vendorId,
-            amount: item.price * item.quantity * 0.1
-          }
-        });
+        // Create commission record (10% commission) only if vendorId is a number
+        if (typeof item.vendorId === 'number') {
+          await prisma.commission.create({
+            data: {
+              orderItemId: item.id,
+              vendorId: item.vendorId,
+              amount: item.price.toNumber() * item.quantity * 0.1
+            }
+          });
+        }
       }
     }
     // Remove cart/cartItem logic

@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCategoryBySlug, getCategoryProducts } from '../services/category';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
-import { ShoppingBag, Star } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -19,6 +19,7 @@ const CategoryPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { addToCart } = useCart();
   const [cartLoading, setCartLoading] = useState<{ [key: number]: boolean }>({});
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!slug) return;
@@ -91,29 +92,31 @@ const CategoryPage: React.FC = () => {
                     <span className="text-lg font-bold">Rs.{product.price}</span>
                     <span className="text-xs text-gray-500">Stock: {product.stockQuantity}</span>
                   </div>
-                  <Button 
-                    size="icon" 
-                    className="bg-indigo-600 hover:bg-indigo-700 w-8 h-8 mt-2" 
-                    onClick={async e => {
-                      e.stopPropagation();
-                      setCartLoading(prev => ({ ...prev, [product.id]: true }));
-                      try {
-                        await addToCart({ productId: product.id, quantity: 1 });
-                        toast.success('Added to cart!');
-                      } catch (err) {
-                        toast.error('Failed to add to cart');
-                      } finally {
-                        setCartLoading(prev => ({ ...prev, [product.id]: false }));
-                      }
-                    }}
-                    disabled={cartLoading[product.id] || product.stockQuantity === 0}
-                  >
-                    {cartLoading[product.id] ? (
-                      <span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full block mx-auto" />
-                    ) : (
-                      <ShoppingBag className="w-4 h-4" />
-                    )}
-                  </Button>
+                  {(user?.role === 'CUSTOMER' || !user) && (
+                    <Button 
+                      size="icon" 
+                      className="bg-indigo-600 hover:bg-indigo-700 w-8 h-8 mt-2" 
+                      onClick={async e => {
+                        e.stopPropagation();
+                        setCartLoading(prev => ({ ...prev, [product.id]: true }));
+                        try {
+                          await addToCart({ productId: product.id, quantity: 1 });
+                          toast.success('Added to cart!');
+                        } catch (err) {
+                          toast.error('Failed to add to cart');
+                        } finally {
+                          setCartLoading(prev => ({ ...prev, [product.id]: false }));
+                        }
+                      }}
+                      disabled={cartLoading[product.id] || product.stockQuantity === 0}
+                    >
+                      {cartLoading[product.id] ? (
+                        <span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full block mx-auto" />
+                      ) : (
+                        <ShoppingBag className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}

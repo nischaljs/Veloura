@@ -1,79 +1,96 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getVendorOrders } from "@/services/order"; // Corrected import
-import { Order } from "@/types";
-import { Badge } from "@/components/ui/badge";
+import { getVendorOrders, updateVendorOrderStatus } from "@/services/order";
+import type { Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+
+const ORDER_STATUSES = ["PENDING", "PROCESSING", "DELIVERED", "CANCELLED"];
 
 const VendorOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+  const [updating, setUpdating] = useState<number | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user || user.role !== 'VENDOR') return;
+    fetchOrders(pagination.page);
+    // eslint-disable-next-line
+  }, [user]);
 
   const fetchOrders = async (page = 1) => {
-    setLoading(true);
-    setError(null);
     try {
       const res = await getVendorOrders({ page, limit: pagination.limit });
       setOrders(res.data.data.orders);
       setPagination(res.data.data.pagination);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch orders');
-    } finally {
-      setLoading(false);
+      // Optionally show error
     }
   };
 
-  useEffect(() => {
-    fetchOrders(pagination.page);
-    // eslint-disable-next-line
-  }, []);
+  const handleStatusChange = async (orderId: number, newStatus: string) => {
+    setUpdating(orderId);
+    try {
+      await updateVendorOrderStatus(orderId, newStatus);
+      await fetchOrders(pagination.page);
+    } catch (err) {
+      // Optionally show error
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  if (!user || user.role !== 'VENDOR') return <div className="flex justify-center items-center h-96 text-gray-500">Orders are only available for vendors.</div>;
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Vendor Orders</h1>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell>{order.id}</TableCell>
-              <TableCell>{order.user.firstName} {order.user.lastName}</TableCell>
-              <TableCell>{order.total}</TableCell>
-              <TableCell>
-                <Badge variant={
-                  order.status === 'DELIVERED' ? 'default' :
-                  order.status === 'PENDING' ? 'secondary' :
-                  order.status === 'CANCELLED' ? 'destructive' : 'outline'
-                }>
-                  {order.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Button size="sm" variant="outline" onClick={() => navigate(`/vendor/orders/${order.id}`)}>
-                  <Eye className="w-4 h-4 mr-1" />
-                  View
-                </Button>
-              </TableCell>
+      <div className="overflow-x-auto rounded-lg shadow bg-white">
+        <Table className="min-w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {orders.map((order) => (
+              <TableRow key={order.id}>
+                <TableCell>{order.id}</TableCell>
+                <TableCell>{order.user.firstName} {order.user.lastName}</TableCell>
+                <TableCell>{order.total}</TableCell>
+                <TableCell>
+                  <select
+                    value={order.status}
+                    disabled={updating === order.id}
+                    onChange={e => handleStatusChange(order.id, e.target.value)}
+                    className="border rounded px-2 py-1"
+                  >
+                    {ORDER_STATUSES.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </TableCell>
+                <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/vendor/orders/${order.id}`)}>
+                    <Eye className="w-4 h-4 mr-1" />
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       {/* Pagination Controls */}
       <div className="flex justify-center mt-6 gap-2">
         <Button
@@ -99,3 +116,4 @@ const VendorOrdersPage = () => {
 };
 
 export default VendorOrdersPage;
+
