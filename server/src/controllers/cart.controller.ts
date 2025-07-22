@@ -1,6 +1,7 @@
 import prisma from '../utils/prisma';
 import { Request, Response, NextFunction } from 'express';
 import { calculateCartSummary } from '../utils/cartUtils';
+import { addImageUrls, addImageUrlsToArray } from '../utils/imageUtils';
 
 // Helper function to get cart with populated items and calculated summary
 const getCartWithSummary = async (userId: number) => {
@@ -22,6 +23,20 @@ const getCartWithSummary = async (userId: number) => {
 
   if (!cart) {
     return null;
+  }
+
+  // Add full image URLs to each product and its images
+  for (const item of cart.items) {
+    if (item.product) {
+      // Add image URLs to all images
+      if (item.product.images && Array.isArray(item.product.images)) {
+        item.product.images = addImageUrlsToArray(item.product.images, ['url']);
+      }
+      // Add image URLs to vendor logo if present
+      if (item.product.vendor) {
+        item.product.vendor = addImageUrls(item.product.vendor, ['logo']);
+      }
+    }
   }
 
   const summary = calculateCartSummary(cart.items);

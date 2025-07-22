@@ -37,7 +37,7 @@ async function main() {
       lastName: 'Sharma',
       phone: '+977-9800000001',
       role: UserRole.CUSTOMER,
-      avatar: '/images/users/customer1-avatar.jpg',
+      avatar: '/images/users/customer1-avatar.png',
       lastLogin: new Date(),
     },
   });
@@ -49,7 +49,7 @@ async function main() {
       lastName: 'Gurung',
       phone: '+977-9800000003',
       role: UserRole.VENDOR,
-      avatar: '/images/users/vendor1-avatar.jpg',
+      avatar: '/images/users/vendor1-avatar.png',
       lastLogin: new Date(),
     },
   });
@@ -61,7 +61,7 @@ async function main() {
       lastName: 'Tamang',
       phone: '+977-9800000004',
       role: UserRole.VENDOR,
-      avatar: '/images/users/vendor2-avatar.jpg',
+      avatar: '/images/users/vendor2-avatar.png',
       lastLogin: new Date(),
     },
   });
@@ -73,7 +73,7 @@ async function main() {
       lastName: 'User',
       phone: '+977-9800000000',
       role: UserRole.ADMIN,
-      avatar: '/images/users/admin-avatar.jpg',
+      avatar: '/images/users/admin-avatar.png',
       lastLogin: new Date(),
     },
   });

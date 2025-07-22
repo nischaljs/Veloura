@@ -20,8 +20,10 @@ const VendorAddProductPage = () => {
     price: "",
     stockQuantity: "",
     categoryId: "",
+    sku: "",
     images: [],
   });
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -45,6 +47,22 @@ const VendorAddProductPage = () => {
     }
   };
 
+  const handleAddImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm((prev) => ({ ...prev, images: [...prev.images, file] }));
+      setImagePreviews((prev) => [...prev, URL.createObjectURL(file)]);
+    }
+  };
+
+  const handleRemoveImage = (idx) => {
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== idx),
+    }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -57,6 +75,7 @@ const VendorAddProductPage = () => {
       formData.append("price", form.price);
       formData.append("stockQuantity", form.stockQuantity);
       formData.append("categoryId", form.categoryId);
+      formData.append("sku", form.sku);
       for (let i = 0; i < form.images.length; i++) {
         formData.append("images", form.images[i]);
       }
@@ -100,6 +119,10 @@ const VendorAddProductPage = () => {
               </div>
             </div>
             <div>
+              <Label htmlFor="sku">SKU</Label>
+              <Input id="sku" name="sku" value={form.sku} onChange={handleChange} required />
+            </div>
+            <div>
               <Label htmlFor="categoryId">Category</Label>
               <select
                 id="categoryId"
@@ -116,8 +139,23 @@ const VendorAddProductPage = () => {
               </select>
             </div>
             <div>
-              <Label htmlFor="images">Product Images</Label>
-              <Input id="images" name="images" type="file" accept="image/*" multiple onChange={handleChange} />
+              <Label>Product Images</Label>
+              <div className="flex flex-col gap-2">
+                {imagePreviews.map((src, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <img src={src} alt={`Preview ${idx + 1}`} className="w-20 h-20 object-cover rounded border" />
+                    <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveImage(idx)}>
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAddImage}
+                  key={form.images.length} // force re-render to allow same file selection
+                />
+              </div>
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
             <Button type="submit" className="w-full" disabled={loading}>

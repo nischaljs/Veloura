@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { updateProductStock } from '@/services/product';
 
 const VendorDashboardPage = () => {
   const [analytics, setAnalytics] = useState({
@@ -45,15 +46,18 @@ const VendorDashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    // Fetch order analytics (total orders, total sales)
-    const fetchOrderAnalytics = async () => {
+    // Quick fix: Fetch all vendor orders and calculate analytics
+    const fetchOrdersForAnalytics = async () => {
       setLoading(true);
       try {
-        const response = await getVendorOrderAnalytics();
+        const response = await getVendorOrders({ page: 1, limit: 100 });
+        const orders = response.data.data.orders || [];
+        const totalOrders = orders.length;
+        const totalSales = orders.reduce((sum, order) => sum + parseFloat(order.total || 0), 0);
         setAnalytics((prev) => ({
           ...prev,
-          totalOrders: response.data.data.totalOrders,
-          totalSales: response.data.data.totalSales,
+          totalOrders,
+          totalSales,
         }));
       } catch (error) {
         setAnalytics((prev) => ({ ...prev, totalOrders: 0, totalSales: 0 }));
@@ -61,7 +65,7 @@ const VendorDashboardPage = () => {
         setLoading(false);
       }
     };
-    fetchOrderAnalytics();
+    fetchOrdersForAnalytics();
   }, []);
 
   useEffect(() => {
@@ -340,6 +344,58 @@ const VendorDashboardPage = () => {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Add inventory management UI below products grid */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold mb-4">Inventory Management</h2>
+        <div className="overflow-x-auto rounded-lg shadow bg-white">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left py-2 px-2">Product</th>
+                <th className="text-left py-2 px-2">SKU</th>
+                <th className="text-left py-2 px-2">Stock</th>
+                <th className="text-left py-2 px-2">Status</th>
+                <th className="text-left py-2 px-2">Update Stock</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product.id} className="border-b">
+                  <td className="py-2 px-2">{product.name}</td>
+                  <td className="py-2 px-2">{product.sku}</td>
+                  <td className="py-2 px-2">{product.stockQuantity}</td>
+                  <td className="py-2 px-2">{product.status}</td>
+                  <td className="py-2 px-2">
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const newStock = formData.get('stock');
+                        if (!newStock) return;
+                        await updateProductStock(product.id, parseInt(newStock as string));
+                        // Refresh products after update
+                        const response = await getMyProducts();
+                        setProducts(response.data.data.products || []);
+                      }}
+                      className="flex gap-2 items-center"
+                    >
+                      <input
+                        type="number"
+                        name="stock"
+                        min="0"
+                        defaultValue={product.stockQuantity}
+                        className="border rounded px-2 py-1 w-20"
+                      />
+                      <Button type="submit" size="sm">Update</Button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

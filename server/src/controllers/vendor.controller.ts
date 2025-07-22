@@ -211,52 +211,73 @@ export const addProduct = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const vendor = await prisma.vendor.findFirst({ where: { userId: Number(userId) } });
     if (!vendor) { res.status(404).json({ success: false, message: 'Vendor not found' }); return; }
-    
-    const { 
-      name, description, shortDescription, price, salePrice, costPrice, sku, 
-      stockQuantity, status = 'ACTIVE', isFeatured = false, 
+
+    const {
+      name, description, shortDescription, price, salePrice, costPrice, sku,
+      stockQuantity, status = 'ACTIVE', isFeatured = false,
       categoryId,
-      images = [], // Default to empty array
-      tags = [],   // Default to empty array
-      attributes = [] // Default to empty array
+      tags = [],
+      attributes = []
     } = req.body;
     const slug = slugify(name, { lower: true, strict: true });
-    
+
+    // Handle uploaded images
+    const files = req.files as Express.Multer.File[];
+    const imagesToCreate = files && files.length > 0
+      ? files.map((file, idx) => ({
+          url: `/images/products/${file.filename}`,
+          altText: file.originalname,
+          isPrimary: idx === 0, // First image is primary
+          order: idx + 1
+        }))
+      : [];
+
+    // Parse tags/attributes if sent as JSON string
+    let tagsArr = tags;
+    let attributesArr = attributes;
+    if (typeof tags === 'string') {
+      try { tagsArr = JSON.parse(tags); } catch {}
+    }
+    if (typeof attributes === 'string') {
+      try { attributesArr = JSON.parse(attributes); } catch {}
+    }
+
     const product = await prisma.product.create({
       data: {
         name,
         description,
         shortDescription,
-        price: parseFloat(price),
-        salePrice: salePrice !== '' ? parseFloat(salePrice) : undefined,
-        costPrice: costPrice !== '' ? parseFloat(costPrice) : undefined,
+        price: price !== undefined && price !== '' ? parseFloat(price) : 0,
+        salePrice: salePrice !== undefined && salePrice !== '' ? parseFloat(salePrice) : null,
+        costPrice: costPrice !== undefined && costPrice !== '' ? parseFloat(costPrice) : null,
         sku,
-        stockQuantity: parseInt(stockQuantity),
+        stockQuantity: stockQuantity !== undefined && stockQuantity !== '' ? parseInt(stockQuantity) : 0,
         status,
         isFeatured,
         slug,
         vendorId: vendor.id,
-        categoryId: parseInt(categoryId),
+        categoryId: categoryId !== undefined && categoryId !== '' ? parseInt(categoryId) : undefined,
         images: {
-          create: images.map((image: { url: string; altText?: string; isPrimary?: boolean; order?: number; }) => ({
-            url: image.url.replace(/^(http|https):\/\/[^\/]+\/images\//, '/images/'), // Strip base URL
-            altText: image.altText,
-            isPrimary: image.isPrimary,
-            order: image.order
-          }))
+          create: imagesToCreate
         },
         tags: {
-          create: tags.map((tag: string) => ({ name: tag }))
+          create: Array.isArray(tagsArr) ? tagsArr.map((tag: string) => ({ name: tag })) : []
         },
         attributes: {
-          create: attributes.map((attr: { name: string; value: string; }) => ({
+          create: Array.isArray(attributesArr) ? attributesArr.map((attr: { name: string; value: string; }) => ({
             name: attr.name,
             value: attr.value
-          }))
+          })) : []
         }
+      },
+      include: {
+        images: true,
+        tags: true,
+        attributes: true,
+        category: true
       }
     });
-    
+
     res.json({ success: true, message: 'Product added successfully', data: { product } });
   } catch (err: any) {
     console.error('❌ addProduct error:', err);

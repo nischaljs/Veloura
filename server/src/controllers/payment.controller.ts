@@ -43,7 +43,7 @@ export const initiateKhaltiPayment = async (req: Request, res: Response) => {
     }
     try {
       const payment = await payments.khalti.createPayment({
-        amount: order.total.toNumber() * 100, // Khalti expects paisa
+        amount: Math.round(order.total.toNumber() * 100), // Khalti expects integer paisa
         purchase_order_id: String(order.id),
         purchase_order_name: `Order #${order.id}`,
         return_url: returnUrl,

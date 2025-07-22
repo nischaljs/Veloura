@@ -100,11 +100,12 @@ const CartPage: React.FC = () => {
           <div className="divide-y divide-zinc-200">
             {cart.items.map((item: any) => {
               const product = item.product;
-              const imageUrl = product.productImage || '';
+              // Use the first image from product.images if available, else fallback
+              const imageUrl = (product.images && product.images.length > 0 && product.images[0].url) || product.productImage || '/placeholder.svg';
               const vendorLogo = product.vendorLogo || '';
               return (
                 <div key={item.id} className="flex flex-col md:flex-row items-center gap-4 py-4">
-                  <img src={imageUrl || '/placeholder.svg'} alt={product.name} className="w-20 h-20 object-cover rounded-lg border bg-gray-100" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  <img src={imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-lg border bg-gray-100" onError={e => { e.currentTarget.style.display = 'none'; }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold text-lg truncate">{product.name}</span>

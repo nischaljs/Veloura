@@ -16,7 +16,7 @@ router.post('/banner', authenticateVendor, upload.single('banner'), handleUpload
 
 // Product Management (for logged-in vendor)
 router.get('/products', authenticateVendor, vendorController.getMyProducts);
-router.post('/products', authenticateVendor, vendorController.addProduct);
+router.post('/products', authenticateVendor, upload.array('images', 10), handleUploadError, vendorController.addProduct);
 router.put('/products/:id', authenticateVendor, vendorController.updateProduct);
 router.delete('/products/:id', authenticateVendor, vendorController.deleteProduct);
 

@@ -45,6 +45,11 @@ const ProductDetailPage: React.FC = () => {
       navigate('/login');
       return;
     }
+    if (user.role !== 'CUSTOMER') {
+      toast.error('Please login as a customer to add items to your cart.');
+      navigate('/login');
+      return;
+    }
     setCartLoading(true);
     try {
       await addToCart({ productId: product.id, quantity: 1 });

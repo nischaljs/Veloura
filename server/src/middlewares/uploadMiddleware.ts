@@ -28,9 +28,9 @@ const storage = multer.diskStorage({
     
     if (req.route?.path === '/banner') {
       uploadPath += 'banners/';
-    } else if (req.route?.path?.includes('/categories/')) {
+    } else if (req.route?.path?.includes('/categories')) {
       uploadPath += 'categories/';
-    } else if (req.route?.path?.includes('/products/')) {
+    } else if (req.route?.path?.includes('/products')) {
       uploadPath += 'products/';
     } else if (req.route?.path?.includes('/users/')) {
       uploadPath += 'users/';

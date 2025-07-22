@@ -8,6 +8,7 @@ import { Input } from '../components/ui/input';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useNavigate } from 'react-router-dom';
 
 const OrderPage: React.FC = () => {
   const [cart, setCart] = useState<any>(null);
@@ -19,6 +20,7 @@ const OrderPage: React.FC = () => {
   const [paymentOptions, setPaymentOptions] = useState<any[]>([]);
   const { user } = useAuth();
   const { clearCart } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getCart().then(res => setCart(res.data.data.cart));
@@ -56,7 +58,8 @@ const OrderPage: React.FC = () => {
         items: cart.items.map((item: any) => ({
           productId: item.productId,
           variantId: item.variantId,
-          quantity: item.quantity
+          quantity: item.quantity,
+          vendorId: item.product?.vendorId // include vendorId for backend
         })),
         shippingAddress: address,
         paymentMethod,
@@ -79,6 +82,9 @@ const OrderPage: React.FC = () => {
         await confirmCODPayment(res.data.data.order.id);
         setOrderSuccess('Order placed with Cash on Delivery!');
         clearCart(); // Clear cart after successful COD order
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
       }
     } catch (err: any) {
       setOrderError(err.response?.data?.message || 'Failed to place order');

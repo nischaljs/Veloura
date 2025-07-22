@@ -100,6 +100,16 @@ const CategoryDetailPage: React.FC = () => {
                         className="bg-indigo-600 hover:bg-indigo-700 w-8 h-8"
                         onClick={async e => {
                           e.stopPropagation();
+                          if (!user) {
+                            toast.info('Please login to add items to your cart.');
+                            navigate('/login');
+                            return;
+                          }
+                          if (user.role !== 'CUSTOMER') {
+                            toast.error('Please login as a customer to add items to your cart.');
+                            navigate('/login');
+                            return;
+                          }
                           setCartLoading(prev => ({ ...prev, [product.id]: true }));
                           try {
                             await addToCart({ productId: product.id, quantity: 1 });

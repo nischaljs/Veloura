@@ -57,7 +57,8 @@ const LoginForm: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-zinc-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center gap-2">
-          <img src="/logo192.png" alt="Logo" className="w-12 h-12 mb-2" />
+          {/* <img src="/logo192.png" alt="Logo" className="w-12 h-12 mb-2" /> */}
+          <span className="text-4xl font-extrabold text-indigo-700 mb-2">Veloura</span>
           <CardTitle className="text-3xl font-extrabold text-center">Sign in to Veloura</CardTitle>
           <CardDescription className="text-center">Welcome back! Please enter your credentials.</CardDescription>
         </CardHeader>

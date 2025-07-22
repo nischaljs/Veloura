@@ -35,3 +35,7 @@ export const getProductsByCategory = (categorySlug: string, params?: {
   minPrice?: number;
   maxPrice?: number;
 }) => api.get(`/categories/${categorySlug}/products`, { params });
+
+// Update product stock (vendor only)
+export const updateProductStock = (id: number, stockQuantity: number, reason?: string) =>
+  api.post(`/products/${id}/stock`, { stockQuantity, reason });
